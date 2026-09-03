@@ -446,13 +446,31 @@ def build_prefixed_reasons(reasons_dict, numeric_data, pct_data, portfolio_map, 
 # 그날 하루 분석이 통째로 날아감. 503/502/500/429처럼 "일시적" 성격이 강한
 # 응답은 같은 모델로 짧게 재시도하고, 그래도 안 되면 다음 후보 모델로 넘어감.
 TRANSIENT_HTTP_CODES = {429, 500, 502, 503, 504}
-GEMINI_RETRY_DELAY_SEC = 3
-GEMINI_MAX_RETRIES_PER_MODEL = 2  # 같은 모델에 최초 시도 포함 최대 2번
+GEMINI_RETRY_DELAY_SEC = 5
+GEMINI_MAX_RETRIES_PER_MODEL = 3  # 같은 모델에 최초 시도 포함 최대 3번
+GEMINI_HTTP_TIMEOUT = 90  # 장문 한국어 JSON — Actions에서도 여유 있게
 
 
-def call_gemini_json(payload, headers, timeout, context_label="Gemini"):
-    # 모델 폴백 리스트를 순서대로 시도하되, 각 모델마다 "일시적 오류"면
+def _is_transient_network_error(exc):
+    # urllib timeout / 연결 끊김은 HTTP status가 아니라 URLError/TimeoutError로 옴.
+    # 예전엔 Exception으로 바로 포기해서 타임아웃 1번에 분석이 통째로 날아감.
+    if isinstance(exc, TimeoutError):
+        return True
+    if isinstance(exc, urllib.error.URLError):
+        reason = getattr(exc, "reason", None)
+        if isinstance(reason, (TimeoutError, OSError)):
+            return True
+        msg = str(reason or exc).lower()
+        if "timed out" in msg or "timeout" in msg or "temporarily unavailable" in msg:
+            return True
+    msg = str(exc).lower()
+    return "timed out" in msg or "timeout" in msg
+
+
+def call_gemini_json(payload, headers, timeout=None, context_label="Gemini"):
+    # 모델 폴백 리스트를 순서대로 시도하되, 각 모델마다 "일시적 오류/타임아웃"이면
     # 짧게 재시도하고, 그래도 실패하거나 영구적 오류(404 등)면 다음 모델로.
+    timeout = timeout or GEMINI_HTTP_TIMEOUT
     for model in GEMINI_MODEL_FALLBACKS:
         url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
 
@@ -489,6 +507,15 @@ def call_gemini_json(payload, headers, timeout, context_label="Gemini"):
                 return None, None  # 영구적 오류(인증 실패 등)로 판단, 바로 포기
 
             except Exception as e:
+                if _is_transient_network_error(e) and attempt < GEMINI_MAX_RETRIES_PER_MODEL:
+                    logger.warning(f"{context_label} 타임아웃/네트워크 오류(모델: {model}, {attempt}번째 시도): {e}. "
+                                    f"{GEMINI_RETRY_DELAY_SEC}초 후 같은 모델로 재시도합니다.")
+                    time.sleep(GEMINI_RETRY_DELAY_SEC)
+                    continue
+                if _is_transient_network_error(e):
+                    logger.warning(f"{context_label} 타임아웃/네트워크 오류가 재시도 후에도 계속됨 "
+                                    f"(모델: {model}): {e}. 다음 후보 모델로 넘어갑니다.")
+                    break
                 logger.error(f"{context_label} 호출 실패 (모델: {model}): {e}")
                 return None, None
 
@@ -571,10 +598,7 @@ JSON 출력 포맷 (각 필드는 "원인 + 파급 영향"만, 숫자/방향 단
     }
     headers = {"x-goog-api-key": api_key}
 
-    # 14개 항목 x 3~4문장의 긴 한국어 출력을 요구하는 무거운 요청이라
-    # 기존 30초보다 여유를 둠. (GitHub Actions job timeout도 여유 있게 둘 것)
-    GEMINI_HTTP_TIMEOUT = 55
-
+    # 14개 항목 x 3~4문장의 긴 한국어 출력 — 타임아웃/재시도는 GEMINI_HTTP_TIMEOUT·call_gemini_json에서 처리
     return call_gemini_json(payload, headers, GEMINI_HTTP_TIMEOUT, context_label="Gemini")
 
 # ==========================================
@@ -602,8 +626,15 @@ ANALYSIS_VERSION = "0.1"   # 지금 쓰는 "심볼별 문단 텍스트" 분석 �
 PROMPT_VERSION = "market-analysis-0.1"
 
 
+def now_kst():
+    # timezone-aware UTC 기준 (datetime.utcnow 폐기 경고 회피)
+    return datetime.datetime.now(datetime.timezone.utc).astimezone(
+        datetime.timezone(datetime.timedelta(hours=9))
+    )
+
+
 def kst_date_str():
-    kst_now = datetime.datetime.utcnow() + datetime.timedelta(hours=9)
+    kst_now = now_kst()
     return kst_now.strftime("%Y-%m-%d"), kst_now
 
 
@@ -861,7 +892,7 @@ def save_to_s3(numeric_data, pct_data, portfolio_map, oil_data, fear_score, news
     # 하위 호환 함수명 — 실제로는 저장소의 briefings.json에 기록
     briefings = load_briefings()
 
-    kst_now = datetime.datetime.utcnow() + datetime.timedelta(hours=9)
+    kst_now = now_kst()
     today_str = kst_now.strftime("%Y-%m-%d")
 
     # ⚠️ 핵심 버그 수정: 이번 실행의 Gemini 분석이 실패해서 reasons_dict가
@@ -1132,7 +1163,7 @@ JSON 포맷:
     }
     headers = {"x-goog-api-key": api_key}
 
-    return call_gemini_json(payload, headers, timeout=55, context_label=f"{period_word}간 AI 분석")
+    return call_gemini_json(payload, headers, timeout=GEMINI_HTTP_TIMEOUT, context_label=f"{period_word}간 AI 분석")
 
 
 # 하위 호환용 별칭 (기존 코드에서 get_weekly_ai_analysis로 호출하던 부분)
@@ -1155,7 +1186,7 @@ KRX_HOLIDAYS_2026 = {
 
 def get_korean_holidays_next_week():
     # 다음 주 국내 증시 휴장일 - 사실(고정 달력) 기반
-    kst_now = datetime.datetime.utcnow() + datetime.timedelta(hours=9)
+    kst_now = now_kst()
     next_monday = kst_now + datetime.timedelta(days=(7 - kst_now.weekday()))
     holidays = []
     for i in range(5):
@@ -1436,7 +1467,7 @@ def run_weekly_report():
     this_week = records[-5:] if len(records) >= 5 else records
     last_week = records[:-5] if len(records) > 5 else []
 
-    kst_now = datetime.datetime.utcnow() + datetime.timedelta(hours=9)
+    kst_now = now_kst()
     week_label = f"{kst_now.year}-W{kst_now.isocalendar()[1]:02d}"
 
     holidays = get_korean_holidays_next_week()
@@ -1464,7 +1495,7 @@ def get_month_records(year, month):
 def run_monthly_report():
     # 매달 1일 07:30 KST에 실행된다고 가정 - 대상은 "지난달" 전체.
     logger.info("월간 리포트 생성 시작")
-    kst_now = datetime.datetime.utcnow() + datetime.timedelta(hours=9)
+    kst_now = now_kst()
     first_of_this_month = kst_now.replace(day=1)
     last_month_end = first_of_this_month - datetime.timedelta(days=1)
     target_year, target_month = last_month_end.year, last_month_end.month
@@ -1588,14 +1619,21 @@ def lambda_handler(event, context):
         except Exception as save_err:
             logger.error(f"briefings.json 저장 실패: {save_err}")
 
-        # ⚠️ Gemini가 실패해서 오늘 기존 분석을 보존한 경우: 에러도 아니고
-        # 성공도 아닌 "회색지대"라 이대로 두면 silent(16:00) 실행에선 아무도
-        # 모르고 지나감. send_notification 값과 무관하게 무조건 알림.
+        # ⚠️ Gemini 실패는 silent(16:00)에서도 무조건 Slack 알림.
+        # (시세는 저장됐지만 분석이 비면 대시보드가 빈칸으로 남음)
         if used_fallback_reasons:
             try:
                 send_slack(
                     f"⚠️ {'아침' if send_notification else '장마감'} 실행: 시세는 최신화됐지만 "
                     f"AI 분석은 실패해서 기존 분석을 유지했습니다. (모델: {model_used or '알 수 없음'})"
+                )
+            except Exception:
+                pass
+        elif not reasons_dict:
+            try:
+                send_slack(
+                    f"⚠️ {'아침' if send_notification else '장마감'} 실행: 시세는 저장됐지만 "
+                    f"AI 분석이 비어 있습니다. (타임아웃/모델 오류 가능, 모델: {model_used or '알 수 없음'})"
                 )
             except Exception:
                 pass
