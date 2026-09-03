@@ -344,9 +344,9 @@ _env_model = clean_str(os.environ.get("GEMINI_MODEL", ""))
 # 다음 후보로 빨리 넘기기 위해 다양하게 둠.
 _DEFAULT_GEMINI_MODELS = [
     "gemini-3.7-flash",
-    "gemini-3.6-flash",
     "gemini-2.5-flash",
     "gemini-2.0-flash",
+    "gemini-3.6-flash",  # 무료 한도 먼저 닳는 경우가 많아 맨 뒤로
 ]
 GEMINI_MODEL_FALLBACKS = []
 for m in ([_env_model] if _env_model else []) + _DEFAULT_GEMINI_MODELS:
@@ -1624,6 +1624,105 @@ def run_monthly_report():
                        holiday_text, title_word="월간", period_word="달", next_period_word="차월")
 
 
+
+def _texts_from_briefing_record(record):
+    """저장된 briefings 레코드에서 Gemini 프롬프트용 텍스트/맵을 재구성."""
+    metrics = record.get("metrics") or {}
+    portfolio_map = record.get("portfolio") or {}
+    news_list = record.get("news") or []
+
+    numeric_data = {}
+    pct_data = {}
+    for key in ("usdkrw", "kospi", "nasdaq", "sp500", "us10y", "wti", "gold_intl", "gold_kr", "btc", "copper"):
+        if key in metrics:
+            numeric_data[key] = metrics.get(key)
+        pct_key = f"{key}_pct"
+        if pct_key in metrics:
+            pct_data[key] = metrics.get(pct_key)
+        elif key in ("us10y",):
+            pass
+
+    oil_data = {
+        "gasoline": metrics.get("gasoline"),
+        "premium_gasoline": metrics.get("premium_gasoline"),
+        "diesel": metrics.get("diesel"),
+    }
+    oil_diff = {"gasoline": 0.0, "premium_gasoline": 0.0, "diesel": 0.0}
+    fear_score = metrics.get("fear_score", 50)
+
+    market_text = build_market_text(numeric_data, pct_data)
+    portfolio_text = build_portfolio_text(portfolio_map)
+    oil_lines = []
+    for k, label in (("gasoline", "전국 평균 일반휘발유"), ("premium_gasoline", "전국 평균 고급휘발유"), ("diesel", "전국 평균 자동차용경유")):
+        v = oil_data.get(k)
+        if v is not None:
+            oil_lines.append(f"• {label}: {v:,.2f}원/L")
+    oil_text = "\n".join(oil_lines) if oil_lines else "• 국내 유가: 데이터 없음"
+
+    # news가 문자열 리스트인 구포맷 호환
+    norm_news = []
+    for n in news_list:
+        if isinstance(n, dict):
+            norm_news.append(n)
+        elif isinstance(n, str):
+            norm_news.append({"title": n, "url": None, "publishedAt": None})
+    if not norm_news:
+        norm_news = [{"title": "뉴스 없음", "url": None, "publishedAt": None}]
+
+    return market_text, portfolio_text, oil_text, norm_news, numeric_data, pct_data, portfolio_map, oil_data, oil_diff, fear_score
+
+
+def run_reanalyze_today():
+    # 시세 재수집 없이, 오늘(또는 마지막) briefings 레코드의 AI reasons만 다시 생성.
+    # 무료 쿼터를 아껴서 "시장 동향 분석 중"만 고쳐야 할 때 사용.
+    logger.info("재분석 모드 시작 (시세 수집 생략, Gemini reasons만 갱신)")
+    briefings = load_briefings()
+    if not briefings:
+        raise RuntimeError("briefings.json이 비어 있어 재분석할 수 없습니다.")
+
+    date_str, _ = kst_date_str()
+    idx = next((i for i, h in enumerate(briefings) if h.get("date") == date_str), None)
+    if idx is None:
+        idx = len(briefings) - 1
+        date_str = briefings[idx].get("date")
+        logger.warning(f"오늘({kst_date_str()[0]}) 레코드 없음 — 마지막 날짜 {date_str}를 재분석합니다.")
+
+    record = briefings[idx]
+    (market_text, portfolio_text, oil_text, news_list,
+     numeric_data, pct_data, portfolio_map, oil_data, oil_diff, fear_score) = _texts_from_briefing_record(record)
+
+    reasons_dict, model_used = get_itemized_ai_analysis(market_text, portfolio_text, oil_text, news_list)
+    reasons_dict = build_prefixed_reasons(
+        reasons_dict, numeric_data, pct_data, portfolio_map, oil_data, oil_diff
+    )
+    if not reasons_dict:
+        raise RuntimeError(f"재분석 실패: Gemini reasons 비어 있음 (model={model_used})")
+
+    # 같은 날짜 레코드의 reasons만 교체 저장
+    record = dict(record)
+    record["reasons"] = reasons_dict
+    record["reason"] = reasons_dict.get("overall", record.get("reason", "시장 동향 분석 중"))
+    briefings[idx] = record
+    save_briefings(briefings)
+
+    # history.json도 동기화 (대시보드 폴백용)
+    try:
+        save_json_file("history.json", briefings)
+    except Exception as e:
+        logger.warning(f"history.json 동기화 실패: {e}")
+
+    try:
+        save_new_data_structure(
+            numeric_data, pct_data, portfolio_map, oil_data, fear_score,
+            news_list, reasons_dict, "close", model_used
+        )
+    except Exception as e:
+        logger.warning(f"계층 저장 실패(무시): {e}")
+
+    logger.info(f"재분석 완료: date={date_str}, model={model_used}, fields={len(reasons_dict)}")
+    return {"statusCode": 200, "body": f"Reanalyzed {date_str} with {model_used}"}
+
+
 def lambda_handler(event, context):
     # ▼ GitHub Actions 스케줄 (Asia/Seoul, cron은 UTC):
     #   아침(월~토 07:30 KST): {"send_notification": true}
@@ -1634,6 +1733,11 @@ def lambda_handler(event, context):
     #   event가 None이거나 키가 없을 때(수동 테스트 등)는 기존 동작과 동일하게
     #   알림을 보내는 쪽을 기본값으로 둠 (안전한 기본값).
     event = event or {}
+
+    # ▼ 재분석 모드: 시세 수집 없이 오늘 reasons만 다시 생성
+    #   {"mode": "reanalyze"} 또는 CLI --mode reanalyze
+    if event.get("mode") == "reanalyze":
+        return run_reanalyze_today()
 
     # ▼ 주간 리포트 모드: 토요일 07:30 KST GitHub Actions workflow가
     #   {"mode": "weekly"}로 호출. 일간 브리핑(데이터 수집/알림)과 완전히
@@ -1834,9 +1938,9 @@ def main():
     parser = argparse.ArgumentParser(description="Market briefing runner (GitHub Actions)")
     parser.add_argument(
         "--mode",
-        choices=["daily", "weekly", "monthly"],
+        choices=["daily", "weekly", "monthly", "reanalyze"],
         default="daily",
-        help="daily=아침/장마감 브리핑, weekly=주간 리포트, monthly=월간 리포트",
+        help="daily=아침/장마감, weekly=주간, monthly=월간, reanalyze=오늘 AI만 재생성",
     )
     parser.add_argument(
         "--send-notification",
@@ -1850,6 +1954,8 @@ def main():
         event = {"mode": "weekly"}
     elif args.mode == "monthly":
         event = {"mode": "monthly"}
+    elif args.mode == "reanalyze":
+        event = {"mode": "reanalyze"}
     else:
         event = {"send_notification": args.send_notification == "true"}
 
