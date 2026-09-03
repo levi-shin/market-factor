@@ -488,6 +488,72 @@ def _payload_for_model(payload, model):
     return body
 
 
+def _extract_gemini_text(res):
+    # gemini-3 thinking 응답은 parts가 여러 개일 수 있음. text만 모은다.
+    try:
+        parts = res["candidates"][0]["content"]["parts"]
+    except (KeyError, IndexError, TypeError):
+        return ""
+    chunks = []
+    for part in parts:
+        if isinstance(part, dict) and part.get("text"):
+            chunks.append(part["text"])
+    return "\n".join(chunks).strip()
+
+
+def _parse_json_object(text_out):
+    if not text_out:
+        return None
+    # 가장 바깥 { ... } 블록을 찾되, 파싱 성공할 때까지 후보를 줄여가며 시도
+    start = text_out.find("{")
+    end = text_out.rfind("}")
+    if start < 0 or end <= start:
+        return None
+    candidate = text_out[start:end + 1]
+    try:
+        return json.loads(candidate)
+    except json.JSONDecodeError:
+        # greedy 매칭이 깨진 경우: 정규식으로 한 번 더
+        m = re.search(r"\{.*\}", text_out, re.DOTALL)
+        if not m:
+            return None
+        try:
+            return json.loads(m.group(0))
+        except json.JSONDecodeError:
+            return None
+
+
+def _is_usable_analysis(parsed, context_label="Gemini"):
+    # "JSON만 파싱되면 성공"이 아니라, 실제로 쓸 문장이 있는지만 본다.
+    if not isinstance(parsed, dict) or not parsed:
+        logger.warning(f"{context_label} 응답 JSON이 비어 있거나 dict가 아님: {type(parsed)}")
+        return False
+    overall = clean_str(parsed.get("overall", "")) if isinstance(parsed.get("overall"), str) else ""
+    nonempty = 0
+    for k, v in parsed.items():
+        if isinstance(v, str) and len(v.strip()) >= 40:
+            nonempty += 1
+        elif isinstance(v, dict):
+            # weekly next_period_events 등
+            if any(isinstance(x, str) and len(x.strip()) >= 10 for x in v.values()):
+                nonempty += 1
+    if context_label.startswith("주") or context_label.startswith("달") or "간 AI" in context_label:
+        # 주간/월간: issue_analysis 또는 next_period_events
+        issue = clean_str(parsed.get("issue_analysis", "")) if isinstance(parsed.get("issue_analysis"), str) else ""
+        events = parsed.get("next_period_events") or parsed.get("next_week_events") or {}
+        ok = bool(issue) or (isinstance(events, dict) and len(events) > 0)
+        if not ok:
+            logger.warning(f"{context_label} 주간/월간 필수 필드 부족: keys={list(parsed.keys())}")
+        return ok
+    if not overall or len(overall) < 40:
+        logger.warning(f"{context_label} overall 부족(len={len(overall)}). keys={list(parsed.keys())}")
+        return False
+    if nonempty < 5:
+        logger.warning(f"{context_label} 유효 필드 부족({nonempty}개). keys={list(parsed.keys())}")
+        return False
+    return True
+
+
 def call_gemini_json(payload, headers, timeout=None, context_label="Gemini"):
     # 모델 폴백 리스트를 순서대로 시도하되, 각 모델마다 "일시적 오류/타임아웃"이면
     # 짧게 재시도하고, 그래도 실패하거나 영구적 오류(404 등)면 다음 모델로.
@@ -501,14 +567,19 @@ def call_gemini_json(payload, headers, timeout=None, context_label="Gemini"):
             try:
                 raw_res = http_post_json(url, model_payload, headers=headers, timeout=timeout)
                 res = json.loads(raw_res)
-                text_out = res['candidates'][0]['content']['parts'][0]['text'].strip()
-                json_match = re.search(r'\{.*\}', text_out, re.DOTALL)
-                if json_match:
-                    parsed = json.loads(json_match.group(0))
-                    logger.info(f"✅ {context_label} 성공 (모델: {model}, 시도: {attempt})")
-                    return parsed, model
-                logger.error(f"{context_label} 응답에서 JSON을 찾지 못함 (모델: {model}): {text_out[:500]}")
-                return None, None  # 파싱 실패는 재시도해도 대부분 재현되므로 바로 포기
+                text_out = _extract_gemini_text(res)
+                parsed = _parse_json_object(text_out)
+                if parsed is None:
+                    logger.error(f"{context_label} 응답에서 JSON을 찾지 못함 (모델: {model}): {text_out[:500]}")
+                    break  # 이 모델 포기, 다음 모델
+                if not _is_usable_analysis(parsed, context_label):
+                    logger.error(f"{context_label} JSON은 왔지만 내용이 비어 있음 (모델: {model}, 시도: {attempt}). "
+                                 f"미리보기: {str(parsed)[:300]}")
+                    break  # 빈 성공 금지 — 다음 모델 시도
+                nonempty = sum(1 for v in parsed.values() if isinstance(v, str) and len(v.strip()) >= 40)
+                logger.info(f"✅ {context_label} 성공 (모델: {model}, 시도: {attempt}, "
+                            f"필드 {len(parsed)}개/유효문장 {nonempty}개, overall {len(str(parsed.get('overall','')))}자)")
+                return parsed, model
 
             except urllib.error.HTTPError as e:
                 if e.code == 404:
@@ -1667,6 +1738,11 @@ def lambda_handler(event, context):
                 )
             except Exception:
                 pass
+            # Actions에서 초록 성공으로 위장하지 않음 (시세는 이미 저장됨)
+            raise RuntimeError(
+                f"AI 분석 결과가 비어 있습니다 (model={model_used or 'none'}). "
+                f"Gemini 응답 검증 실패 또는 모든 모델 폴백 실패."
+            )
 
         # 신규 계층 구조(raw/analysis/evidence/metadata) 저장 - 완전히 별도의
         # try/except로 감싸서, 여기서 실패해도 기존 briefings.json/Slack 흐름에는
