@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>01. 모닝 팩터 (Morning Factor) | Collection & Big Tech Insights</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body { font-family: 'Pretendard', -apple-system, 'Malgun Gothic', sans-serif; }
+    .num { font-variant-numeric: tabular-nums; }
+    ::-webkit-scrollbar { height: 6px; width: 6px; }
+    ::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen font-sans antialiased">
+
+  <div class="max-w-6xl mx-auto p-4 md:p-8 space-y-5">
+
+    <!-- 헤더 -->
+    <header class="space-y-1">
+      <div class="flex items-center gap-2">
+        <h1 class="text-xl md:text-2xl font-bold text-white tracking-tight">
+          01. 모닝 팩터 (Morning Factor)
+        </h1>
+        <span class="text-xs bg-sky-500/10 text-sky-400 border border-sky-500/20 px-2 py-0.5 rounded-md font-medium">
+          Live
+        </span>
+      </div>
+      <p class="text-sm text-slate-400">
+        Collection &amp; Big Tech Insights — 글로벌 시세 수집 및 항목별 AI 등락 원인 심층 분석
+      </p>
+    </header>
+
+    <!-- 지표 선택 네비게이션 (자산군별 그룹) -->
+    <nav class="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-3" id="metricNav">
+      <!-- JS METRIC_GROUPS로부터 동적 렌더링 -->
+    </nav>
+
+    <!-- 본문: 차트 및 AI 인과 분석 -->
+    <div class="grid grid-cols-1 lg:grid-cols-5 gap-5">
+
+      <!-- 차트 영역 -->
+      <div class="lg:col-span-3 bg-slate-900 p-4 md:p-5 rounded-2xl border border-slate-800 shadow-2xl flex flex-col">
+        <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+          <h2 id="chartTitle" class="text-sm font-semibold text-slate-300">달러/원 환율 (원)</h2>
+          <!-- 기간 선택 - 데이터가 쌓일수록(1개월/6개월) x축이 빽빽해지는 걸
+               막기 위해 기본으로는 최근 구간만 보여주고, 필요하면 넓힘 -->
+          <div class="flex gap-1" id="rangeSelector"></div>
+        </div>
+        <div class="h-[320px] md:h-[400px] w-full">
+          <canvas id="macroChart"></canvas>
+        </div>
+        <p class="text-xs text-slate-500 mt-2" id="rangeInfo"></p>
+      </div>
+
+      <!-- AI 심층 사유 분석 카드 -->
+      <div class="lg:col-span-2 bg-slate-900 p-5 md:p-6 rounded-2xl border border-sky-500/30 shadow-2xl flex flex-col">
+        <div class="flex items-start justify-between gap-3 border-b border-slate-800 pb-3 mb-4">
+          <div>
+            <div class="text-sky-400 font-bold text-base md:text-lg" id="selectedTitle">항목별 심층 분석</div>
+            <div class="text-xs text-slate-500 mt-0.5" id="selectedDate">-</div>
+          </div>
+          <span id="selectedBadge" class="shrink-0 text-xs text-sky-400 bg-sky-950/80 px-3 py-1 rounded-full border border-sky-800 whitespace-nowrap">
+            달러/원 환율 분석
+          </span>
+        </div>
+
+        <div id="selectedReason" class="text-slate-200 leading-relaxed text-sm md:text-base whitespace-pre-line overflow-y-auto max-h-[420px] pr-1">
+          데이터를 불러오는 중입니다...
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    const METRIC_GROUPS = [
+      {
+        label: '환율 · 지수',
+        items: [
+          { key: 'usdkrw', label: '환율', full: '달러/원 환율 (원)', color: '#38bdf8' },
+          { key: 'kospi', label: '코스피', full: '코스피 지수 (pt)', color: '#f43f5e' },
+          { key: 'nasdaq', label: '나스닥', full: '나스닥 지수 (pt)', color: '#818cf8' },
+          { key: 'sp500', label: 'S&P500', full: 'S&P 500 지수 (pt)', color: '#60a5fa' },
+        ]
+      },
+      {
+        label: '원자재 · 자산',
+        items: [
+          { key: 'wti', label: 'WTI유가', full: 'WTI 유가 ($/배럴)', color: '#f59e0b' },
+          { key: 'premium_gasoline', label: '고급유', full: '고급 휘발유 (원/L)', color: '#fb7185' },
+          { key: 'gasoline', label: '일반유', full: '일반 휘발유 (원/L)', color: '#10b981' },
+          { key: 'gold_kr', label: '국내금', full: '국내 금 (원/1g)', color: '#eab308' },
+          { key: 'btc', label: '비트코인', full: '비트코인 (원)', color: '#f97316' },
+        ]
+      },
+      {
+        label: '빅테크 포트폴리오',
+        items: [
+          { key: 'NVDA', label: '엔비디아', full: '엔비디아 ($)', color: '#22c55e' },
+          { key: 'AAPL', label: '애플', full: '애플 ($)', color: '#a855f7' },
+          { key: 'TSLA', label: '테슬라', full: '테슬라 ($)', color: '#e11d48' },
+          { key: '005930.KS', label: '삼성전자', full: '삼성전자 (원)', color: '#3b82f6' },
+          { key: 'MSFT', label: 'MSFT', full: '마이크로소프트 ($)', color: '#06b6d4' },
+          // 브리핑 저장 키는 SPCX (구 SPCX.O와 호환 처리는 extractValue/displayDetail에서)
+          { key: 'SPCX', label: 'SPCX', full: '스페이스X(SPCX) ($)', color: '#c084fc' },
+          { key: 'BOTZ', label: 'BOTZ', full: '로보틱스&AI ETF (BOTZ) ($)', color: '#2dd4bf' },
+        ]
+      },
+    ];
+
+    // 기간 선택 옵션. days=null은 "전체". 데이터는 하루 1개씩 쌓이므로
+    // "최근 N개 레코드"로 근사해도 충분함 (정확한 날짜 계산 대신 count 기반).
+    const RANGE_OPTIONS = [
+      { key: '1w', label: '1주', days: 7 },
+      { key: '1m', label: '1개월', days: 30 },
+      { key: '3m', label: '3개월', days: 90 },
+      { key: '6m', label: '6개월', days: 180 },
+      { key: 'all', label: '전체', days: null },
+    ];
+
+    // 일별 브리핑 누적 파일 (구 history.json → briefings.json)
+    const BRIEFINGS_URL = './briefings.json';
+    const LEGACY_BRIEFINGS_URL = './history.json';
+
+    let rawData = [];
+    let chartInstance = null;
+    let currentKey = 'usdkrw';
+    let currentLabel = '달러/원 환율 (원)';
+    let currentColor = '#38bdf8';
+    let selectedItemIndex = -1;
+    // 기본값: 데이터가 적을 땐 어차피 전체가 다 보이고, 쌓이기 시작하면
+    // 1개월 정도가 "한눈에 보기 + 너무 빽빽하지 않기"의 균형점이라 기본값으로 둠.
+    let currentRangeKey = '1m';
+
+    function renderRangeSelector() {
+      const el = document.getElementById('rangeSelector');
+      el.innerHTML = RANGE_OPTIONS.map(r => `
+        <button
+          data-range="${r.key}"
+          onclick="changeRange('${r.key}', this)"
+          class="range-btn px-2.5 py-1 rounded-md text-xs font-medium transition
+            ${r.key === currentRangeKey ? 'bg-slate-700 text-white' : 'bg-slate-800/60 text-slate-400 hover:bg-slate-700/60'}"
+        >${r.label}</button>
+      `).join('');
+    }
+
+    function changeRange(key, btnEl) {
+      currentRangeKey = key;
+      document.querySelectorAll('.range-btn').forEach(b => {
+        b.classList.remove('bg-slate-700', 'text-white');
+        b.classList.add('bg-slate-800/60', 'text-slate-400');
+      });
+      if (btnEl) {
+        btnEl.classList.remove('bg-slate-800/60', 'text-slate-400');
+        btnEl.classList.add('bg-slate-700', 'text-white');
+      }
+      renderChart();
+    }
+
+    function getFilteredData() {
+      const opt = RANGE_OPTIONS.find(r => r.key === currentRangeKey);
+      if (!opt || opt.days === null) return rawData;
+      return rawData.slice(-opt.days);
+    }
+
+    function renderNav() {
+      const nav = document.getElementById('metricNav');
+      nav.innerHTML = METRIC_GROUPS.map(group => `
+        <div class="flex flex-col sm:flex-row sm:items-center gap-2">
+          <span class="text-xs text-slate-500 w-28 shrink-0 font-medium">${group.label}</span>
+          <div class="flex flex-wrap gap-1.5">
+            ${group.items.map(m => `
+              <button
+                data-key="${m.key}"
+                onclick="changeMetric('${m.key}', '${m.full}', '${m.color}', this)"
+                class="btn px-3 py-1.5 rounded-lg font-medium text-xs md:text-sm transition
+                  ${m.key === currentKey ? 'bg-sky-600 text-white' : 'bg-slate-800 text-slate-300 hover:bg-slate-700'}"
+              >${m.label}</button>
+            `).join('')}
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function extractValue(item, key) {
+      if (!item) return null;
+      if (item[key] !== undefined && item[key] !== null) return item[key];
+      if (item.metrics && item.metrics[key] !== undefined && item.metrics[key] !== null) return item.metrics[key];
+      if (item.portfolio) {
+        if (item.portfolio[key] && item.portfolio[key].price !== undefined) return item.portfolio[key].price;
+        // 키가 SPCX / SPCX.O 호환 처리
+        const altKey = key.includes('.') ? key.split('.')[0] : key + '.O';
+        if (item.portfolio[altKey] && item.portfolio[altKey].price !== undefined) return item.portfolio[altKey].price;
+      }
+      return null;
+    }
+
+    async function fetchBriefings() {
+      const urls = [BRIEFINGS_URL, LEGACY_BRIEFINGS_URL];
+      let lastErr = null;
+      for (const url of urls) {
+        try {
+          const res = await fetch(url + '?nocache=' + Date.now());
+          if (!res.ok) {
+            lastErr = new Error('HTTP ' + res.status + ' (' + url + ')');
+            continue;
+          }
+          const data = await res.json();
+          if (url === LEGACY_BRIEFINGS_URL) {
+            console.info('구 history.json에서 데이터를 로드했습니다. briefings.json으로 마이그레이션하세요.');
+          }
+          return data;
+        } catch (err) {
+          lastErr = err;
+        }
+      }
+      throw lastErr || new Error('브리핑 데이터 로딩 실패');
+    }
+
+    async function loadData() {
+      try {
+        rawData = await fetchBriefings();
+
+        if (Array.isArray(rawData) && rawData.length > 0) {
+          selectedItemIndex = rawData.length - 1;
+          displayDetail(rawData[selectedItemIndex]);
+          renderRangeSelector();
+          renderChart();
+        } else {
+          document.getElementById('selectedReason').innerText = "저장된 데이터가 없습니다.";
+        }
+      } catch (err) {
+        console.error(err);
+        document.getElementById('selectedReason').innerText = "데이터 로딩 실패: " + err.message;
+      }
+    }
+
+    function displayDetail(item) {
+      if (!item) return;
+      document.getElementById('chartTitle').innerText = currentLabel;
+      document.getElementById('selectedTitle').innerText = `${currentLabel.split(' ')[0]} 심층 분석`;
+      document.getElementById('selectedDate').innerText = item.date || '-';
+      document.getElementById('selectedBadge').innerText = `${currentLabel} 전용 사유`;
+
+      let reasonText = "";
+
+      if (item.reasons) {
+        if (item.reasons[currentKey]) {
+          reasonText = item.reasons[currentKey];
+        } else if (currentKey === 'gold_kr' && item.reasons['gold_intl']) {
+          reasonText = item.reasons['gold_intl'];
+        } else if (currentKey === 'SPCX.O' && item.reasons['SPCX']) {
+          reasonText = item.reasons['SPCX'];
+        } else if (currentKey === 'SPCX' && item.reasons['SPCX.O']) {
+          reasonText = item.reasons['SPCX.O'];
+        }
+      }
+
+      if (!reasonText && item.reason) {
+        reasonText = item.reason;
+      }
+
+      if (!reasonText) {
+        reasonText = "해당 일자의 분석 데이터가 존재하지 않습니다.";
+      }
+
+      document.getElementById('selectedReason').innerText = reasonText;
+    }
+
+    function renderChart() {
+      const canvas = document.getElementById('macroChart');
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+
+      const filtered = getFilteredData();
+      const labels = filtered.map(d => d.date);
+      const values = filtered.map(d => extractValue(d, currentKey));
+
+      // 표시 중인 구간/개수를 텍스트로 안내 (몇 개 중 몇 개를 보고 있는지)
+      const infoEl = document.getElementById('rangeInfo');
+      if (infoEl) {
+        infoEl.innerText = filtered.length < rawData.length
+          ? `최근 ${filtered.length}개 데이터 표시 중 (전체 ${rawData.length}개 중)`
+          : `전체 ${rawData.length}개 데이터 표시 중`;
+      }
+
+      if (chartInstance) chartInstance.destroy();
+
+      chartInstance = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: currentLabel,
+            data: values,
+            borderColor: currentColor,
+            backgroundColor: currentColor + '18',
+            borderWidth: 3,
+            fill: true,
+            tension: 0.25,
+            // 점이 많아지면(3개월/6개월/전체) 점 반경을 줄여서 서로 겹치지 않게 함
+            pointRadius: filtered.length > 40 ? 2 : 5,
+            pointHoverRadius: 8,
+            pointBackgroundColor: currentColor,
+            pointBorderColor: '#090d16',
+            pointBorderWidth: filtered.length > 40 ? 1 : 2
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          onClick: (e, elements) => {
+            if (elements.length > 0) {
+              const idx = elements[0].index;
+              // filtered 배열 기준 index를 rawData 기준 index로 환산
+              const rawIndex = rawData.indexOf(filtered[idx]);
+              selectedItemIndex = rawIndex >= 0 ? rawIndex : idx;
+              displayDetail(rawData[selectedItemIndex]);
+            }
+          },
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              callbacks: {
+                afterBody: () => '\n(클릭하면 해당 일자 분석으로 갱신)'
+              }
+            }
+          },
+          scales: {
+            x: {
+              grid: { color: '#1e293b' },
+              ticks: {
+                color: '#94a3b8',
+                // 라벨이 많아지면 자동으로 솎아내서 겹침 방지
+                maxTicksLimit: 10,
+                autoSkip: true
+              }
+            },
+            y: { grid: { color: '#1e293b' }, ticks: { color: '#94a3b8' } }
+          }
+        }
+      });
+    }
+
+    function changeMetric(key, label, color, btnEl) {
+      currentKey = key;
+      currentLabel = label;
+      currentColor = color;
+
+      document.querySelectorAll('#metricNav .btn').forEach(b => {
+        b.classList.remove('bg-sky-600', 'text-white');
+        b.classList.add('bg-slate-800', 'text-slate-300');
+      });
+      if (btnEl) {
+        btnEl.classList.remove('bg-slate-800', 'text-slate-300');
+        btnEl.classList.add('bg-sky-600', 'text-white');
+      }
+
+      if (selectedItemIndex >= 0 && rawData[selectedItemIndex]) {
+        displayDetail(rawData[selectedItemIndex]);
+      }
+      renderChart();
+    }
+
+    renderNav();
+    window.onload = loadData;
+  </script>
+</body>
+</html>

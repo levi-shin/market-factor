@@ -21,6 +21,10 @@ logger.setLevel(logging.INFO)
 
 s3 = boto3.client('s3')
 
+# 일별 브리핑 누적 저장 파일 (구명칭 history.json → briefings.json)
+BRIEFINGS_S3_KEY = "briefings.json"
+LEGACY_BRIEFINGS_S3_KEY = "history.json"  # 기존 S3 객체 호환용 읽기 폴백
+
 MY_PORTFOLIO_TICKERS = [
     ("NVDA", "엔비디아"),
     ("AAPL", "애플"),
@@ -540,8 +544,9 @@ JSON 출력 포맷 (각 필드는 "원인 + 파급 영향"만, 숫자/방향 단
 # ==========================================
 # 3.5. 데이터 구조 뼈대 (raw/analysis/evidence/metadata)
 # ==========================================
-# ⚠️ 기존 history.json 저장(save_to_s3)은 절대 건드리지 않음 - 대시보드가
-# 계속 그걸 그대로 씀. 아래는 "이중 쓰기"로 추가되는 신규 계층이며, 실패해도
+# ⚠️ 기존 briefings.json 저장(save_to_s3)은 대시보드가 계속 참조함.
+# (구 history.json은 읽기 폴백만 유지)
+# 아래는 "이중 쓰기"로 추가되는 신규 계층이며, 실패해도
 # 기존 흐름(Slack 알림 등)에 영향을 주지 않도록 lambda_handler에서 별도
 # try/except로 감싸서 호출함.
 #
@@ -677,7 +682,7 @@ def save_new_data_structure(numeric_data, pct_data, portfolio_map, oil_data, fea
                              news_list, reasons_dict, analysis_type, model_used):
     # 위 4개 저장 함수를 순서대로 호출하는 진입점. 이 함수 전체가
     # lambda_handler에서 별도 try/except로 감싸져서, 여기서 뭔가 실패해도
-    # 기존 history.json 저장/Slack 알림에는 영향이 없음.
+    # 기존 briefings.json 저장/Slack 알림에는 영향이 없음.
     date_str, kst_now = kst_date_str()
     save_raw_market(date_str, analysis_type, numeric_data, pct_data, portfolio_map, oil_data, fear_score)
     save_evidence_market(date_str, news_list)
@@ -695,20 +700,52 @@ def save_new_data_structure(numeric_data, pct_data, portfolio_map, oil_data, fea
 # 쓸 수 있음. 그 결과 Yahoo가 주는 pct와 "우리가 어제 실제로 기록했던
 # 값 대비 오늘 값"이 서로 다른(심지어 부호가 반대인) 경우가 발생함.
 #
-# 해결: Yahoo의 pct를 그대로 믿지 않고, S3 history.json의 "가장 최근
+# 해결: Yahoo의 pct를 그대로 믿지 않고, S3 briefings.json의 "가장 최근
 # 기록(=직전 실행 결과, 07:30 아니면 16:00)"과 직접 비교해서 우리가
 # 등락률을 다시 계산한다. 하루 2번 도는 스케줄과 맞물려서, 이러면 항상
 # "지난 브리핑 이후 얼마나 움직였는지"라는 명확한 기준이 생김.
 
+
+def load_briefings(bucket_name):
+    """briefings.json을 읽고, 없으면 구 history.json을 폴백으로 읽음."""
+    for key in (BRIEFINGS_S3_KEY, LEGACY_BRIEFINGS_S3_KEY):
+        try:
+            obj = s3.get_object(Bucket=bucket_name, Key=key)
+            data = json.loads(obj['Body'].read().decode('utf-8'))
+            if key == LEGACY_BRIEFINGS_S3_KEY:
+                logger.info(f"구 파일 {LEGACY_BRIEFINGS_S3_KEY}에서 브리핑 데이터를 읽었습니다 (마이그레이션 대상)")
+            return data if isinstance(data, list) else []
+        except ClientError as e:
+            code = e.response.get('Error', {}).get('Code', '')
+            if code in ('NoSuchKey', '404', 'NotFound'):
+                continue
+            raise
+        except Exception as e:
+            if key == BRIEFINGS_S3_KEY:
+                logger.warning(f"{BRIEFINGS_S3_KEY} 조회 실패, 폴백 시도: {e}")
+                continue
+            raise
+    return []
+
+
+def save_briefings(bucket_name, briefings):
+    s3.put_object(
+        Bucket=bucket_name,
+        Key=BRIEFINGS_S3_KEY,
+        Body=json.dumps(briefings, ensure_ascii=False, indent=2).encode('utf-8'),
+        ContentType='application/json',
+        CacheControl='no-cache, no-store, must-revalidate'
+    )
+
+
 def get_previous_snapshot():
-    # history.json의 마지막 레코드 = 가장 최근에 저장된 실행 결과.
+    # briefings.json의 마지막 레코드 = 가장 최근에 저장된 실행 결과.
     # (오늘 아침 실행이라면 어제 16:00 종가, 오늘 16:00 실행이라면 오늘 07:30 값)
     bucket_name = clean_str(os.environ.get("S3_BUCKET_NAME", "1125labs-s3-bucket"))
     try:
-        obj = s3.get_object(Bucket=bucket_name, Key="history.json")
-        history = json.loads(obj['Body'].read().decode('utf-8'))
-        if history:
-            return history[-1]
+        briefings = load_briefings(bucket_name)
+        if briefings:
+            return briefings[-1]
     except Exception as e:
         logger.warning(f"이전 스냅샷 조회 실패 (최초 실행이거나 기록 없음): {e}")
     return None
@@ -784,20 +821,12 @@ def build_portfolio_text(portfolio_map):
 
 
 # ==========================================
-# 4. S3 누적 저장 (기존 history.json - 절대 변경 없음)
+# 4. S3 누적 저장 (briefings.json — 구 history.json에서 개명)
 # ==========================================
 
 def save_to_s3(numeric_data, pct_data, portfolio_map, oil_data, fear_score, news_list, reasons_dict):
     bucket_name = clean_str(os.environ.get("S3_BUCKET_NAME", "1125labs-s3-bucket"))
-    file_key = "history.json"
-    history = []
-
-    try:
-        obj = s3.get_object(Bucket=bucket_name, Key=file_key)
-        history = json.loads(obj['Body'].read().decode('utf-8'))
-    except ClientError as e:
-        if e.response['Error']['Code'] == 'NoSuchKey':
-            history = []
+    briefings = load_briefings(bucket_name)
 
     kst_now = datetime.datetime.utcnow() + datetime.timedelta(hours=9)
     today_str = kst_now.strftime("%Y-%m-%d")
@@ -808,7 +837,7 @@ def save_to_s3(numeric_data, pct_data, portfolio_map, oil_data, fear_score, news
     # (예전엔 07:30에 성공해도 16:00이 실패하면 하루치가 통째로 날아갔음)
     used_fallback_reasons = False
     if not reasons_dict:
-        existing_today = next((h for h in history if h.get("date") == today_str), None)
+        existing_today = next((h for h in briefings if h.get("date") == today_str), None)
         if existing_today and existing_today.get("reasons"):
             logger.warning("이번 실행 Gemini 분석 실패 - 오늘 기존에 저장된 분석 결과를 유지합니다.")
             reasons_dict = existing_today["reasons"]
@@ -845,20 +874,14 @@ def save_to_s3(numeric_data, pct_data, portfolio_map, oil_data, fear_score, news
         "reason": (reasons_dict or {}).get("overall", "시장 동향 분석 중")
     }
 
-    history = [h for h in history if h.get("date") != today_str]
-    history.append(record)
+    briefings = [h for h in briefings if h.get("date") != today_str]
+    briefings.append(record)
 
-    if len(history) > 180:
-        history = history[-180:]
+    if len(briefings) > 180:
+        briefings = briefings[-180:]
 
-    s3.put_object(
-        Bucket=bucket_name,
-        Key=file_key,
-        Body=json.dumps(history, ensure_ascii=False, indent=2).encode('utf-8'),
-        ContentType='application/json',
-        CacheControl='no-cache, no-store, must-revalidate'
-    )
-    logger.info("S3 history.json 저장 완료")
+    save_briefings(bucket_name, briefings)
+    logger.info(f"S3 {BRIEFINGS_S3_KEY} 저장 완료")
     return used_fallback_reasons
 
 def send_slack(text):
@@ -872,7 +895,7 @@ def send_slack(text):
 # 5. 주간 리포트 (토요일 07:30 KST)
 # ==========================================
 # 주말엔 국내/미국 장이 다 안 열리므로, 토요일 아침 시점에 이미 그 주(월~금)
-# 데이터가 완결되어 있음. 새로운 시세 수집은 하지 않고 history.json에 이미
+# 데이터가 완결되어 있음. 새로운 시세 수집은 하지 않고 briefings.json에 이미
 # 쌓인 일별 기록을 집계만 함. 숫자는 전부 코드가 계산하고, Gemini는 "원인
 # 서술"과 "차주 예정 이벤트 사실 나열"만 맡음 (일간 브리핑과 동일한 원칙).
 
@@ -887,14 +910,18 @@ WEEKLY_MACRO_SPECS = [
 ]
 
 
-def get_full_history():
+def get_full_briefings():
     bucket_name = clean_str(os.environ.get("S3_BUCKET_NAME", "1125labs-s3-bucket"))
     try:
-        obj = s3.get_object(Bucket=bucket_name, Key="history.json")
-        return json.loads(obj['Body'].read().decode('utf-8'))
+        return load_briefings(bucket_name)
     except Exception as e:
-        logger.error(f"history.json 조회 실패: {e}")
+        logger.error(f"{BRIEFINGS_S3_KEY} 조회 실패: {e}")
         return []
+
+
+# 하위 호환 별칭
+def get_full_history():
+    return get_full_briefings()
 
 
 def get_weekday_records(count=10):
@@ -1306,7 +1333,7 @@ def build_weekly_slack_message(date_range, report_url, biggest_mover_text,
 def run_period_report(this_period, last_period, period_label, report_key, holiday_text,
                        title_word="주간", period_word="주", next_period_word="차주"):
     # 주간/월간 리포트가 공유하는 핵심 로직. this_period/last_period는 각각
-    # "이번 기간"/"직전 기간"에 해당하는 history.json 레코드 리스트.
+    # "이번 기간"/"직전 기간"에 해당하는 briefings.json 레코드 리스트.
     macro_metrics, portfolio_metrics, fear_scores = compute_weekly_metrics(this_period, last_period)
     biggest_sym, biggest_pct = find_biggest_mover(portfolio_metrics)
     biggest_name = dict(MY_PORTFOLIO_TICKERS).get(biggest_sym, biggest_sym) if biggest_sym else "종목"
@@ -1451,7 +1478,7 @@ def lambda_handler(event, context):
 
     # ▼ 주간 리포트 모드: 토요일 07:30 KST GitHub Actions workflow가
     #   {"mode": "weekly"}로 호출. 일간 브리핑(데이터 수집/알림)과 완전히
-    #   분리된 별도 실행 경로 - 새 시세 수집 없이 history.json만 집계함.
+    #   분리된 별도 실행 경로 - 새 시세 수집 없이 briefings.json만 집계함.
     if event.get("mode") == "weekly":
         try:
             run_weekly_report()
@@ -1549,7 +1576,7 @@ def lambda_handler(event, context):
                 pass
 
         # 신규 계층 구조(raw/analysis/evidence/metadata) 저장 - 완전히 별도의
-        # try/except로 감싸서, 여기서 실패해도 기존 history.json/Slack 흐름에는
+        # try/except로 감싸서, 여기서 실패해도 기존 briefings.json/Slack 흐름에는
         # 절대 영향이 없도록 함. 아직 실험적인 뼈대 단계이기 때문.
         try:
             save_new_data_structure(

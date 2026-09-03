@@ -7,8 +7,10 @@
 ## 구성
 
 - `lambda_function.py` — 시세 수집, Gemini 분석, S3 저장, Slack 알림 (CLI 진입점 포함)
+- `index.html` — 모닝 팩터 대시보드 (`briefings.json` 기반 차트·AI 분석)
 - `.github/workflows/` — 아침 / 장마감 / 주간 / 월간 스케줄
 - `requirements.txt` — Python 의존성
+- S3 `briefings.json` — 일별 브리핑 누적 데이터 (구 `history.json`, 읽기 시 자동 폴백)
 
 ## 스케줄 (Asia/Seoul)
 
@@ -35,7 +37,7 @@ Repository → Settings → Secrets and variables → Actions 에 아래를 등�
 | `AWS_ACCESS_KEY_ID` | S3 읽기/쓰기 IAM 키 |
 | `AWS_SECRET_ACCESS_KEY` | S3 읽기/쓰기 IAM 시크릿 |
 | `AWS_REGION` | (선택) 기본 `ap-northeast-2` |
-| `S3_BUCKET_NAME` | history/리포트 버킷명 |
+| `S3_BUCKET_NAME` | `briefings.json`·리포트가 저장되는 버킷명 |
 | `GEMINI_API_KEY` | Google Gemini API 키 |
 | `GEMINI_MODEL` | (선택) 우선 사용할 모델명 |
 | `SLACK_WEBHOOK_URL` | Incoming Webhook URL |
