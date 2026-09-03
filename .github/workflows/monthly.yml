@@ -1,0 +1,65 @@
+# 월간 리포트 — 매달 1일 07:30 KST
+# GitHub cron은 KST 타임존이 없어서, 전월 말(UTC 28–31일 22:30)에 돌리고
+# KST 기준 1일일 때만 실행한다.
+name: Monthly Report
+
+on:
+  schedule:
+    # Candidate windows: UTC 22:30 on days 28–31 (= next day 07:30 KST)
+    - cron: "30 22 28-31 * *"
+  workflow_dispatch:
+
+concurrency:
+  group: market-briefing-monthly
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Guard — only run on KST day 1 (or manual)
+        id: guard
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "run=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          DAY="$(TZ=Asia/Seoul date +%d)"
+          echo "KST day=$DAY"
+          if [ "$DAY" = "01" ]; then
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "run=false" >> "$GITHUB_OUTPUT"
+            echo "Not the 1st in KST — skip"
+          fi
+
+      - uses: actions/checkout@v4
+        if: steps.guard.outputs.run == 'true'
+
+      - uses: actions/setup-python@v5
+        if: steps.guard.outputs.run == 'true'
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install dependencies
+        if: steps.guard.outputs.run == 'true'
+        run: pip install -r requirements.txt
+
+      - name: Configure AWS credentials
+        if: steps.guard.outputs.run == 'true'
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ap-northeast-2
+
+      - name: Run monthly report
+        if: steps.guard.outputs.run == 'true'
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GEMINI_MODEL: ${{ secrets.GEMINI_MODEL }}
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          S3_BUCKET_NAME: ${{ secrets.S3_BUCKET_NAME }}
+        run: python lambda_function.py --mode monthly

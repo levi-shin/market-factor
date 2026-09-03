@@ -12,7 +12,11 @@ import boto3
 from botocore.exceptions import ClientError
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
-logger = logging.getLogger()
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s %(levelname)s %(message)s",
+)
+logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
 s3 = boto3.client('s3')
@@ -1435,7 +1439,7 @@ def run_monthly_report():
 
 
 def lambda_handler(event, context):
-    # ▼ EventBridge 스케줄 (Asia/Seoul):
+    # ▼ GitHub Actions 스케줄 (Asia/Seoul, cron은 UTC):
     #   아침(월~토 07:30 KST): {"send_notification": true}
     #   장마감(월~금 16:00 KST): {"send_notification": false}
     #   주간(토요일 07:30 KST): {"mode": "weekly"}
@@ -1445,7 +1449,7 @@ def lambda_handler(event, context):
     #   알림을 보내는 쪽을 기본값으로 둠 (안전한 기본값).
     event = event or {}
 
-    # ▼ 주간 리포트 모드: 토요일 07:30 KST 전용 EventBridge 규칙이
+    # ▼ 주간 리포트 모드: 토요일 07:30 KST GitHub Actions workflow가
     #   {"mode": "weekly"}로 호출. 일간 브리핑(데이터 수집/알림)과 완전히
     #   분리된 별도 실행 경로 - 새 시세 수집 없이 history.json만 집계함.
     if event.get("mode") == "weekly":
@@ -1460,7 +1464,7 @@ def lambda_handler(event, context):
                 pass
             raise e
 
-    # ▼ 월간 리포트 모드: 매달 1일 07:30 KST 전용 EventBridge 규칙이
+    # ▼ 월간 리포트 모드: 매달 1일 07:30 KST GitHub Actions workflow가
     #   {"mode": "monthly"}로 호출. 지난달 전체(월~금)를 집계함.
     if event.get("mode") == "monthly":
         try:
@@ -1474,7 +1478,7 @@ def lambda_handler(event, context):
                 pass
             raise e
 
-    # ▼ 일간 브리핑:
+    # ▼ 일간 브리핑 (GitHub Actions):
     #   아침(월~토 07:30 KST): {"send_notification": true}
     #   장마감(월~금 16:00 KST): {"send_notification": false}
     send_notification = bool(event.get("send_notification", True))
@@ -1611,3 +1615,46 @@ def lambda_handler(event, context):
         except Exception:
             pass
         raise e
+
+
+# ==========================================
+# GitHub Actions / 로컬 CLI 진입점
+# ==========================================
+# Lambda 대신 GitHub Actions에서 직접 실행할 때 사용.
+#   python lambda_function.py --mode daily --send-notification true
+#   python lambda_function.py --mode daily --send-notification false
+#   python lambda_function.py --mode weekly
+#   python lambda_function.py --mode monthly
+
+
+def main():
+    import argparse
+    parser = argparse.ArgumentParser(description="Market briefing runner (GitHub Actions)")
+    parser.add_argument(
+        "--mode",
+        choices=["daily", "weekly", "monthly"],
+        default="daily",
+        help="daily=아침/장마감 브리핑, weekly=주간 리포트, monthly=월간 리포트",
+    )
+    parser.add_argument(
+        "--send-notification",
+        choices=["true", "false"],
+        default="true",
+        help="daily 모드에서만 사용. false면 데이터 갱신만(장마감)",
+    )
+    args = parser.parse_args()
+
+    if args.mode == "weekly":
+        event = {"mode": "weekly"}
+    elif args.mode == "monthly":
+        event = {"mode": "monthly"}
+    else:
+        event = {"send_notification": args.send_notification == "true"}
+
+    result = lambda_handler(event, None)
+    logger.info(f"실행 완료: {result}")
+    return result
+
+
+if __name__ == "__main__":
+    main()

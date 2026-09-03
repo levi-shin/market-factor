@@ -1,0 +1,53 @@
+# 아침 브리핑 — 월~토 07:30 KST (= 22:30 UTC 전날)
+name: Morning Briefing
+
+on:
+  schedule:
+    # Sun–Fri 22:30 UTC = Mon–Sat 07:30 KST
+    - cron: "30 22 * * 0-5"
+  workflow_dispatch:
+    inputs:
+      send_notification:
+        description: "Slack 알림 발송 여부"
+        required: true
+        default: "true"
+        type: choice
+        options:
+          - "true"
+          - "false"
+
+concurrency:
+  group: market-briefing-daily
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ap-northeast-2
+
+      - name: Run morning briefing
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GEMINI_MODEL: ${{ secrets.GEMINI_MODEL }}
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          S3_BUCKET_NAME: ${{ secrets.S3_BUCKET_NAME }}
+        run: |
+          NOTIFY="${{ github.event.inputs.send_notification || 'true' }}"
+          python lambda_function.py --mode daily --send-notification "$NOTIFY"
