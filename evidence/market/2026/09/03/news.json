@@ -1,0 +1,48 @@
+{
+  "date": "2026-09-03",
+  "domain": "market",
+  "sources": [
+    {
+      "id": "evidence-001",
+      "title": "수익률 갉아먹는 주범…'잦은 매매'의 위험성",
+      "url": "https://www.hankyung.com/article/202609032079i",
+      "publishedAt": "Thu, 03 Sep 2026 15:05:19 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-002",
+      "title": "수익 좋아도 안산다...시들해진 개미, 적립식에만 '몰빵'",
+      "url": "https://www.hankyung.com/article/202609032028i",
+      "publishedAt": "Thu, 03 Sep 2026 15:02:23 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-003",
+      "title": "조정 끝났나… 한화오션 2조 잭팟에 조선 3사 '뱃고동'",
+      "url": "https://www.hankyung.com/article/202609032157i",
+      "publishedAt": "Thu, 03 Sep 2026 14:37:39 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-004",
+      "title": "[속보] 코스피, 돌연 하락 전환해 6400대로…코스닥도 2%↓",
+      "url": "https://www.hankyung.com/article/2026090322007",
+      "publishedAt": "Thu, 03 Sep 2026 14:30:51 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-005",
+      "title": "\"빚더미인데 주가 2배 간다고?\"…오라클 두고 월가 시끌",
+      "url": "https://www.hankyung.com/article/202609031471i",
+      "publishedAt": "Thu, 03 Sep 2026 14:29:21 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-006",
+      "title": "\"용혜인의 저주?\"…장관 후보자 지명 뒤 주가 급락한 '혜인' [종목+]",
+      "url": "https://www.hankyung.com/article/202609032092H",
+      "publishedAt": "Thu, 03 Sep 2026 14:23:18 +0900",
+      "source": "한국경제"
+    }
+  ]
+}
