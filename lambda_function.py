@@ -340,14 +340,20 @@ def get_news_headlines():
 # 빈 문자열이 그대로 쓰여서 "models/:generateContent" 같은 깨진 URL이 됨.
 # 그래서 clean_str() 결과가 빈 문자열이면 명시적으로 버리도록 처리.
 _env_model = clean_str(os.environ.get("GEMINI_MODEL", ""))
-GEMINI_MODEL_FALLBACKS = [
-    _env_model,             # 환경변수로 지정했다면(비어있지 않은 경우) 최우선
-    "gemini-3.6-flash",     # 2026-08 기준 GA
-    "gemini-3.7-flash",     # 2026-08 기준 GA (더 최신)
+# Google AI Studio(API 키) 기준 후보. 수요 폭주(503) 시 같은 모델에 붙잡지 않고
+# 다음 후보로 빨리 넘기기 위해 다양하게 둠.
+_DEFAULT_GEMINI_MODELS = [
+    "gemini-3.7-flash",
+    "gemini-3.6-flash",
+    "gemini-2.5-flash",
+    "gemini-2.0-flash",
 ]
-GEMINI_MODEL_FALLBACKS = [m for m in GEMINI_MODEL_FALLBACKS if m]  # 빈 값 제거, 순서/중복 유지
+GEMINI_MODEL_FALLBACKS = []
+for m in ([_env_model] if _env_model else []) + _DEFAULT_GEMINI_MODELS:
+    if m and m not in GEMINI_MODEL_FALLBACKS:
+        GEMINI_MODEL_FALLBACKS.append(m)
 if not GEMINI_MODEL_FALLBACKS:
-    GEMINI_MODEL_FALLBACKS = ["gemini-3.6-flash", "gemini-3.7-flash"]
+    GEMINI_MODEL_FALLBACKS = list(_DEFAULT_GEMINI_MODELS)
 
 # ⚠️ 핵심 버그 수정: Gemini가 "실제 데이터를 봐라"는 지시문만으로는 숫자를
 # 새로 지어내는 경우가 있었음 (예: 513.53 -> 507.29인데 "+0.44% 상승"이라고
@@ -446,8 +452,11 @@ def build_prefixed_reasons(reasons_dict, numeric_data, pct_data, portfolio_map, 
 # 그날 하루 분석이 통째로 날아감. 503/502/500/429처럼 "일시적" 성격이 강한
 # 응답은 같은 모델로 짧게 재시도하고, 그래도 안 되면 다음 후보 모델로 넘어감.
 TRANSIENT_HTTP_CODES = {429, 500, 502, 503, 504}
-GEMINI_RETRY_DELAY_SEC = 5
-GEMINI_MAX_RETRIES_PER_MODEL = 3  # 같은 모델에 최초 시도 포함 최대 3번
+# 503/429(수요 폭주·쿼터)는 같은 모델 재시도보다 다른 모델로 넘기는 편이 빠름
+CAPACITY_HTTP_CODES = {429, 503}
+GEMINI_RETRY_DELAY_SEC = 4
+GEMINI_MAX_RETRIES_PER_MODEL = 2  # 일반 일시 오류: 같은 모델 최대 2번
+GEMINI_CAPACITY_RETRIES_PER_MODEL = 2  # 503/429: 같은 모델 최대 2번(1회 재시도) 후 다음 후보
 GEMINI_HTTP_TIMEOUT = 90  # 장문 한국어 JSON — Actions에서도 여유 있게
 
 
@@ -467,16 +476,31 @@ def _is_transient_network_error(exc):
     return "timed out" in msg or "timeout" in msg
 
 
+def _payload_for_model(payload, model):
+    # gemini-3.x만 thinkingConfig 사용. 구세대 모델엔 빼서 400을 피함.
+    body = json.loads(json.dumps(payload))  # deep copy (dict-only)
+    if not str(model).startswith("gemini-3"):
+        gen = body.get("generationConfig") or {}
+        gen.pop("thinkingConfig", None)
+        if gen:
+            body["generationConfig"] = gen
+        elif "generationConfig" in body:
+            del body["generationConfig"]
+    return body
+
+
 def call_gemini_json(payload, headers, timeout=None, context_label="Gemini"):
     # 모델 폴백 리스트를 순서대로 시도하되, 각 모델마다 "일시적 오류/타임아웃"이면
     # 짧게 재시도하고, 그래도 실패하거나 영구적 오류(404 등)면 다음 모델로.
     timeout = timeout or GEMINI_HTTP_TIMEOUT
+    logger.info(f"{context_label} 모델 후보(중복 제거): {GEMINI_MODEL_FALLBACKS}")
     for model in GEMINI_MODEL_FALLBACKS:
         url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
+        model_payload = _payload_for_model(payload, model)
 
         for attempt in range(1, GEMINI_MAX_RETRIES_PER_MODEL + 1):
             try:
-                raw_res = http_post_json(url, payload, headers=headers, timeout=timeout)
+                raw_res = http_post_json(url, model_payload, headers=headers, timeout=timeout)
                 res = json.loads(raw_res)
                 text_out = res['candidates'][0]['content']['parts'][0]['text'].strip()
                 json_match = re.search(r'\{.*\}', text_out, re.DOTALL)
@@ -491,6 +515,18 @@ def call_gemini_json(payload, headers, timeout=None, context_label="Gemini"):
                 if e.code == 404:
                     logger.warning(f"모델 {model} 사용 불가(404). 다음 후보 모델로 넘어갑니다.")
                     break  # 이 모델은 재시도 의미 없음 -> 다음 모델로
+
+                # 503/429: 수요 폭주 — 같은 모델에 길게 붙지 말고 빠르게 다음 후보로
+                if e.code in CAPACITY_HTTP_CODES:
+                    max_cap = GEMINI_CAPACITY_RETRIES_PER_MODEL
+                    if attempt < max_cap:
+                        logger.warning(f"{context_label} 수요 폭주(HTTP {e.code}, 모델: {model}, {attempt}번째). "
+                                        f"{GEMINI_RETRY_DELAY_SEC}초 후 같은 모델 1회만 재시도.")
+                        time.sleep(GEMINI_RETRY_DELAY_SEC)
+                        continue
+                    logger.warning(f"{context_label} 수요 폭주(HTTP {e.code}, 모델: {model}). "
+                                    f"다음 후보 모델로 넘어갑니다.")
+                    break
 
                 if e.code in TRANSIENT_HTTP_CODES and attempt < GEMINI_MAX_RETRIES_PER_MODEL:
                     logger.warning(f"{context_label} 일시적 오류(HTTP {e.code}, 모델: {model}, {attempt}번째 시도). "
