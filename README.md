@@ -2,15 +2,16 @@
 
 국내외 시장·환율·원자재·보유종목을 매일 자동 수집해 AI가 등락 원인을 분석하고, 아침/장마감 브리핑과 주간·월간 리포트를 Slack으로 보내는 개인용 자동화 시스템입니다.
 
-스케줄러는 **GitHub Actions** (`schedule` cron)로 돌립니다. (AWS Lambda / EventBridge 불필요)
+**GitHub Actions만 사용합니다.** AWS Lambda / S3 / EventBridge는 쓰지 않습니다.
 
 ## 구성
 
-- `lambda_function.py` — 시세 수집, Gemini 분석, S3 저장, Slack 알림 (CLI 진입점 포함)
-- `index.html` — 모닝 팩터 대시보드 (`briefings.json` 기반 차트·AI 분석)
+- `lambda_function.py` — 시세 수집, Gemini 분석, 로컬 JSON/HTML 저장, Slack 알림
+- `index.html` — 모닝 팩터 대시보드 (`briefings.json` 기반)
+- `briefings.json` — 일별 브리핑 누적 데이터 (Actions가 갱신 후 커밋)
+- `reports/` — 주간·월간 HTML 리포트
+- `raw/` · `analysis/` · `evidence/` · `metadata/` — 일자별 상세 데이터
 - `.github/workflows/` — 아침 / 장마감 / 주간 / 월간 스케줄
-- `requirements.txt` — Python 의존성
-- S3 `briefings.json` — 일별 브리핑 누적 데이터 (구 `history.json`, 읽기 시 자동 폴백)
 
 ## 스케줄 (Asia/Seoul)
 
@@ -21,37 +22,29 @@
 | `weekly.yml` | 토요일 07:30 KST | `30 22 * * 5` | `--mode weekly` |
 | `monthly.yml` | 매달 1일 07:30 KST | `30 22 28-31 * *` + KST 1일 가드 | `--mode monthly` |
 
-- **아침**: 시세 수집 + AI 분석 + Slack 브리핑
-- **장마감**: 시세/분석 갱신만 (알림 없음)
-- **주간**: 한 주 집계 HTML 리포트 + Slack
-- **월간**: 지난달 집계 HTML 리포트 + Slack
-
-> GitHub `schedule`은 UTC만 지원하며, 부하에 따라 수 분~수십 분 지연될 수 있습니다.
+> GitHub `schedule`은 UTC만 지원하며, 부하에 따라 지연될 수 있습니다.
 
 ## GitHub Secrets
 
-Repository → Settings → Secrets and variables → Actions 에 아래를 등록하세요.
-
 | Secret | 설명 |
 |--------|------|
-| `AWS_ACCESS_KEY_ID` | S3 읽기/쓰기 IAM 키 |
-| `AWS_SECRET_ACCESS_KEY` | S3 읽기/쓰기 IAM 시크릿 |
-| `AWS_REGION` | (선택) 기본 `ap-northeast-2` |
-| `S3_BUCKET_NAME` | `briefings.json`·리포트가 저장되는 버킷명 |
 | `GEMINI_API_KEY` | Google Gemini API 키 |
-| `GEMINI_MODEL` | (선택) 우선 사용할 모델명 |
 | `SLACK_WEBHOOK_URL` | Incoming Webhook URL |
+| `SITE_BASE_URL` | (선택) 대시보드/리포트 링크 베이스. 예: `https://levi-shin.github.io/market-factor` |
+| `GEMINI_MODEL` | (선택) 우선 사용할 모델명 |
 
-## 로컬 / 수동 실행
+## GitHub Pages (대시보드)
+
+1. Settings → Pages → Source: **Deploy from a branch**
+2. Branch: `main` / `/ (root)`
+3. `SITE_BASE_URL`에 Pages URL을 넣으면 Slack 링크가 대시보드로 연결됩니다.
+
+## 로컬 실행
 
 ```bash
-pip install -r requirements.txt
-export AWS_ACCESS_KEY_ID=...
-export AWS_SECRET_ACCESS_KEY=...
-export AWS_DEFAULT_REGION=ap-northeast-2
-export S3_BUCKET_NAME=...
 export GEMINI_API_KEY=...
 export SLACK_WEBHOOK_URL=...
+export SITE_BASE_URL=https://levi-shin.github.io/market-factor   # 선택
 
 python lambda_function.py --mode daily --send-notification true
 python lambda_function.py --mode daily --send-notification false
@@ -59,4 +52,4 @@ python lambda_function.py --mode weekly
 python lambda_function.py --mode monthly
 ```
 
-Actions 탭에서 각 workflow의 **Run workflow**로도 수동 실행할 수 있습니다.
+결과 파일(`briefings.json`, `reports/` 등)은 저장소에 쓰입니다. Actions에서는 실행 후 자동 커밋됩니다.
