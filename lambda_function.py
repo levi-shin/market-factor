@@ -1640,6 +1640,12 @@ def lambda_handler(event, context):
         gas_sign = "+" if gas_diff > 0 else ""
 
         overall_summary = (reasons_dict or {}).get("overall", "시장 동향 분석 중입니다.")
+        dash = site_base_url()
+        dash_line = (
+            f"🔗 <{dashboard_url()}|👉 항목별 개별 심층 사유 대시보드 열기>"
+            if dash else
+            "🔗 대시보드: `index.html` (GitHub Pages + `SITE_BASE_URL` 설정 시 링크 활성화)"
+        )
 
         compact_briefing = f"""☀️ *모닝 퀵 브리핑* ({weather_text})
 
@@ -1654,7 +1660,7 @@ def lambda_handler(event, context):
 • ⛽ 고급유: {prem_price:,.1f}원 ({prem_sign}{prem_diff:,.2f}원) | 일반유: {gas_price:,.1f}원 ({gas_sign}{gas_diff:,.2f}원)
 • 심리지수: {fear_text}
 
-🔗 <{dashboard_url()}|👉 항목별 개별 심층 사유 대시보드 열기>"""
+{dash_line}"""
 
         send_slack(compact_briefing)
         return {"statusCode": 200, "body": "Success"}
