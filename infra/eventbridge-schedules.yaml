@@ -1,0 +1,47 @@
+# EventBridge Scheduler definitions for market-briefing Lambda
+# Timezone: Asia/Seoul (KST)
+
+Schedules:
+  - Name: market-briefing-morning
+    Description: 아침 브리핑 (월~토 07:30 KST) - Slack 알림 발송
+    ScheduleExpression: cron(30 7 ? * MON-SAT *)
+    ScheduleExpressionTimezone: Asia/Seoul
+    FlexibleTimeWindow:
+      Mode: "OFF"
+    Target:
+      Arn: !Sub arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:market-briefing
+      RoleArn: !GetAtt EventBridgeSchedulerRole.Arn
+      Input: '{"send_notification": true}'
+
+  - Name: market-briefing-close
+    Description: 장마감 데이터 갱신 (월~금 16:00 KST) - 알림 미발송
+    ScheduleExpression: cron(0 16 ? * MON-FRI *)
+    ScheduleExpressionTimezone: Asia/Seoul
+    FlexibleTimeWindow:
+      Mode: "OFF"
+    Target:
+      Arn: !Sub arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:market-briefing
+      RoleArn: !GetAtt EventBridgeSchedulerRole.Arn
+      Input: '{"send_notification": false}'
+
+  - Name: market-briefing-weekly
+    Description: 주간 리포트 (토요일 07:30 KST)
+    ScheduleExpression: cron(30 7 ? * SAT *)
+    ScheduleExpressionTimezone: Asia/Seoul
+    FlexibleTimeWindow:
+      Mode: "OFF"
+    Target:
+      Arn: !Sub arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:market-briefing
+      RoleArn: !GetAtt EventBridgeSchedulerRole.Arn
+      Input: '{"mode": "weekly"}'
+
+  - Name: market-briefing-monthly
+    Description: 월간 리포트 (매달 1일 07:30 KST)
+    ScheduleExpression: cron(30 7 1 * ? *)
+    ScheduleExpressionTimezone: Asia/Seoul
+    FlexibleTimeWindow:
+      Mode: "OFF"
+    Target:
+      Arn: !Sub arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:market-briefing
+      RoleArn: !GetAtt EventBridgeSchedulerRole.Arn
+      Input: '{"mode": "monthly"}'
