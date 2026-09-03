@@ -8,8 +8,7 @@ import urllib.parse
 import xml.etree.ElementTree as ET
 import re
 import time
-import boto3
-from botocore.exceptions import ClientError
+from pathlib import Path
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 logging.basicConfig(
@@ -18,12 +17,6 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
-
-s3 = boto3.client('s3')
-
-# 일별 브리핑 누적 저장 파일 (구명칭 history.json → briefings.json)
-BRIEFINGS_S3_KEY = "briefings.json"
-LEGACY_BRIEFINGS_S3_KEY = "history.json"  # 기존 S3 객체 호환용 읽기 폴백
 
 MY_PORTFOLIO_TICKERS = [
     ("NVDA", "엔비디아"),
@@ -42,6 +35,50 @@ def clean_str(val):
     if not val:
         return ""
     return str(val).strip().strip("[]'\"` ")
+
+
+# ==========================================
+# 로컬 파일 저장 (GitHub 저장소 / Actions 커밋)
+# ==========================================
+# AWS S3 없이 저장소 안의 JSON/HTML로 관리. Actions가 실행 후 git commit/push.
+
+def data_root():
+    override = clean_str(os.environ.get("DATA_ROOT", ""))
+    return Path(override) if override else Path(__file__).resolve().parent
+
+
+def site_base_url():
+    return clean_str(os.environ.get("SITE_BASE_URL", "")).rstrip("/")
+
+
+def briefings_path():
+    return data_root() / "briefings.json"
+
+
+def legacy_briefings_path():
+    return data_root() / "history.json"
+
+
+def dashboard_url(path=""):
+    base = site_base_url()
+    if not base:
+        return path or "index.html"
+    return f"{base}/{path.lstrip('/')}" if path else base
+
+
+def save_json_file(rel_path, payload):
+    target = data_root() / rel_path
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
+    return str(target.relative_to(data_root()))
+
+
+def save_text_file(rel_path, content, encoding="utf-8"):
+    target = data_root() / rel_path
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_text(content, encoding=encoding)
+    return str(target.relative_to(data_root()))
+
 
 def http_get(url, headers=None, timeout=8):
     url = clean_str(url)
@@ -299,7 +336,7 @@ def get_news_headlines():
 #   1순위 모델이 또 막혀도 자동으로 다음 후보로 넘어가도록 폴백 리스트를 둠.
 #
 # 주의: os.environ.get(key, default)는 환경변수가 "아예 없을 때"만 default를
-# 씀. Lambda 콘솔에 GEMINI_MODEL을 빈 값("")으로 만들어두면 default가 무시되고
+# 씀. 환경변수 GEMINI_MODEL을 빈 값("")으로 만들어두면 default가 무시되고
 # 빈 문자열이 그대로 쓰여서 "models/:generateContent" 같은 깨진 URL이 됨.
 # 그래서 clean_str() 결과가 빈 문자열이면 명시적으로 버리도록 처리.
 _env_model = clean_str(os.environ.get("GEMINI_MODEL", ""))
@@ -535,8 +572,7 @@ JSON 출력 포맷 (각 필드는 "원인 + 파급 영향"만, 숫자/방향 단
     headers = {"x-goog-api-key": api_key}
 
     # 14개 항목 x 3~4문장의 긴 한국어 출력을 요구하는 무거운 요청이라
-    # 기존 30초보다 여유를 둠. (Lambda 함수 자체의 제한시간(Configuration ->
-    # General configuration -> Timeout)도 이보다 커야 함. 최소 60초 이상 권장)
+    # 기존 30초보다 여유를 둠. (GitHub Actions job timeout도 여유 있게 둘 것)
     GEMINI_HTTP_TIMEOUT = 55
 
     return call_gemini_json(payload, headers, GEMINI_HTTP_TIMEOUT, context_label="Gemini")
@@ -544,11 +580,11 @@ JSON 출력 포맷 (각 필드는 "원인 + 파급 영향"만, 숫자/방향 단
 # ==========================================
 # 3.5. 데이터 구조 뼈대 (raw/analysis/evidence/metadata)
 # ==========================================
-# ⚠️ 기존 briefings.json 저장(save_to_s3)은 대시보드가 계속 참조함.
+# ⚠️ 기존 briefings.json 저장(save_to_s3)은 대시보드(index.html)가 계속 참조함.
 # (구 history.json은 읽기 폴백만 유지)
-# 아래는 "이중 쓰기"로 추가되는 신규 계층이며, 실패해도
+# 아래는 "이중 쓰기"로 추가되는 신규 계층(raw/analysis/...)이며, 실패해도
 # 기존 흐름(Slack 알림 등)에 영향을 주지 않도록 lambda_handler에서 별도
-# try/except로 감싸서 호출함.
+# try/except로 감싸서 호출함. AWS S3 없이 저장소 로컬 경로에 기록.
 #
 # 설계 원칙(로드맵 문서 1번 참고):
 #   - raw / analysis 는 절대 섞지 않는다
@@ -571,10 +607,15 @@ def kst_date_str():
     return kst_now.strftime("%Y-%m-%d"), kst_now
 
 
-def build_s3_key(layer, domain, date_str, filename):
+def build_data_key(layer, domain, date_str, filename):
     # 예: raw/market/2026/09/01/morning.json
     y, m, d = date_str.split("-")
     return f"{layer}/{domain}/{y}/{m}/{d}/{filename}"
+
+
+def build_s3_key(layer, domain, date_str, filename):
+    # 하위 호환 별칭
+    return build_data_key(layer, domain, date_str, filename)
 
 
 def build_record_id(layer, domain, date_str, type_or_symbol, version=None):
@@ -584,16 +625,14 @@ def build_record_id(layer, domain, date_str, type_or_symbol, version=None):
 
 
 def save_json_to_s3(key, payload):
-    # save_to_s3()의 s3.put_object 호출 부분을 범용화한 것.
-    # raw/analysis/evidence/metadata 저장이 전부 이 함수 하나로 처리됨.
-    bucket_name = clean_str(os.environ.get("S3_BUCKET_NAME", "1125labs-s3-bucket"))
-    s3.put_object(
-        Bucket=bucket_name,
-        Key=key,
-        Body=json.dumps(payload, ensure_ascii=False, indent=2).encode('utf-8'),
-        ContentType='application/json',
-        CacheControl='no-cache, no-store, must-revalidate'
-    )
+    # 하위 호환 별칭 — 실제로는 로컬 파일에 저장
+    return save_json_file(key, payload)
+
+
+def save_json_to_repo(key, payload):
+    path = save_json_file(key, payload)
+    logger.info(f"JSON 저장: {path}")
+    return path
 
 
 def save_raw_market(date_str, analysis_type, numeric_data, pct_data, portfolio_map, oil_data, fear_score):
@@ -612,7 +651,7 @@ def save_raw_market(date_str, analysis_type, numeric_data, pct_data, portfolio_m
         },
         "portfolio": portfolio_map,
     }
-    key = build_s3_key("raw", DOMAIN, date_str, f"{analysis_type}.json")
+    key = build_data_key("raw", DOMAIN, date_str, f"{analysis_type}.json")
     save_json_to_s3(key, payload)
     logger.info(f"raw 저장 완료: {key}")
 
@@ -636,7 +675,7 @@ def save_evidence_market(date_str, news_list):
         "domain": DOMAIN,
         "sources": sources,
     }
-    key = build_s3_key("evidence", DOMAIN, date_str, "news.json")
+    key = build_data_key("evidence", DOMAIN, date_str, "news.json")
     save_json_to_s3(key, payload)
     logger.info(f"evidence 저장 완료: {key} (기사 {len(sources)}건)")
 
@@ -657,7 +696,7 @@ def save_analysis_market(date_str, analysis_type, reasons_dict):
         "reasons": reasons_dict or {},
     }
     filename = f"{analysis_type}-v{ANALYSIS_VERSION}.json"
-    key = build_s3_key("analysis", DOMAIN, date_str, filename)
+    key = build_data_key("analysis", DOMAIN, date_str, filename)
     save_json_to_s3(key, payload)
     logger.info(f"analysis 저장 완료: {key}")
 
@@ -673,7 +712,7 @@ def save_metadata_market(date_str, analysis_type, generated_at_iso, model_used, 
         "model": model_used,
         "status": status,  # "published" | "failed"
     }
-    key = build_s3_key("metadata", DOMAIN, date_str, f"{analysis_type}.json")
+    key = build_data_key("metadata", DOMAIN, date_str, f"{analysis_type}.json")
     save_json_to_s3(key, payload)
     logger.info(f"metadata 저장 완료: {key}")
 
@@ -700,50 +739,44 @@ def save_new_data_structure(numeric_data, pct_data, portfolio_map, oil_data, fea
 # 쓸 수 있음. 그 결과 Yahoo가 주는 pct와 "우리가 어제 실제로 기록했던
 # 값 대비 오늘 값"이 서로 다른(심지어 부호가 반대인) 경우가 발생함.
 #
-# 해결: Yahoo의 pct를 그대로 믿지 않고, S3 briefings.json의 "가장 최근
+# 해결: Yahoo의 pct를 그대로 믿지 않고, briefings.json의 "가장 최근
 # 기록(=직전 실행 결과, 07:30 아니면 16:00)"과 직접 비교해서 우리가
 # 등락률을 다시 계산한다. 하루 2번 도는 스케줄과 맞물려서, 이러면 항상
 # "지난 브리핑 이후 얼마나 움직였는지"라는 명확한 기준이 생김.
 
 
-def load_briefings(bucket_name):
+def load_briefings(bucket_name=None):
     """briefings.json을 읽고, 없으면 구 history.json을 폴백으로 읽음."""
-    for key in (BRIEFINGS_S3_KEY, LEGACY_BRIEFINGS_S3_KEY):
+    for path in (briefings_path(), legacy_briefings_path()):
         try:
-            obj = s3.get_object(Bucket=bucket_name, Key=key)
-            data = json.loads(obj['Body'].read().decode('utf-8'))
-            if key == LEGACY_BRIEFINGS_S3_KEY:
-                logger.info(f"구 파일 {LEGACY_BRIEFINGS_S3_KEY}에서 브리핑 데이터를 읽었습니다 (마이그레이션 대상)")
-            return data if isinstance(data, list) else []
-        except ClientError as e:
-            code = e.response.get('Error', {}).get('Code', '')
-            if code in ('NoSuchKey', '404', 'NotFound'):
+            if not path.exists():
                 continue
-            raise
+            data = json.loads(path.read_text(encoding="utf-8"))
+            if path == legacy_briefings_path():
+                logger.info(f"구 파일 {path.name}에서 브리핑 데이터를 읽었습니다 (마이그레이션 대상)")
+            return data if isinstance(data, list) else []
         except Exception as e:
-            if key == BRIEFINGS_S3_KEY:
-                logger.warning(f"{BRIEFINGS_S3_KEY} 조회 실패, 폴백 시도: {e}")
+            if path == briefings_path():
+                logger.warning(f"{path.name} 조회 실패, 폴백 시도: {e}")
                 continue
             raise
     return []
 
 
-def save_briefings(bucket_name, briefings):
-    s3.put_object(
-        Bucket=bucket_name,
-        Key=BRIEFINGS_S3_KEY,
-        Body=json.dumps(briefings, ensure_ascii=False, indent=2).encode('utf-8'),
-        ContentType='application/json',
-        CacheControl='no-cache, no-store, must-revalidate'
-    )
+def save_briefings(bucket_name=None, briefings=None):
+    # 호출 호환: save_briefings(briefings) 또는 save_briefings(None, briefings)
+    if briefings is None and bucket_name is not None and not isinstance(bucket_name, str):
+        briefings = bucket_name
+    path = save_json_file("briefings.json", briefings or [])
+    logger.info(f"브리핑 저장: {path}")
+    return path
 
 
 def get_previous_snapshot():
     # briefings.json의 마지막 레코드 = 가장 최근에 저장된 실행 결과.
     # (오늘 아침 실행이라면 어제 16:00 종가, 오늘 16:00 실행이라면 오늘 07:30 값)
-    bucket_name = clean_str(os.environ.get("S3_BUCKET_NAME", "1125labs-s3-bucket"))
     try:
-        briefings = load_briefings(bucket_name)
+        briefings = load_briefings()
         if briefings:
             return briefings[-1]
     except Exception as e:
@@ -821,12 +854,12 @@ def build_portfolio_text(portfolio_map):
 
 
 # ==========================================
-# 4. S3 누적 저장 (briefings.json — 구 history.json에서 개명)
+# 4. 로컬 누적 저장 (briefings.json — 구 history.json에서 개명)
 # ==========================================
 
 def save_to_s3(numeric_data, pct_data, portfolio_map, oil_data, fear_score, news_list, reasons_dict):
-    bucket_name = clean_str(os.environ.get("S3_BUCKET_NAME", "1125labs-s3-bucket"))
-    briefings = load_briefings(bucket_name)
+    # 하위 호환 함수명 — 실제로는 저장소의 briefings.json에 기록
+    briefings = load_briefings()
 
     kst_now = datetime.datetime.utcnow() + datetime.timedelta(hours=9)
     today_str = kst_now.strftime("%Y-%m-%d")
@@ -880,8 +913,8 @@ def save_to_s3(numeric_data, pct_data, portfolio_map, oil_data, fear_score, news
     if len(briefings) > 180:
         briefings = briefings[-180:]
 
-    save_briefings(bucket_name, briefings)
-    logger.info(f"S3 {BRIEFINGS_S3_KEY} 저장 완료")
+    save_briefings(briefings)
+    logger.info("briefings.json 저장 완료")
     return used_fallback_reasons
 
 def send_slack(text):
@@ -911,11 +944,10 @@ WEEKLY_MACRO_SPECS = [
 
 
 def get_full_briefings():
-    bucket_name = clean_str(os.environ.get("S3_BUCKET_NAME", "1125labs-s3-bucket"))
     try:
-        return load_briefings(bucket_name)
+        return load_briefings()
     except Exception as e:
-        logger.error(f"{BRIEFINGS_S3_KEY} 조회 실패: {e}")
+        logger.error(f"briefings.json 조회 실패: {e}")
         return []
 
 
@@ -1369,14 +1401,9 @@ def run_period_report(this_period, last_period, period_label, report_key, holida
         holiday_text, title_word=title_word, period_word=period_word, next_period_word=next_period_word
     )
 
-    bucket_name = clean_str(os.environ.get("S3_BUCKET_NAME", "1125labs-s3-bucket"))
-    s3.put_object(
-        Bucket=bucket_name, Key=report_key,
-        Body=report_html.encode('utf-8'), ContentType='text/html; charset=utf-8',
-        CacheControl='no-cache, no-store, must-revalidate'
-    )
-    report_url = f"http://{bucket_name}.s3-website.ap-northeast-2.amazonaws.com/{report_key}"
-    logger.info(f"{title_word} 리포트 S3 저장 완료: {report_url}")
+    saved = save_text_file(report_key, report_html)
+    report_url = dashboard_url(report_key)
+    logger.info(f"{title_word} 리포트 저장 완료: {saved} ({report_url})")
 
     fear_avg = None
     valid_scores = [s for _, s in fear_scores if s is not None]
@@ -1512,8 +1539,6 @@ def lambda_handler(event, context):
 
     logger.info(f"모닝 통합 브리핑 시작 (알림 발송: {send_notification})")
     try:
-        bucket_name = clean_str(os.environ.get("S3_BUCKET_NAME", "1125labs-s3-bucket"))
-
         # 날씨/시장지표/포트폴리오/공포지수/유가/뉴스 - 서로 의존관계가 없으므로
         # 순차 호출 대신 병렬로 돌려서 전체 대기시간을 크게 줄임.
         # (market_data와 portfolio_data는 내부적으로도 이미 병렬화되어 있음)
@@ -1532,7 +1557,7 @@ def lambda_handler(event, context):
             oil_text, oil_data, oil_diff = f_oil.result()
             news_list = f_news.result()
 
-        # ⚠️ pct 재계산: Yahoo가 주는 pct 대신, S3에 저장된 "직전 실행 결과"와
+        # ⚠️ pct 재계산: Yahoo가 주는 pct 대신, briefings.json의 "직전 실행 결과"와
         # 직접 비교해서 등락률을 다시 계산 (24시간 거래되는 환율/원자재의
         # Yahoo previousClose 기준점 불일치 버그 수정). market_text/portfolio_text도
         # 바뀐 pct 기준으로 다시 조립해서 Gemini에게 일관된 값을 전달함.
@@ -1554,14 +1579,14 @@ def lambda_handler(event, context):
         # (send_notification 플래그와 1:1로 대응하는 값이라 별도 event 필드 없이 유도)
         analysis_type = "morning" if send_notification else "close"
 
-        # S3 저장 - 두 실행 모두 동일하게 수행. 같은 날짜(date) 레코드는
+        # briefings.json 저장 - 두 실행 모두 동일하게 수행. 같은 날짜(date) 레코드는
         # save_to_s3 내부에서 덮어쓰기 처리되므로, 장마감 후 실행이 그날의
         # 최종 데이터를 한 번 더 정확하게 갱신해주는 효과가 있음.
         used_fallback_reasons = False
         try:
             used_fallback_reasons = save_to_s3(numeric_data, pct_data, portfolio_map, oil_data, fear_score, news_list, reasons_dict)
-        except Exception as s3_err:
-            logger.error(f"S3 저장 실패: {s3_err}")
+        except Exception as save_err:
+            logger.error(f"briefings.json 저장 실패: {save_err}")
 
         # ⚠️ Gemini가 실패해서 오늘 기존 분석을 보존한 경우: 에러도 아니고
         # 성공도 아닌 "회색지대"라 이대로 두면 silent(16:00) 실행에선 아무도
@@ -1615,6 +1640,12 @@ def lambda_handler(event, context):
         gas_sign = "+" if gas_diff > 0 else ""
 
         overall_summary = (reasons_dict or {}).get("overall", "시장 동향 분석 중입니다.")
+        dash = site_base_url()
+        dash_line = (
+            f"🔗 <{dashboard_url()}|👉 항목별 개별 심층 사유 대시보드 열기>"
+            if dash else
+            "🔗 대시보드: `index.html` (GitHub Pages + `SITE_BASE_URL` 설정 시 링크 활성화)"
+        )
 
         compact_briefing = f"""☀️ *모닝 퀵 브리핑* ({weather_text})
 
@@ -1629,7 +1660,7 @@ def lambda_handler(event, context):
 • ⛽ 고급유: {prem_price:,.1f}원 ({prem_sign}{prem_diff:,.2f}원) | 일반유: {gas_price:,.1f}원 ({gas_sign}{gas_diff:,.2f}원)
 • 심리지수: {fear_text}
 
-🔗 <http://{bucket_name}.s3-website.ap-northeast-2.amazonaws.com|👉 항목별 개별 심층 사유 대시보드 열기>"""
+{dash_line}"""
 
         send_slack(compact_briefing)
         return {"statusCode": 200, "body": "Success"}
