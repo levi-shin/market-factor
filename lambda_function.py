@@ -342,11 +342,12 @@ def get_news_headlines():
 _env_model = clean_str(os.environ.get("GEMINI_MODEL", ""))
 # Google AI Studio(API 키) 기준 후보. 수요 폭주(503) 시 같은 모델에 붙잡지 않고
 # 다음 후보로 빨리 넘기기 위해 다양하게 둠.
+# 2026-09 기준 generateContent에서 살아있는 모델만 둔다.
+# gemini-2.5-flash / 2.0-flash는 404(no longer available)라 제거함.
 _DEFAULT_GEMINI_MODELS = [
+    "gemini-3.8-flash",
     "gemini-3.7-flash",
-    "gemini-2.5-flash",
-    "gemini-2.0-flash",
-    "gemini-3.6-flash",  # 무료 한도 먼저 닳는 경우가 많아 맨 뒤로
+    "gemini-3.6-flash",
 ]
 GEMINI_MODEL_FALLBACKS = []
 for m in ([_env_model] if _env_model else []) + _DEFAULT_GEMINI_MODELS:
