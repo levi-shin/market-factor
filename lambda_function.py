@@ -452,11 +452,10 @@ def build_prefixed_reasons(reasons_dict, numeric_data, pct_data, portfolio_map, 
 # 그날 하루 분석이 통째로 날아감. 503/502/500/429처럼 "일시적" 성격이 강한
 # 응답은 같은 모델로 짧게 재시도하고, 그래도 안 되면 다음 후보 모델로 넘어감.
 TRANSIENT_HTTP_CODES = {429, 500, 502, 503, 504}
-# 503/429(수요 폭주·쿼터)는 같은 모델 재시도보다 다른 모델로 넘기는 편이 빠름
+# 503/429(수요 폭주·쿼터)는 같은 모델 재시도 없이 즉시 다음 후보로 넘김
 CAPACITY_HTTP_CODES = {429, 503}
 GEMINI_RETRY_DELAY_SEC = 4
-GEMINI_MAX_RETRIES_PER_MODEL = 2  # 일반 일시 오류: 같은 모델 최대 2번
-GEMINI_CAPACITY_RETRIES_PER_MODEL = 2  # 503/429: 같은 모델 최대 2번(1회 재시도) 후 다음 후보
+GEMINI_MAX_RETRIES_PER_MODEL = 2  # 일반 일시 오류(500/502/504): 같은 모델 최대 2번
 GEMINI_HTTP_TIMEOUT = 90  # 장문 한국어 JSON — Actions에서도 여유 있게
 
 
@@ -516,16 +515,11 @@ def call_gemini_json(payload, headers, timeout=None, context_label="Gemini"):
                     logger.warning(f"모델 {model} 사용 불가(404). 다음 후보 모델로 넘어갑니다.")
                     break  # 이 모델은 재시도 의미 없음 -> 다음 모델로
 
-                # 503/429: 수요 폭주 — 같은 모델에 길게 붙지 말고 빠르게 다음 후보로
+                # 503/429: 수요 폭주 — 재시도해도 같은 모델이 또 막히는 경우가 많음.
+                # 바로 다음 후보(3.7 / 2.5 / 2.0 등)로 넘어가서 성공 확률을 높임.
                 if e.code in CAPACITY_HTTP_CODES:
-                    max_cap = GEMINI_CAPACITY_RETRIES_PER_MODEL
-                    if attempt < max_cap:
-                        logger.warning(f"{context_label} 수요 폭주(HTTP {e.code}, 모델: {model}, {attempt}번째). "
-                                        f"{GEMINI_RETRY_DELAY_SEC}초 후 같은 모델 1회만 재시도.")
-                        time.sleep(GEMINI_RETRY_DELAY_SEC)
-                        continue
                     logger.warning(f"{context_label} 수요 폭주(HTTP {e.code}, 모델: {model}). "
-                                    f"다음 후보 모델로 넘어갑니다.")
+                                    f"같은 모델 재시도 없이 다음 후보로 넘어갑니다.")
                     break
 
                 if e.code in TRANSIENT_HTTP_CODES and attempt < GEMINI_MAX_RETRIES_PER_MODEL:
