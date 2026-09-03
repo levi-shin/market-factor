@@ -7,6 +7,7 @@
 ## 구성
 
 - `lambda_function.py` — 시세 수집, Gemini 분석, S3 저장, Slack 알림 (CLI 진입점 포함)
+- `index.html` — 모닝 팩터 대시보드 (`briefings.json` 기반 차트·AI 분석)
 - `.github/workflows/` — 아침 / 장마감 / 주간 / 월간 스케줄
 - `requirements.txt` — Python 의존성
 - S3 `briefings.json` — 일별 브리핑 누적 데이터 (구 `history.json`, 읽기 시 자동 폴백)
