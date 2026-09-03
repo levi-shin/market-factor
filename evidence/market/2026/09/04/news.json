@@ -1,0 +1,48 @@
+{
+  "date": "2026-09-04",
+  "domain": "market",
+  "sources": [
+    {
+      "id": "evidence-001",
+      "title": "석유공사와 합치는 가스공사…재무 개편 방향에 쏠리는 눈",
+      "url": "https://www.hankyung.com/article/202609033221i",
+      "publishedAt": "Fri, 04 Sep 2026 08:00:07 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-002",
+      "title": "퇴직연금에 '연 8%대' 안전자산 나온다…이달부터 달라지는 것",
+      "url": "https://www.hankyung.com/article/202609033126i",
+      "publishedAt": "Fri, 04 Sep 2026 08:00:02 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-003",
+      "title": "'월러 랠리' '엔화 랠리'…9월 초는 원래 오른다? [김현석의 월스트리트나우]",
+      "url": "https://www.hankyung.com/article/202609043367i",
+      "publishedAt": "Fri, 04 Sep 2026 07:57:52 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-004",
+      "title": "\"삼성전자, 연내 40조 자사주 매입·소각 가능…목표가 60만원\"-KB",
+      "url": "https://www.hankyung.com/article/2026090433696",
+      "publishedAt": "Fri, 04 Sep 2026 07:43:40 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-005",
+      "title": "\"로보티즈, 중국 매출 증가 긍정적\"-KB",
+      "url": "https://www.hankyung.com/article/2026090433656",
+      "publishedAt": "Fri, 04 Sep 2026 07:40:28 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-006",
+      "title": "월러 '금리 동결' 시사에 동반 상승…나스닥 1.4%↑ [뉴욕증시 브리핑]",
+      "url": "https://www.hankyung.com/article/2026090433366",
+      "publishedAt": "Fri, 04 Sep 2026 07:12:39 +0900",
+      "source": "한국경제"
+    }
+  ]
+}
