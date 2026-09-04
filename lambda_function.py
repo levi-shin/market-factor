@@ -1704,6 +1704,37 @@ def is_analysis_already_published(analysis_type):
     return meta.get("status") == "published"
 
 
+
+# 아침/장마감 각각 "이 시간대 안이면 아직 늦지 않았다"고 보는 창(KST).
+# GitHub schedule이 정시를 흘려도 창 안의 아무 슬롯이나 걸리면 그날 실행이 채워진다.
+AUTO_SESSION_WINDOWS = {
+    # (시작분, 종료분, 허용 요일) — 요일은 0=월 ... 6=일
+    "morning": (7 * 60 + 30, 12 * 60, {0, 1, 2, 3, 4, 5}),   # 07:30~12:00, 월~토
+    "close": (16 * 60, 22 * 60, {0, 1, 2, 3, 4}),            # 16:00~22:00, 월~금
+}
+
+
+def resolve_auto_session(now=None):
+    """지금 실행해야 할 세션을 반환. 없으면 None.
+
+    창 안이면서 아직 그날 성공 기록이 없는 세션만 고른다.
+    아침과 장마감 창은 겹치지 않으므로 하나만 선택된다.
+    """
+    now = now or now_kst()
+    weekday = now.weekday()
+    minutes = now.hour * 60 + now.minute
+
+    for session in ("morning", "close"):
+        start, end, weekdays = AUTO_SESSION_WINDOWS[session]
+        if weekday not in weekdays or not (start <= minutes < end):
+            continue
+        if is_analysis_already_published(session):
+            logger.info(f"{session} 세션은 오늘 이미 완료됨")
+            continue
+        return session
+    return None
+
+
 def _texts_from_briefing_record(record):
     """저장된 briefings 레코드에서 Gemini 프롬프트용 텍스트/맵을 재구성."""
     metrics = record.get("metrics") or {}
@@ -2018,9 +2049,10 @@ def main():
     parser = argparse.ArgumentParser(description="Market briefing runner (GitHub Actions)")
     parser.add_argument(
         "--mode",
-        choices=["daily", "weekly", "monthly", "reanalyze"],
+        choices=["auto", "daily", "weekly", "monthly", "reanalyze"],
         default="daily",
-        help="daily=아침/장마감, weekly=주간, monthly=월간, reanalyze=오늘 AI만 재생성",
+        help="auto=KST 시각으로 세션 자동 판별, daily=아침/장마감, "
+             "weekly=주간, monthly=월간, reanalyze=오늘 AI만 재생성",
     )
     parser.add_argument(
         "--send-notification",
@@ -2034,6 +2066,17 @@ def main():
         help="오늘 같은 타입 실행이 이미 성공했으면 건너뜀 (놓친 스케줄 보충용)",
     )
     args = parser.parse_args()
+
+    if args.mode == "auto":
+        # auto는 중복 방지가 기본 동작이라 --skip-if-done이 필요 없다.
+        session = resolve_auto_session()
+        if session is None:
+            logger.info("지금 실행할 세션이 없습니다 (시간대 밖이거나 오늘 이미 완료).")
+            return {"statusCode": 200, "body": "Nothing to do"}
+        logger.info(f"auto 판별 결과: {session} 세션 실행")
+        result = lambda_handler({"send_notification": session == "morning"}, None)
+        logger.info(f"실행 완료: {result}")
+        return result
 
     if args.skip_if_done and args.mode == "daily":
         analysis_type = "morning" if args.send_notification == "true" else "close"

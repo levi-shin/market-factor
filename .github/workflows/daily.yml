@@ -1,0 +1,81 @@
+# 일간 브리핑 디스패처
+#
+# GitHub의 schedule은 실행이 보장되지 않아 특정 슬롯이 통째로 누락된다.
+# (2026-09-04 관측: 아침이 5시간 지연, 장마감 3개 슬롯 전부 미발생)
+#
+# 그래서 정시 하나에 의존하지 않고, 창(window) 안에서 매시간 시도한다.
+# --mode auto가 KST 시각으로 세션을 판별하고, 그날 이미 성공했으면 즉시 종료하므로
+# 실제 수집/AI 호출은 세션당 1회만 일어난다.
+#
+#   아침   07:30~12:00 KST (월~토) = 22:30~03:00 UTC
+#   장마감 16:00~22:00 KST (월~금) = 07:00~13:00 UTC
+name: Daily Briefing
+
+on:
+  schedule:
+    - cron: "30 22 * * *"            # 07:30 KST — 아침 정시
+    - cron: "0 23 * * *"             # 08:00 KST
+    - cron: "0 0,1,2 * * *"          # 09:00~11:00 KST
+    - cron: "0 7 * * *"              # 16:00 KST — 장마감 정시
+    - cron: "0 8,9,10,11,12 * * *"   # 17:00~21:00 KST
+  workflow_dispatch:
+    inputs:
+      session:
+        description: "실행할 세션 (auto=시각으로 판별)"
+        required: true
+        default: "auto"
+        type: choice
+        options:
+          - "auto"
+          - "morning"
+          - "close"
+
+concurrency:
+  group: market-briefing-daily
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Run briefing
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GEMINI_MODEL: ${{ secrets.GEMINI_MODEL }}
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          SITE_BASE_URL: ${{ secrets.SITE_BASE_URL }}
+        run: |
+          SESSION="${{ github.event.inputs.session || 'auto' }}"
+          case "$SESSION" in
+            morning) python lambda_function.py --mode daily --send-notification true ;;
+            close)   python lambda_function.py --mode daily --send-notification false ;;
+            *)       python lambda_function.py --mode auto ;;
+          esac
+
+      - name: Commit updated data
+        if: always()
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          for p in briefings.json history.json raw analysis evidence metadata reports; do
+            if [ -e "$p" ]; then
+              git add "$p"
+            fi
+          done
+          if git diff --staged --quiet; then
+            echo "No data changes to commit"
+            exit 0
+          fi
+          git commit -m "chore: update daily briefing data"
+          git pull --rebase --autostash origin "${{ github.ref_name }}" || true
+          git push

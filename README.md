@@ -16,24 +16,35 @@
 
 ## 스케줄 (Asia/Seoul)
 
-| Workflow | 시각 | GitHub cron (UTC) | 실행 |
-|----------|------|-------------------|------|
-| `morning.yml` | 월~토 07:30 KST | `30 22 * * 0-5` | `--mode daily --send-notification true` |
-| `close.yml` | 월~금 16:00 KST | `0 7 * * 1-5` | `--mode daily --send-notification false` |
-| `weekly.yml` | 토요일 07:30 KST | `30 22 * * 5` | `--mode weekly` |
-| `monthly.yml` | 매달 1일 07:30 KST | `30 22 28-31 * *` + KST 1일 가드 | `--mode monthly` |
-| `reanalyze.yml` | 수동 | — | `--mode reanalyze` |
+| Workflow | 대상 | 실행 |
+|----------|------|------|
+| `daily.yml` | 아침 + 장마감 | `--mode auto` (시각으로 세션 판별) |
+| `weekly.yml` | 토요일 07:30 KST | `--mode weekly` |
+| `monthly.yml` | 매달 1일 07:30 KST | `--mode monthly` |
+| `reanalyze.yml` | 수동 | `--mode reanalyze` |
 
-GitHub `schedule`은 UTC만 지원하고 실행이 보장되지 않아 건너뛸 수 있습니다.
-그래서 아침·장마감에는 보충 슬롯을 두었습니다.
+### 일간 브리핑이 도는 방식
 
-| 구분 | 정시 | 보충 |
-|------|------|------|
-| 아침 | 07:30 | 08:30, 09:30 |
-| 장마감 | 16:00 | 17:00, 18:00 |
+GitHub `schedule`은 실행이 보장되지 않습니다. 정시 슬롯 하나에 의존하면
+그 슬롯이 누락될 때 그날 브리핑이 통째로 빠집니다.
+(2026-09-04 관측: 아침이 5시간 지연, 장마감은 3개 슬롯 전부 미발생)
 
-보충 슬롯은 `--skip-if-done`으로 동작해, 그날 이미 성공했으면 즉시 종료합니다.
-따라서 Gemini 호출은 하루 1회만 나갑니다. 수동 실행은 이 검사를 무시하고 항상 실행됩니다.
+그래서 `daily.yml`은 **창(window) 안에서 매시간** 시도합니다.
+
+| 세션 | 창 (KST) | 요일 | Slack |
+|------|----------|------|-------|
+| 아침 | 07:30 ~ 12:00 | 월~토 | 발송 |
+| 장마감 | 16:00 ~ 22:00 | 월~금 | 미발송 |
+
+`--mode auto`가 현재 KST 시각으로 세션을 고르고, **그날 이미 성공했으면 즉시 종료**합니다.
+따라서 창 안의 슬롯이 몇 개 누락돼도 나머지 하나만 걸리면 그날 실행이 채워지고,
+실제 수집·Gemini 호출은 세션당 1회만 일어납니다.
+
+완료 판정 기준은 `metadata/market/YYYY/MM/DD/{morning,close}.json`의 `status == "published"`입니다.
+AI가 실패한 날은 metadata가 기록되지 않으므로 남은 슬롯이 자동으로 재시도합니다.
+
+수동 실행(`workflow_dispatch`)은 `session` 입력으로 `auto` / `morning` / `close`를 고를 수 있고,
+`morning`·`close`를 직접 지정하면 중복 검사를 무시하고 강제 실행합니다.
 
 ## GitHub Secrets
 
@@ -63,8 +74,12 @@ export GEMINI_API_KEY=...
 export SLACK_WEBHOOK_URL=...
 export SITE_BASE_URL=https://levi-shin.github.io/market-factor   # 선택
 
-python lambda_function.py --mode daily --send-notification true
-python lambda_function.py --mode daily --send-notification false
+# 현재 KST 시각으로 세션 판별 (Actions가 쓰는 방식)
+python lambda_function.py --mode auto
+
+# 세션 직접 지정
+python lambda_function.py --mode daily --send-notification true    # 아침
+python lambda_function.py --mode daily --send-notification false   # 장마감
 python lambda_function.py --mode weekly
 python lambda_function.py --mode monthly
 
