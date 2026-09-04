@@ -66,17 +66,37 @@ def dashboard_url(path=""):
     return f"{base}/{path.lstrip('/')}" if path else base
 
 
+def _atomic_write(target, content, encoding="utf-8"):
+    # 같은 디렉터리에 .tmp로 쓴 뒤 os.replace로 교체한다.
+    # 쓰는 도중 프로세스가 죽어도 원본이 깨지지 않음 (replace는 원자적).
+    target.parent.mkdir(parents=True, exist_ok=True)
+    tmp = target.with_name(target.name + ".tmp")
+    try:
+        with open(tmp, "w", encoding=encoding) as f:
+            f.write(content)
+            f.flush()
+            os.fsync(f.fileno())
+        os.replace(tmp, target)
+    finally:
+        if tmp.exists():
+            try:
+                tmp.unlink()
+            except OSError:
+                pass
+
+
 def save_json_file(rel_path, payload):
     target = data_root() / rel_path
-    target.parent.mkdir(parents=True, exist_ok=True)
-    target.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
+    content = json.dumps(payload, ensure_ascii=False, indent=2)
+    # 교체 직전에 다시 파싱해서 깨진 JSON을 절대 남기지 않는다.
+    json.loads(content)
+    _atomic_write(target, content)
     return str(target.relative_to(data_root()))
 
 
 def save_text_file(rel_path, content, encoding="utf-8"):
     target = data_root() / rel_path
-    target.parent.mkdir(parents=True, exist_ok=True)
-    target.write_text(content, encoding=encoding)
+    _atomic_write(target, content, encoding=encoding)
     return str(target.relative_to(data_root()))
 
 
@@ -625,7 +645,8 @@ def call_gemini_json(payload, headers, timeout=None, context_label="Gemini"):
     return None, None
 
 
-def get_itemized_ai_analysis(market_data_text, portfolio_text, oil_prices_text, news_list):
+def get_itemized_ai_analysis(market_data_text, portfolio_text, oil_prices_text, news_list,
+                              analysis_type="morning"):
     # 반환값: (reasons_dict, model_used) 튜플. 실패 시 (None, None).
     # model_used는 metadata에 "실제로 어떤 모델이 이 분석을 생성했는지" 남기기 위함.
     api_key = clean_str(os.environ.get("GEMINI_API_KEY", ""))
@@ -638,6 +659,19 @@ def get_itemized_ai_analysis(market_data_text, portfolio_text, oil_prices_text, 
     # save_evidence_market()에서 별도로 사용).
     news_text = "\n".join([f"• {n['title']}" for n in news_list])
     logger.info(f"Gemini 모델 후보 순서: {GEMINI_MODEL_FALLBACKS}")
+
+    # 실행 시각에 따라 "지금 어느 장이 끝난 상태인지"가 달라진다.
+    # 아침(07:30 KST)은 미국장 마감 직후, 장마감(16:00 KST)은 국내장 마감 직후.
+    if analysis_type == "close":
+        session_context = """[거래시간 맥락 - 16:00 KST 국내장 마감 시점]
+- 코스피/삼성전자 등 국내 자산: 오늘 정규장이 방금 마감된 당일 종가입니다.
+- 나스닥/S&P500/미국 개별주: 아직 오늘 미국장이 열리지 않았으므로 "직전 거래일 종가"입니다.
+  오늘 국내장 흐름의 원인으로 미국 지수를 언급할 때는 "간밤/전일 미국장"으로 다루세요."""
+    else:
+        session_context = """[거래시간 맥락 - 07:30 KST 아침 시점]
+- 나스닥/S&P500/미국 개별주: 간밤에 마감된 미국장 결과입니다. 가장 최신 정보입니다.
+- 코스피/삼성전자 등 국내 자산: 아직 오늘 장이 열리기 전이므로 "전 거래일 종가"입니다.
+  간밤 미국장 결과가 오늘 국내장에 어떤 영향을 줄지의 관점으로 서술하세요."""
 
     prompt = f"""
 당신은 대한민국 최고 수준의 월가 매크로 헤지펀드 및 여의도 수석 스트래티지스트입니다.
@@ -655,12 +689,21 @@ def get_itemized_ai_analysis(market_data_text, portfolio_text, oil_prices_text, 
   헤드라인에 근거해서만 서술하세요.
 - 스페이스X(SPCX)는 2026년 6월 12일 나스닥에 상장(IPO)을 완료한 상장 기업입니다.
   "비상장 기업이라 데이터가 없다" 등 사실과 다른 발언을 절대 하지 마세요.
+- 근거(뉴스/데이터)가 부족하면 원인을 단정하지 말고 "~로 보입니다", "~가능성이 있습니다"처럼
+  불확실성을 남겨서 서술하세요.
+
+[매우 중요 - 투자 조언 금지]
+- 매수/매도/비중확대/저가매수/목표주가 등 어떤 형태의 투자 추천도 하지 마세요.
+- "지금 사야 한다", "차익 실현 시점" 같은 행동 지시도 금지입니다.
+- 당신의 역할은 이미 일어난 움직임의 원인과 파급 영향을 설명하는 것까지입니다.
+
+{session_context}
 
 반드시 마크다운(```json) 없이 순수 JSON 포맷으로만 출력하세요.
 
 JSON 출력 포맷 (각 필드는 "원인 + 파급 영향"만, 숫자/방향 단어 없이):
 {{
-  "overall": "시장 종합 인과관계 총평 - 환율/금리/기술주/유가 간 연결고리와 투자 시사점을 3줄로 (숫자 나열보다 관계/맥락 위주로)",
+  "overall": "시장 종합 인과관계 총평 - 환율/금리/기술주/유가 간 연결고리와 시장 참여자가 주목할 맥락을 3줄로 (매매 권유 없이, 숫자 나열보다 관계/맥락 위주로)",
   "usdkrw": "달러/원 환율 분석: 이런 흐름의 배경과 수출기업 실적 및 외인 수급에 미치는 영향",
   "kospi": "코스피 분석: 지수 움직임의 원인과 국내 증시 파급 영향",
   "nasdaq": "나스닥 분석: 움직임의 원인과 미국 성장주 밸류에이션 파급 효과",
@@ -1692,7 +1735,9 @@ def run_reanalyze_today():
     (market_text, portfolio_text, oil_text, news_list,
      numeric_data, pct_data, portfolio_map, oil_data, oil_diff, fear_score) = _texts_from_briefing_record(record)
 
-    reasons_dict, model_used = get_itemized_ai_analysis(market_text, portfolio_text, oil_text, news_list)
+    reasons_dict, model_used = get_itemized_ai_analysis(
+        market_text, portfolio_text, oil_text, news_list, analysis_type="close"
+    )
     reasons_dict = build_prefixed_reasons(
         reasons_dict, numeric_data, pct_data, portfolio_map, oil_data, oil_diff
     )
@@ -1804,17 +1849,16 @@ def lambda_handler(event, context):
 
         # Gemini AI 분석 호출 (알림을 안 보내는 실행이라도 대시보드용 데이터는
         # 최신으로 갱신되어야 하므로 동일하게 수행)
-        reasons_dict, model_used = get_itemized_ai_analysis(market_text, portfolio_text, oil_text, news_list)
+        analysis_type = "morning" if send_notification else "close"
+        reasons_dict, model_used = get_itemized_ai_analysis(
+            market_text, portfolio_text, oil_text, news_list, analysis_type=analysis_type
+        )
 
         # Gemini는 "원인/영향"만 서술했고, 등락 방향·%·가격은 우리 코드가
         # 직접 계산해서 각 항목 문장 앞에 붙임 (숫자 할루시네이션 원천 차단).
         reasons_dict = build_prefixed_reasons(
             reasons_dict, numeric_data, pct_data, portfolio_map, oil_data, oil_diff
         )
-
-        # analysis_type: 07:30 알림 실행 = "morning", 16:00 조용히 갱신 실행 = "close"
-        # (send_notification 플래그와 1:1로 대응하는 값이라 별도 event 필드 없이 유도)
-        analysis_type = "morning" if send_notification else "close"
 
         # briefings.json 저장 - 두 실행 모두 동일하게 수행. 같은 날짜(date) 레코드는
         # save_to_s3 내부에서 덮어쓰기 처리되므로, 장마감 후 실행이 그날의
