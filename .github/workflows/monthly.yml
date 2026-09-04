@@ -55,7 +55,7 @@ jobs:
         run: python lambda_function.py --mode monthly
 
       - name: Commit updated report
-        if: steps.guard.outputs.run == 'true'
+        if: always() && steps.guard.outputs.run == 'true'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"

@@ -3,8 +3,11 @@ name: Close Update
 
 on:
   schedule:
-    # Mon–Fri 07:00 UTC = Mon–Fri 16:00 KST
+    # Mon–Fri 07:00 UTC = Mon–Fri 16:00 KST (정시)
     - cron: "0 7 * * 1-5"
+    # 보충 슬롯 (이미 성공했으면 --skip-if-done으로 즉시 종료)
+    - cron: "0 8 * * 1-5"     # 17:00 KST
+    - cron: "0 9 * * 1-5"     # 18:00 KST
   workflow_dispatch:
 
 concurrency:
@@ -31,9 +34,16 @@ jobs:
           GEMINI_MODEL: ${{ secrets.GEMINI_MODEL }}
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
           SITE_BASE_URL: ${{ secrets.SITE_BASE_URL }}
-        run: python lambda_function.py --mode daily --send-notification false
+        run: |
+          # 수동 실행은 항상 강제 재실행, 스케줄만 중복 방지
+          SKIP=""
+          if [ "${{ github.event_name }}" = "schedule" ]; then
+            SKIP="--skip-if-done"
+          fi
+          python lambda_function.py --mode daily --send-notification false $SKIP
 
       - name: Commit updated data
+        if: always()
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"

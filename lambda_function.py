@@ -1669,6 +1669,25 @@ def run_monthly_report():
 
 
 
+
+def is_analysis_already_published(analysis_type):
+    """오늘(KST) 같은 타입 실행이 이미 성공 저장됐는지.
+
+    metadata는 AI 분석까지 성공해야 기록되므로, 실패한 실행은 여기서
+    False가 되어 뒤따르는 보충(catch-up) 슬롯이 다시 시도한다.
+    """
+    date_str, _ = kst_date_str()
+    key = build_data_key("metadata", DOMAIN, date_str, f"{analysis_type}.json")
+    path = data_root() / key
+    if not path.exists():
+        return False
+    try:
+        meta = json.loads(path.read_text(encoding="utf-8"))
+    except Exception:
+        return False
+    return meta.get("status") == "published"
+
+
 def _texts_from_briefing_record(record):
     """저장된 briefings 레코드에서 Gemini 프롬프트용 텍스트/맵을 재구성."""
     metrics = record.get("metrics") or {}
@@ -1993,7 +2012,18 @@ def main():
         default="true",
         help="daily 모드에서만 사용. false면 데이터 갱신만(장마감)",
     )
+    parser.add_argument(
+        "--skip-if-done",
+        action="store_true",
+        help="오늘 같은 타입 실행이 이미 성공했으면 건너뜀 (놓친 스케줄 보충용)",
+    )
     args = parser.parse_args()
+
+    if args.skip_if_done and args.mode == "daily":
+        analysis_type = "morning" if args.send_notification == "true" else "close"
+        if is_analysis_already_published(analysis_type):
+            logger.info(f"오늘 {analysis_type} 실행이 이미 완료됨 - 건너뜁니다.")
+            return {"statusCode": 200, "body": "Skipped (already done today)"}
 
     if args.mode == "weekly":
         event = {"mode": "weekly"}

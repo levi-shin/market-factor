@@ -3,8 +3,12 @@ name: Morning Briefing
 
 on:
   schedule:
-    # Sun–Fri 22:30 UTC = Mon–Sat 07:30 KST
+    # Sun–Fri 22:30 UTC = Mon–Sat 07:30 KST (정시)
     - cron: "30 22 * * 0-5"
+    # 보충 슬롯: GitHub schedule이 건너뛰었을 때만 실제로 실행됨
+    # (이미 성공했으면 --skip-if-done으로 즉시 종료)
+    - cron: "30 23 * * 0-5"   # 08:30 KST
+    - cron: "30 0 * * 1-6"    # 09:30 KST (UTC일 = KST일)
   workflow_dispatch:
     inputs:
       send_notification:
@@ -42,9 +46,15 @@ jobs:
           SITE_BASE_URL: ${{ secrets.SITE_BASE_URL }}
         run: |
           NOTIFY="${{ github.event.inputs.send_notification || 'true' }}"
-          python lambda_function.py --mode daily --send-notification "$NOTIFY"
+          # 수동 실행은 항상 강제 재실행, 스케줄만 중복 방지
+          SKIP=""
+          if [ "${{ github.event_name }}" = "schedule" ]; then
+            SKIP="--skip-if-done"
+          fi
+          python lambda_function.py --mode daily --send-notification "$NOTIFY" $SKIP
 
       - name: Commit updated data
+        if: always()
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
