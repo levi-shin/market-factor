@@ -41,14 +41,20 @@ GitHub `schedule`은 UTC만 지원하고 실행이 보장되지 않아 건너뛸
 |--------|------|
 | `GEMINI_API_KEY` | Google Gemini API 키 |
 | `SLACK_WEBHOOK_URL` | Incoming Webhook URL |
-| `SITE_BASE_URL` | (선택) 대시보드/리포트 링크 베이스. 예: `https://levi-shin.github.io/market-factor` |
+| `SITE_BASE_URL` | (선택) 대시보드/리포트 링크 베이스. 비워두면 `CNAME` 값을 사용 |
 | `GEMINI_MODEL` | (선택) 우선 사용할 모델명 |
 
 ## GitHub Pages (대시보드)
 
 1. Settings → Pages → Source: **Deploy from a branch**
 2. Branch: `main` / `/ (root)`
-3. `SITE_BASE_URL`에 Pages URL을 넣으면 Slack 링크가 대시보드로 연결됩니다.
+
+Slack 링크에 쓰이는 주소는 다음 순서로 결정됩니다.
+
+1. `SITE_BASE_URL` Secret
+2. 저장소의 `CNAME` (커스텀 도메인, 현재 `briefings.1125labs.com`)
+
+커스텀 도메인을 쓰고 있다면 Secret은 설정하지 않아도 됩니다.
 
 ## 로컬 실행
 

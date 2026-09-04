@@ -48,7 +48,23 @@ def data_root():
 
 
 def site_base_url():
-    return clean_str(os.environ.get("SITE_BASE_URL", "")).rstrip("/")
+    """대시보드/리포트 링크의 베이스 URL.
+
+    우선순위: SITE_BASE_URL 환경변수 > 저장소의 CNAME(GitHub Pages 커스텀 도메인).
+    CNAME이 있으면 별도 Secret 없이도 Slack 링크가 정상 동작한다.
+    """
+    env_url = clean_str(os.environ.get("SITE_BASE_URL", "")).rstrip("/")
+    if env_url:
+        return env_url
+
+    cname = data_root() / "CNAME"
+    try:
+        host = cname.read_text(encoding="utf-8").strip().splitlines()[0].strip()
+    except (OSError, IndexError):
+        return ""
+    if not host or "/" in host or " " in host:
+        return ""
+    return f"https://{host}"
 
 
 def briefings_path():
@@ -1956,7 +1972,7 @@ def lambda_handler(event, context):
         dash_line = (
             f"🔗 <{dashboard_url()}|👉 항목별 개별 심층 사유 대시보드 열기>"
             if dash else
-            "🔗 대시보드: `index.html` (GitHub Pages + `SITE_BASE_URL` 설정 시 링크 활성화)"
+            "🔗 대시보드 주소를 확인하지 못했습니다 (CNAME 또는 SITE_BASE_URL 확인 필요)"
         )
 
         compact_briefing = f"""☀️ *모닝 퀵 브리핑* ({weather_text})
