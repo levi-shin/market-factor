@@ -1,11 +1,22 @@
-# 주간 리포트 — 토요일 07:30 KST (= 금요일 22:30 UTC)
+# 주간 리포트 — 토요일 07:30 KST
+#
+# GitHub schedule은 슬롯을 통째로 누락시킬 수 있어 정시 하나에 기대지 않는다.
+# 토요일 오전 창(07:30~12:00 KST) 안에서 여러 번 시도하고,
+# 이미 생성된 주차면 --skip-if-done으로 즉시 종료한다.
 name: Weekly Report
 
 on:
   schedule:
-    # Fri 22:30 UTC = Sat 07:30 KST
-    - cron: "30 22 * * 5"
+    - cron: "30 22 * * 5"       # 토 07:30 KST (금 22:30 UTC)
+    - cron: "0 23 * * 5"        # 토 08:00 KST
+    - cron: "0 0,1,2 * * 6"     # 토 09:00~11:00 KST
   workflow_dispatch:
+    inputs:
+      force:
+        description: "이미 생성된 주차도 다시 만들기"
+        required: false
+        default: false
+        type: boolean
 
 concurrency:
   group: market-briefing-weekly
@@ -31,7 +42,12 @@ jobs:
           GEMINI_MODEL: ${{ secrets.GEMINI_MODEL }}
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
           SITE_BASE_URL: ${{ secrets.SITE_BASE_URL }}
-        run: python lambda_function.py --mode weekly
+        run: |
+          SKIP="--skip-if-done"
+          if [ "${{ github.event.inputs.force }}" = "true" ]; then
+            SKIP=""
+          fi
+          python lambda_function.py --mode weekly $SKIP
 
       - name: Commit updated report
         if: always()

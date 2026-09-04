@@ -1554,6 +1554,15 @@ def build_weekly_slack_message(date_range, report_url, biggest_mover_text,
                                        biggest_mover_text, fear_avg, macro_metrics, next_week_events_preview)
 
 
+
+def is_period_report_published(report_key):
+    """주간/월간 리포트가 이미 만들어졌는지 (파일 존재 여부).
+
+    일간과 달리 리포트는 결과물 HTML 자체가 완료 표식이 된다.
+    """
+    return (data_root() / report_key).exists()
+
+
 def run_period_report(this_period, last_period, period_label, report_key, holiday_text,
                        title_word="주간", period_word="주", next_period_word="차주"):
     # 주간/월간 리포트가 공유하는 핵심 로직. this_period/last_period는 각각
@@ -1618,8 +1627,16 @@ def run_period_report(this_period, last_period, period_label, report_key, holida
         raise
 
 
-def run_weekly_report():
+def run_weekly_report(skip_if_done=False):
     logger.info("주간 리포트 생성 시작")
+    kst_now = now_kst()
+    week_label = f"{kst_now.year}-W{kst_now.isocalendar()[1]:02d}"
+    report_key = f"reports/{week_label}.html"
+
+    if skip_if_done and is_period_report_published(report_key):
+        logger.info(f"주간 리포트 {week_label} 이미 생성됨 - 건너뜁니다.")
+        return
+
     records = get_weekday_records(count=10)
     if len(records) < 2:
         logger.warning("주간 리포트: 데이터가 부족해서 생략 (최소 며칠치 필요)")
@@ -1628,13 +1645,10 @@ def run_weekly_report():
     this_week = records[-5:] if len(records) >= 5 else records
     last_week = records[:-5] if len(records) > 5 else []
 
-    kst_now = now_kst()
-    week_label = f"{kst_now.year}-W{kst_now.isocalendar()[1]:02d}"
-
     holidays = get_korean_holidays_next_week()
     holiday_text = ", ".join(holidays) if holidays else "없음 (정상 5거래일)"
 
-    run_period_report(this_week, last_week, week_label, f"reports/{week_label}.html", holiday_text,
+    run_period_report(this_week, last_week, week_label, report_key, holiday_text,
                        title_word="주간", period_word="주", next_period_word="차주")
 
 
@@ -1653,13 +1667,20 @@ def get_month_records(year, month):
     return records
 
 
-def run_monthly_report():
+def run_monthly_report(skip_if_done=False):
     # 매달 1일 07:30 KST에 실행된다고 가정 - 대상은 "지난달" 전체.
     logger.info("월간 리포트 생성 시작")
     kst_now = now_kst()
     first_of_this_month = kst_now.replace(day=1)
     last_month_end = first_of_this_month - datetime.timedelta(days=1)
     target_year, target_month = last_month_end.year, last_month_end.month
+
+    month_label = f"{target_year}-{target_month:02d}"
+    report_key = f"reports/{month_label}-monthly.html"
+
+    if skip_if_done and is_period_report_published(report_key):
+        logger.info(f"월간 리포트 {month_label} 이미 생성됨 - 건너뜁니다.")
+        return
 
     if target_month == 1:
         prev_year, prev_month = target_year - 1, 12
@@ -1672,15 +1693,13 @@ def run_monthly_report():
     if len(this_month) < 2:
         logger.warning("월간 리포트: 지난달 데이터가 부족해서 생략")
         return
-
-    month_label = f"{target_year}-{target_month:02d}"
     # 차월(target_month의 다음 달) 휴장일을 봐야 하므로 연도 넘어가는 경우도 처리
     next_month_year = target_year if target_month < 12 else target_year + 1
     next_month = target_month + 1 if target_month < 12 else 1
     holidays = get_korean_holidays_in_month(next_month_year, next_month)
     holiday_text = ", ".join(holidays) if holidays else "없음"
 
-    run_period_report(this_month, last_month, f"{month_label}-monthly", f"reports/{month_label}-monthly.html",
+    run_period_report(this_month, last_month, f"{month_label}-monthly", report_key,
                        holiday_text, title_word="월간", period_word="달", next_period_word="차월")
 
 
@@ -1856,7 +1875,7 @@ def lambda_handler(event, context):
     #   분리된 별도 실행 경로 - 새 시세 수집 없이 briefings.json만 집계함.
     if event.get("mode") == "weekly":
         try:
-            run_weekly_report()
+            run_weekly_report(skip_if_done=bool(event.get("skip_if_done")))
             return {"statusCode": 200, "body": "Weekly report sent"}
         except Exception as e:
             logger.error(f"주간 리포트 실행 실패: {e}")
@@ -1870,7 +1889,7 @@ def lambda_handler(event, context):
     #   {"mode": "monthly"}로 호출. 지난달 전체(월~금)를 집계함.
     if event.get("mode") == "monthly":
         try:
-            run_monthly_report()
+            run_monthly_report(skip_if_done=bool(event.get("skip_if_done")))
             return {"statusCode": 200, "body": "Monthly report sent"}
         except Exception as e:
             logger.error(f"월간 리포트 실행 실패: {e}")
@@ -2085,9 +2104,9 @@ def main():
             return {"statusCode": 200, "body": "Skipped (already done today)"}
 
     if args.mode == "weekly":
-        event = {"mode": "weekly"}
+        event = {"mode": "weekly", "skip_if_done": args.skip_if_done}
     elif args.mode == "monthly":
-        event = {"mode": "monthly"}
+        event = {"mode": "monthly", "skip_if_done": args.skip_if_done}
     elif args.mode == "reanalyze":
         event = {"mode": "reanalyze"}
     else:

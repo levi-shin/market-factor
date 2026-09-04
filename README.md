@@ -19,9 +19,21 @@
 | Workflow | 대상 | 실행 |
 |----------|------|------|
 | `daily.yml` | 아침 + 장마감 | `--mode auto` (시각으로 세션 판별) |
-| `weekly.yml` | 토요일 07:30 KST | `--mode weekly` |
-| `monthly.yml` | 매달 1일 07:30 KST | `--mode monthly` |
+| `weekly.yml` | 토요일 오전 | `--mode weekly --skip-if-done` |
+| `monthly.yml` | 매달 1일 오전 | `--mode monthly --skip-if-done` |
 | `reanalyze.yml` | 수동 | `--mode reanalyze` |
+
+네 워크플로 모두 **정시 슬롯 하나에 의존하지 않고 창 안에서 여러 번 시도**하며,
+이미 완료된 실행은 즉시 종료합니다.
+
+| 대상 | 창 (KST) | 완료 판정 |
+|------|----------|-----------|
+| 아침 | 토요일 포함 월~토 07:30~12:00 | `metadata/.../morning.json` |
+| 장마감 | 월~금 16:00~22:00 | `metadata/.../close.json` |
+| 주간 | 토 07:30~11:00 | `reports/YYYY-Www.html` |
+| 월간 | 1일 07:30~11:00 | `reports/YYYY-MM-monthly.html` |
+
+주간·월간은 수동 실행 시 `force` 입력을 켜면 이미 만든 리포트도 다시 생성합니다.
 
 ### 일간 브리핑이 도는 방식
 

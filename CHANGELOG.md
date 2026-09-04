@@ -32,6 +32,14 @@ GitHub `schedule`은 실행이 보장되지 않습니다. 실제로 관측된 �
   - 중복 방지가 내장되어 실제 수집·Gemini 호출은 세션당 1회
   - 수동 실행 시 `session` 입력으로 `auto` / `morning` / `close` 선택 가능
 
+- **주간·월간에도 동일한 창 방식 적용**
+  - 주간: 토 07:30~11:00 KST 사이 3개 슬롯 (기존 금 22:30 UTC 단일 슬롯)
+  - 월간: 1일 07:30~11:00 KST 사이 슬롯 (기존 사실상 월 1회 단일 슬롯)
+  - 월간은 슬롯을 놓치면 **한 달을 통째로 건너뛰는** 구조였음
+- **리포트 중복 생성 방지** (`is_period_report_published`)
+  - 완료 판정: `reports/YYYY-Www.html`, `reports/YYYY-MM-monthly.html` 존재 여부
+  - 수동 실행 시 `force` 입력으로 강제 재생성 가능
+
 ### 제거
 
 - `morning.yml`, `close.yml` — `daily.yml`로 통합

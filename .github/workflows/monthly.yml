@@ -5,9 +5,18 @@ name: Monthly Report
 
 on:
   schedule:
-    # Candidate windows: UTC 22:30 on days 28–31 (= next day 07:30 KST)
-    - cron: "30 22 28-31 * *"
+    # KST 1일 오전 창(07:30~11:00) 안에서 여러 번 시도.
+    # 아래 UTC 슬롯 중 KST 기준 1일인 것만 가드를 통과한다.
+    - cron: "30 22 28-31 * *"   # KST 익일 07:30
+    - cron: "0 23 28-31 * *"    # KST 익일 08:00
+    - cron: "0 0,1,2 1 * *"     # KST 1일 09:00~11:00
   workflow_dispatch:
+    inputs:
+      force:
+        description: "이미 생성된 달도 다시 만들기"
+        required: false
+        default: false
+        type: boolean
 
 concurrency:
   group: market-briefing-monthly
@@ -52,7 +61,12 @@ jobs:
           GEMINI_MODEL: ${{ secrets.GEMINI_MODEL }}
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
           SITE_BASE_URL: ${{ secrets.SITE_BASE_URL }}
-        run: python lambda_function.py --mode monthly
+        run: |
+          SKIP="--skip-if-done"
+          if [ "${{ github.event.inputs.force }}" = "true" ]; then
+            SKIP=""
+          fi
+          python lambda_function.py --mode monthly $SKIP
 
       - name: Commit updated report
         if: always() && steps.guard.outputs.run == 'true'
