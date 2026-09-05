@@ -1,0 +1,48 @@
+{
+  "date": "2026-09-05",
+  "domain": "market",
+  "sources": [
+    {
+      "id": "evidence-001",
+      "title": "JP모건이 선별한 '중간선거 매매 전략' [김현석의 퀵브리프]",
+      "url": "https://www.hankyung.com/article/202609055621i",
+      "publishedAt": "Sat, 05 Sep 2026 08:17:48 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-002",
+      "title": "고금리 우려에…서학개미, 단기채 ETF에 1256억 '뭉칫돈'",
+      "url": "https://www.hankyung.com/article/2026090556277",
+      "publishedAt": "Sat, 05 Sep 2026 08:16:50 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-003",
+      "title": "'굿 뉴스는 나쁜 뉴스' 뜨거운 고용, 냉각된 증시…CPI가 9월 운명 결정? [김현석의 월스트리트나우]",
+      "url": "https://www.hankyung.com/article/202609055581i",
+      "publishedAt": "Sat, 05 Sep 2026 08:03:36 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-004",
+      "title": "'매물 다 나왔나'…외국인 돌아오면 집중할 업종·종목은",
+      "url": "https://www.hankyung.com/article/202609044722i",
+      "publishedAt": "Sat, 05 Sep 2026 08:00:10 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-005",
+      "title": "9월 투자 답안지 나왔나…기관·외인 투자자 '실적주' 싹쓸이",
+      "url": "https://www.hankyung.com/article/202609045378i",
+      "publishedAt": "Sat, 05 Sep 2026 08:00:05 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-006",
+      "title": "중소기업 시작해 '월가 금융가' 모두 제쳤다…비결 뭐길래",
+      "url": "https://www.hankyung.com/article/202609044516i",
+      "publishedAt": "Sat, 05 Sep 2026 07:30:02 +0900",
+      "source": "한국경제"
+    }
+  ]
+}
