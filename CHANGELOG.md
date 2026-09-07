@@ -8,6 +8,50 @@
 
 ---
 
+## [0.7.0] - 2026-09-07
+
+0.6.0에서 넣은 EventBridge 스케줄러를 걷어냈습니다.
+
+### 배경
+
+정시성은 확실히 좋아지지만, 그 대가로 관리할 게 늘었습니다.
+
+- AWS 계정·IAM·CloudFormation 스택
+- 최대 1년짜리 PAT와 만료 시 교체 절차 (만료되면 401로 조용히 죽음)
+- 실패해도 알려주지 않아 CloudWatch 지표를 따로 봐야 함
+
+개인용 브리핑 하나 때문에 감당할 운영 부담이 아니라고 판단했습니다.
+
+### 제거
+
+- `infra/eventbridge-dispatch.yaml`
+- `infra/README.md`
+- README의 EventBridge 관련 서술
+
+### 유지
+
+0.5.1의 스케줄 개선과 0.6.1의 Gemini 재시도는 **그대로 둡니다.**
+AWS 없이도 슬롯 누락은 창 방식으로 메꿔지고, AI 실패는 라운드 재시도로 버팁니다.
+
+남는 한계는 **지연**입니다. 07:30 브리핑이 09:11에 도착하는 건 못 막습니다.
+급하면 Actions → Daily Briefing → Run workflow로 수동 실행하면 됩니다.
+
+### 되살리려면
+
+배포했던 스택은 아래 한 줄로 정리됩니다.
+
+```bash
+aws cloudformation delete-stack --stack-name market-factor-scheduler --region ap-northeast-2
+```
+
+나중에 다시 필요하면 지우기 전 커밋에서 파일을 꺼내면 됩니다.
+
+```bash
+git checkout bd44ba2 -- infra/
+```
+
+---
+
 ## [0.6.1] - 2026-09-07
 
 수요 폭주(503)에 42초 만에 포기하던 문제를 고쳤습니다.
