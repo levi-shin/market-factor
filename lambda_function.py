@@ -1053,11 +1053,22 @@ def get_previous_snapshot():
     return None
 
 
-def recompute_pct_vs_previous(numeric_data, pct_data, portfolio_map):
+def recompute_pct_vs_previous(numeric_data, pct_data, portfolio_map, oil_data=None, oil_diff=None):
+    """등락을 직전 브리핑(오늘 제외) 기준으로 다시 계산.
+
+    Yahoo/Opinet이 주는 자체 등락은 '직전 캘린더 거래일' 기준이라,
+    주말·공휴일을 건너뛴 우리 브리핑 간격과 어긋날 수 있다.
+    대시보드 차트는 briefings.json 시계열을 그대로 보여주므로,
+    문장 앞머리의 등락도 같은 기준으로 맞춰야 차트와 글이 일치한다.
+
+    2026-09-07 관측: 일반휘발유 1859.27(09-05) → 1859.31(+0.04)인데
+    Opinet DIFF=-0.02를 그대로 써서 "하락"이라고 적었다.
+    Opinet은 우리가 없는 중간일(추정 1859.33) 대비 등락이다.
+    """
     prev = get_previous_snapshot()
     if not prev:
-        logger.info("이전 스냅샷 없음 - 이번 1회만 Yahoo 자체 pct 값을 그대로 사용")
-        return pct_data, portfolio_map
+        logger.info("이전 스냅샷 없음 - 이번 1회만 Yahoo/Opinet 자체 등락을 그대로 사용")
+        return pct_data, portfolio_map, (oil_diff or {})
     logger.info(f"등락률 기준일: {prev.get('date')} (오늘 레코드는 제외)")
 
     prev_metrics = prev.get("metrics", {})
@@ -1082,7 +1093,32 @@ def recompute_pct_vs_previous(numeric_data, pct_data, portfolio_map):
         # get_stock_price_any가 계산한 값을 그대로 둠
         new_portfolio_map[sym] = new_info
 
-    return new_pct_data, new_portfolio_map
+    new_oil_diff = dict(oil_diff or {})
+    if oil_data:
+        for key in ("gasoline", "premium_gasoline", "diesel"):
+            curr_val = oil_data.get(key)
+            prev_val = prev_metrics.get(key)
+            if curr_val is not None and prev_val is not None:
+                new_oil_diff[key] = curr_val - prev_val
+
+    return new_pct_data, new_portfolio_map, new_oil_diff
+
+
+def build_oil_text(oil_data, oil_diff):
+    """재계산된 oil_diff 기준으로 Gemini/로그용 유가 텍스트를 다시 조립."""
+    labels = {
+        "gasoline": "전국 평균 일반휘발유",
+        "premium_gasoline": "전국 평균 고급휘발유",
+        "diesel": "전국 평균 자동차용경유",
+    }
+    lines = []
+    for key, label in labels.items():
+        price = (oil_data or {}).get(key)
+        if price is None:
+            continue
+        diff = (oil_diff or {}).get(key, 0.0) or 0.0
+        lines.append(f"• {label}: {price:,.2f}원/L ({diff:+.2f}원)")
+    return "\n".join(lines) if lines else "• 전국 평균 유가: 데이터 수집 지연"
 
 
 def build_market_text(numeric_data, pct_data):
@@ -1854,17 +1890,22 @@ def _texts_from_briefing_record(record):
         "premium_gasoline": metrics.get("premium_gasoline"),
         "diesel": metrics.get("diesel"),
     }
+    # 유가 등락은 저장하지 않으므로, 직전 브리핑 가격과의 차로 다시 만든다.
+    # (Opinet DIFF를 쓰면 차트와 문장이 어긋날 수 있음)
     oil_diff = {"gasoline": 0.0, "premium_gasoline": 0.0, "diesel": 0.0}
+    prev = get_previous_snapshot()
+    if prev:
+        prev_metrics = prev.get("metrics") or {}
+        for key in oil_diff:
+            curr = oil_data.get(key)
+            prev_val = prev_metrics.get(key)
+            if curr is not None and prev_val is not None:
+                oil_diff[key] = curr - prev_val
     fear_score = metrics.get("fear_score", 50)
 
     market_text = build_market_text(numeric_data, pct_data)
     portfolio_text = build_portfolio_text(portfolio_map)
-    oil_lines = []
-    for k, label in (("gasoline", "전국 평균 일반휘발유"), ("premium_gasoline", "전국 평균 고급휘발유"), ("diesel", "전국 평균 자동차용경유")):
-        v = oil_data.get(k)
-        if v is not None:
-            oil_lines.append(f"• {label}: {v:,.2f}원/L")
-    oil_text = "\n".join(oil_lines) if oil_lines else "• 국내 유가: 데이터 없음"
+    oil_text = build_oil_text(oil_data, oil_diff)
 
     # news가 문자열 리스트인 구포맷 호환
     norm_news = []
@@ -2002,13 +2043,17 @@ def lambda_handler(event, context):
             oil_text, oil_data, oil_diff = f_oil.result()
             news_list = f_news.result()
 
-        # ⚠️ pct 재계산: Yahoo가 주는 pct 대신, briefings.json의 "직전 실행 결과"와
-        # 직접 비교해서 등락률을 다시 계산 (24시간 거래되는 환율/원자재의
-        # Yahoo previousClose 기준점 불일치 버그 수정). market_text/portfolio_text도
-        # 바뀐 pct 기준으로 다시 조립해서 Gemini에게 일관된 값을 전달함.
-        pct_data, portfolio_map = recompute_pct_vs_previous(numeric_data, pct_data, portfolio_map)
+        # ⚠️ 등락 재계산: Yahoo/Opinet이 주는 자체 등락 대신, briefings.json의
+        # "직전 브리핑(오늘 제외)"과 직접 비교한다. 주말·공휴일을 건너뛴 우리
+        # 브리핑 간격과 소스의 캘린더 거래일이 어긋나면 차트(시계열)와 문장
+        # 앞머리의 등락이 반대로 나온다.
+        # (2026-09-07: 일반유 차트는 올랐는데 Opinet DIFF로 "하락"이라고 기록)
+        pct_data, portfolio_map, oil_diff = recompute_pct_vs_previous(
+            numeric_data, pct_data, portfolio_map, oil_data, oil_diff
+        )
         market_text = build_market_text(numeric_data, pct_data)
         portfolio_text = build_portfolio_text(portfolio_map)
+        oil_text = build_oil_text(oil_data, oil_diff)
 
         # Gemini AI 분석 호출 (알림을 안 보내는 실행이라도 대시보드용 데이터는
         # 최신으로 갱신되어야 하므로 동일하게 수행)
