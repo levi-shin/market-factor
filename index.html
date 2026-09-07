@@ -18,19 +18,35 @@
   <div class="max-w-6xl mx-auto p-4 md:p-8 space-y-5">
 
     <!-- 헤더 -->
-    <header class="space-y-1">
-      <div class="flex items-center gap-2">
-        <h1 class="text-xl md:text-2xl font-bold text-white tracking-tight">
-          01. 모닝 팩터 (Morning Factor)
-        </h1>
-        <span class="text-xs bg-sky-500/10 text-sky-400 border border-sky-500/20 px-2 py-0.5 rounded-md font-medium">
-          Live
-        </span>
+    <header class="space-y-3">
+      <div class="flex flex-wrap items-start justify-between gap-3">
+        <div class="space-y-1">
+          <div class="flex items-center gap-2">
+            <h1 class="text-xl md:text-2xl font-bold text-white tracking-tight">
+              01. 모닝 팩터 (Morning Factor)
+            </h1>
+            <span class="text-xs bg-sky-500/10 text-sky-400 border border-sky-500/20 px-2 py-0.5 rounded-md font-medium">
+              Live
+            </span>
+          </div>
+          <p class="text-sm text-slate-400">
+            Collection &amp; Big Tech Insights — 글로벌 시세 수집 및 항목별 AI 등락 원인 심층 분석
+          </p>
+        </div>
+        <nav id="reportNav" class="flex flex-wrap gap-2 text-xs">
+          <!-- reports.json에서 최신 주간/월간 링크를 채움 -->
+        </nav>
       </div>
-      <p class="text-sm text-slate-400">
-        Collection &amp; Big Tech Insights — 글로벌 시세 수집 및 항목별 AI 등락 원인 심층 분석
-      </p>
     </header>
+
+    <!-- 주간 · 월간 리포트 목록 -->
+    <section id="reportsPanel" class="bg-slate-900 border border-slate-800 rounded-2xl p-4 md:p-5 hidden">
+      <div class="flex items-center justify-between gap-3 mb-3">
+        <h2 class="text-sm font-semibold text-slate-300">주간 · 월간 리포트</h2>
+        <span class="text-xs text-slate-500" id="reportsCount"></span>
+      </div>
+      <div id="reportsList" class="grid grid-cols-1 md:grid-cols-2 gap-2"></div>
+    </section>
 
     <!-- 지표 선택 네비게이션 (자산군별 그룹) -->
     <nav class="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-3" id="metricNav">
@@ -123,6 +139,7 @@
     // 일별 브리핑 누적 파일 (구 history.json → briefings.json)
     const BRIEFINGS_URL = './briefings.json';
     const LEGACY_BRIEFINGS_URL = './history.json';
+    const REPORTS_URL = './reports.json';
 
     let rawData = [];
     let chartInstance = null;
@@ -133,6 +150,63 @@
     // 기본값: 데이터가 적을 땐 어차피 전체가 다 보이고, 쌓이기 시작하면
     // 1개월 정도가 "한눈에 보기 + 너무 빽빽하지 않기"의 균형점이라 기본값으로 둠.
     let currentRangeKey = '1m';
+
+    function escapeHtml(s) {
+      return String(s ?? '').replace(/[&<>"']/g, c => (
+        { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]
+      ));
+    }
+
+    async function loadReports() {
+      const nav = document.getElementById('reportNav');
+      const panel = document.getElementById('reportsPanel');
+      const list = document.getElementById('reportsList');
+      try {
+        const res = await fetch(REPORTS_URL + '?t=' + Date.now());
+        if (!res.ok) throw new Error('reports.json ' + res.status);
+        const reports = await res.json();
+        if (!Array.isArray(reports) || reports.length === 0) {
+          nav.innerHTML = '';
+          return;
+        }
+
+        const latestWeekly = reports.find(r => r.type === 'weekly');
+        const latestMonthly = reports.find(r => r.type === 'monthly');
+        const chips = [];
+        if (latestWeekly) {
+          chips.push(`<a href="${escapeHtml(latestWeekly.path)}"
+            class="px-3 py-1.5 rounded-md bg-slate-800 text-slate-200 border border-slate-700 hover:border-sky-500/50 hover:text-sky-300 transition">
+            주간 ${escapeHtml(latestWeekly.id)}</a>`);
+        }
+        if (latestMonthly) {
+          chips.push(`<a href="${escapeHtml(latestMonthly.path)}"
+            class="px-3 py-1.5 rounded-md bg-slate-800 text-slate-200 border border-slate-700 hover:border-sky-500/50 hover:text-sky-300 transition">
+            월간 ${escapeHtml(String(latestMonthly.id).replace(/-monthly$/, ''))}</a>`);
+        }
+        nav.innerHTML = chips.join('');
+
+        list.innerHTML = reports.map(r => {
+          const kind = r.type === 'monthly' ? '월간' : '주간';
+          const badge = r.type === 'monthly'
+            ? 'bg-violet-500/10 text-violet-300 border-violet-500/20'
+            : 'bg-emerald-500/10 text-emerald-300 border-emerald-500/20';
+          return `
+            <a href="${escapeHtml(r.path)}"
+               class="block rounded-xl border border-slate-800 bg-slate-950/40 px-4 py-3 hover:border-sky-500/40 transition">
+              <div class="flex items-center gap-2 mb-1">
+                <span class="text-[11px] px-1.5 py-0.5 rounded border ${badge}">${kind}</span>
+                <span class="text-xs text-slate-500 num">${escapeHtml(r.dateRange || r.id || '')}</span>
+              </div>
+              <div class="text-sm text-slate-200 leading-snug line-clamp-2">${escapeHtml(r.headline || r.title || '')}</div>
+            </a>`;
+        }).join('');
+        document.getElementById('reportsCount').textContent = `${reports.length}건`;
+        panel.classList.remove('hidden');
+      } catch (e) {
+        console.warn('리포트 목록 로드 실패:', e);
+        nav.innerHTML = '';
+      }
+    }
 
     function renderRangeSelector() {
       const el = document.getElementById('rangeSelector');
@@ -365,7 +439,7 @@
     }
 
     renderNav();
-    window.onload = loadData;
+    window.onload = () => { loadData(); loadReports(); };
   </script>
 </body>
 </html>

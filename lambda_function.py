@@ -75,11 +75,107 @@ def legacy_briefings_path():
     return data_root() / "history.json"
 
 
+def reports_index_path():
+    return data_root() / "reports.json"
+
+
 def dashboard_url(path=""):
     base = site_base_url()
     if not base:
         return path or "index.html"
     return f"{base}/{path.lstrip('/')}" if path else base
+
+
+def _report_entry_from_key(report_key, title_word, period_label, date_range, headline):
+    """reports.json에 넣을 한 줄 레코드."""
+    kind = "monthly" if "monthly" in report_key or title_word == "월간" else "weekly"
+    return {
+        "type": kind,
+        "id": period_label,
+        "path": report_key,
+        "title": f"{title_word} 마켓 리포트",
+        "dateRange": date_range,
+        "headline": headline or "",
+        "generatedAt": now_kst().isoformat(),
+    }
+
+
+def upsert_reports_index(report_key, title_word, period_label, date_range, headline):
+    """리포트 저장 후 목록 인덱스를 갱신. GitHub Pages는 디렉터리 리스팅이
+    없어서, 프론트가 읽을 수 있는 reports.json을 따로 유지한다."""
+    path = reports_index_path()
+    try:
+        entries = json.loads(path.read_text(encoding="utf-8")) if path.exists() else []
+        if not isinstance(entries, list):
+            entries = []
+    except Exception:
+        entries = []
+
+    entry = _report_entry_from_key(report_key, title_word, period_label, date_range, headline)
+    entries = [e for e in entries if e.get("path") != report_key and e.get("id") != period_label]
+    entries.append(entry)
+    # 최신순. id가 ISO week/month라 문자열 정렬로도 대체로 맞지만 generatedAt 우선.
+    entries.sort(key=lambda e: e.get("generatedAt") or e.get("id") or "", reverse=True)
+    save_json_file("reports.json", entries)
+    logger.info(f"reports.json 갱신: {len(entries)}건 (최신 {entry['id']})")
+    return entries
+
+
+def rebuild_reports_index_from_files():
+    """reports/ 안의 HTML을 스캔해 reports.json을 다시 만든다.
+    이미 있는 리포트에 목록만 붙일 때 사용."""
+    reports_dir = data_root() / "reports"
+    if not reports_dir.exists():
+        save_json_file("reports.json", [])
+        return []
+
+    existing = {}
+    idx_path = reports_index_path()
+    if idx_path.exists():
+        try:
+            for e in json.loads(idx_path.read_text(encoding="utf-8")):
+                if isinstance(e, dict) and e.get("path"):
+                    existing[e["path"]] = e
+        except Exception:
+            pass
+
+    entries = []
+    for html in sorted(reports_dir.glob("*.html")):
+        report_key = f"reports/{html.name}"
+        stem = html.stem  # 2026-W36 or 2026-09-monthly
+        if stem.endswith("-monthly"):
+            title_word, period_label, kind = "월간", stem.replace("-monthly", ""), "monthly"
+        else:
+            title_word, period_label, kind = "주간", stem, "weekly"
+
+        date_range, headline = "", ""
+        try:
+            text = html.read_text(encoding="utf-8")
+            # <div class="eyebrow">주간 마켓 리포트 · 2026-08-31 ~ 2026-09-04</div>
+            m = re.search(r'class="eyebrow">[^·]*·\s*([^<]+)</div>', text)
+            if m:
+                date_range = m.group(1).strip()
+            m = re.search(r'class="headline">([^<]+)</div>', text)
+            if m:
+                headline = m.group(1).strip()
+        except Exception:
+            pass
+
+        prev = existing.get(report_key, {})
+        entries.append({
+            "type": kind,
+            "id": period_label if kind == "weekly" else f"{period_label}-monthly",
+            "path": report_key,
+            "title": f"{title_word} 마켓 리포트",
+            "dateRange": date_range or prev.get("dateRange", ""),
+            "headline": headline or prev.get("headline", ""),
+            "generatedAt": prev.get("generatedAt") or now_kst().isoformat(),
+        })
+
+    entries.sort(key=lambda e: e.get("generatedAt") or e.get("id") or "", reverse=True)
+    save_json_file("reports.json", entries)
+    logger.info(f"reports.json 재구성: {len(entries)}건")
+    return entries
 
 
 def _atomic_write(target, content, encoding="utf-8"):
@@ -1600,6 +1696,7 @@ def build_period_report_html(period_label, date_range, macro_metrics, portfolio_
   </section>
   <footer>
     <p>※ {next_period_word} 체크는 수집된 뉴스 기준이며, 언론에 보도되지 않은 일정은 포함되지 않을 수 있습니다.</p>
+    <p><a href="../">← 모닝 팩터 대시보드</a></p>
   </footer>
 </div>
 <script>
@@ -1719,6 +1816,11 @@ def run_period_report(this_period, last_period, period_label, report_key, holida
     saved = save_text_file(report_key, report_html)
     report_url = dashboard_url(report_key)
     logger.info(f"{title_word} 리포트 저장 완료: {saved} ({report_url})")
+
+    try:
+        upsert_reports_index(report_key, title_word, period_label, date_range, biggest_mover_text)
+    except Exception as e:
+        logger.warning(f"reports.json 갱신 실패(무시): {e}")
 
     fear_avg = None
     valid_scores = [s for _, s in fear_scores if s is not None]

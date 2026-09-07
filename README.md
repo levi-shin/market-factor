@@ -7,8 +7,9 @@
 ## 구성
 
 - `lambda_function.py` — 시세 수집, Gemini 분석, 로컬 JSON/HTML 저장, Slack 알림
-- `index.html` — 모닝 팩터 대시보드 (`briefings.json` 기반)
+- `index.html` — 모닝 팩터 대시보드 (`briefings.json` · `reports.json` 기반)
 - `briefings.json` — 일별 브리핑 누적 데이터 (Actions가 갱신 후 커밋)
+- `reports.json` — 주간·월간 리포트 목록 (대시보드가 읽음)
 - `reports/` — 주간·월간 HTML 리포트
 - `raw/` · `analysis/` · `evidence/` · `metadata/` — 일자별 상세 데이터
 - `.github/workflows/` — 아침 / 장마감 / 주간 / 월간 / 재분석 스케줄
