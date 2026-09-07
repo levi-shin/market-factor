@@ -1500,6 +1500,141 @@ def search_stock_event_news(symbol, name, max_items=6):
     rest = [it for it in deduped if it not in hinted]
     return (hinted + rest)[:max_items]
 
+
+# 애플은 공홈에 이벤트 ICS를 올려 둔다. 뉴스 검색보다 이게 1순위.
+# https://www.apple.com/kr/apple-events/home/assets/event/event.ics
+APPLE_EVENT_ICS_URLS = [
+    "https://www.apple.com/kr/apple-events/home/assets/event/event.ics",
+]
+
+
+def _unfold_ics(text):
+    # RFC 5545: 긴 줄은 CRLF + 공백/탭으로 접힌다.
+    return re.sub(r"\r?\n[ \t]", "", text)
+
+
+def _parse_ics_dt(prop_key, prop_val):
+    """ICS DTSTART/DTEND → timezone-aware datetime (가능하면)."""
+    # DTSTART;TZID=America/Los_Angeles:20260909T100000
+    # DTSTART:20260909T170000Z
+    tz_name = None
+    m = re.search(r"TZID=([^;:]+)", prop_key or "")
+    if m:
+        tz_name = m.group(1)
+    raw = (prop_val or "").strip()
+    if raw.endswith("Z"):
+        return datetime.datetime.strptime(raw, "%Y%m%dT%H%M%SZ").replace(tzinfo=datetime.timezone.utc)
+    if "T" in raw:
+        dt = datetime.datetime.strptime(raw, "%Y%m%dT%H%M%S")
+    else:
+        dt = datetime.datetime.strptime(raw, "%Y%m%d")
+    if tz_name:
+        try:
+            from zoneinfo import ZoneInfo
+            return dt.replace(tzinfo=ZoneInfo(tz_name))
+        except Exception:
+            pass
+    return dt.replace(tzinfo=datetime.timezone.utc)
+
+
+def parse_ics_events(ics_text):
+    text = _unfold_ics(ics_text or "")
+    events = []
+    for block in re.findall(r"BEGIN:VEVENT(.*?)END:VEVENT", text, re.S | re.I):
+        fields = {}
+        for line in block.splitlines():
+            line = line.strip()
+            if not line or ":" not in line:
+                continue
+            key, val = line.split(":", 1)
+            name = key.split(";")[0].upper()
+            fields[name] = (key, val)
+        if "DTSTART" not in fields:
+            continue
+        start = _parse_ics_dt(*fields["DTSTART"])
+        end = _parse_ics_dt(*fields["DTEND"]) if "DTEND" in fields else None
+        summary = fields.get("SUMMARY", ("", ""))[1].strip() or "Apple 이벤트"
+        desc = fields.get("DESCRIPTION", ("", ""))[1].strip()
+        location = fields.get("LOCATION", ("", ""))[1].strip()
+        events.append({
+            "summary": summary,
+            "description": desc,
+            "location": location,
+            "start": start,
+            "end": end,
+        })
+    return events
+
+
+def fetch_apple_official_events():
+    """애플 공홈 ICS에서 공식 이벤트 일정을 읽는다."""
+    for url in APPLE_EVENT_ICS_URLS:
+        try:
+            raw = http_get(url, timeout=8)
+            # 404 HTML이 오면 ICS가 아님
+            if "BEGIN:VCALENDAR" not in raw:
+                logger.warning(f"Apple ICS가 캘린더가 아님: {url}")
+                continue
+            events = parse_ics_events(raw)
+            logger.info(f"Apple 공식 ICS {len(events)}건 ({url})")
+            return events
+        except Exception as e:
+            logger.warning(f"Apple ICS 조회 실패 ({url}): {e}")
+    return []
+
+
+def next_period_date_window(period_word, now=None):
+    """차주/차월로 볼 날짜 구간 (KST date)."""
+    now = now or now_kst()
+    today = now.date()
+    if period_word == "달":
+        if today.month == 12:
+            start = datetime.date(today.year + 1, 1, 1)
+            end = datetime.date(today.year + 1, 1, 31)
+        else:
+            start = datetime.date(today.year, today.month + 1, 1)
+            # 다음달 말일
+            if today.month + 1 == 12:
+                end = datetime.date(today.year, 12, 31)
+            else:
+                end = datetime.date(today.year, today.month + 2, 1) - datetime.timedelta(days=1)
+        return start, end
+    # 차주: 내일부터 14일 (토요 실행이면 월~금+α를 넉넉히 커버)
+    start = today + datetime.timedelta(days=1)
+    end = today + datetime.timedelta(days=14)
+    return start, end
+
+
+def apple_events_as_news_items(events, window_start, window_end):
+    """공식 이벤트를 AI 프롬프트용 '뉴스' 항목으로 바꾼다. 창 안의 것만."""
+    items = []
+    kst = datetime.timezone(datetime.timedelta(hours=9))
+    for ev in events or []:
+        start = ev.get("start")
+        if start is None:
+            continue
+        start_kst = start.astimezone(kst) if start.tzinfo else start.replace(tzinfo=kst)
+        d = start_kst.date()
+        if d < window_start or d > window_end:
+            continue
+        when = start_kst.strftime("%Y-%m-%d %H:%M KST")
+        title = f"[공식 캘린더] {ev.get('summary') or 'Apple 이벤트'} — {when}"
+        if ev.get("description"):
+            title = f"{title} · {ev['description'][:80]}"
+        items.append({
+            "title": title,
+            "publishedAt": when,
+            "official": True,
+            "start_kst": start_kst,
+            "summary": ev.get("summary") or "Apple 이벤트",
+        })
+    return items
+
+
+def format_apple_official_event_line(item):
+    when = item["start_kst"].strftime("%m/%d %H:%M KST")
+    return f"{item['summary']} (공식 일정 {when}). 신제품 공개로 관련 종목 변동성 확대 가능"
+
 def get_period_ai_analysis(macro_metrics, portfolio_metrics, period_news_titles, per_symbol_news,
                             period_word="주", next_period_word="차주", per_symbol_event_news=None):
     # period_word: "주" 또는 "달" / next_period_word: "차주" 또는 "차월"
@@ -1547,6 +1682,7 @@ def get_period_ai_analysis(macro_metrics, portfolio_metrics, period_news_titles,
 
 [매우 중요 - {next_period_word} 이벤트는 사실만]
 - "next_period_events"는 아래 [종목별 예정 일정 뉴스]를 우선 보고, 없으면 [종목별 일반 뉴스]를 보조로 보세요.
+- 제목이 "[공식 캘린더]"로 시작하면 회사 공식 일정입니다. 뉴스보다 우선하고 반드시 반영하세요.
 - 발표·공개·출시·이벤트·파업·시위·집회·실적발표처럼 **일정 신호**가 헤드라인에 있으면 채우세요.
 - 정확한 날짜(예: 9월 9일)가 없어도 "이번 주/차주/임박/예고/예약판매"처럼 시점이 드러나면 포함하세요.
 - 일정 신호가 전혀 없으면 반드시 "확인된 예정 이벤트 없음"이라고 쓰세요. 추측하거나 지어내지 마세요.
@@ -1851,9 +1987,22 @@ def run_period_report(this_period, last_period, period_label, report_key, holida
 
     per_symbol_news = {}
     per_symbol_event_news = {}
+    window_start, window_end = next_period_date_window(period_word)
+    apple_official_items = []
+    try:
+        apple_official_items = apple_events_as_news_items(
+            fetch_apple_official_events(), window_start, window_end
+        )
+    except Exception as e:
+        logger.warning(f"Apple 공식 일정 처리 실패(무시): {e}")
+
     for sym, name in MY_PORTFOLIO_TICKERS:
         per_symbol_news[sym] = search_stock_news(name)
-        per_symbol_event_news[sym] = search_stock_event_news(sym, name)
+        events = search_stock_event_news(sym, name)
+        if sym == "AAPL" and apple_official_items:
+            # 공식 ICS를 맨 앞에 붙인다. AI가 놓쳐도 아래에서 보강한다.
+            events = apple_official_items + events
+        per_symbol_event_news[sym] = events
         logger.info(f"{name} 뉴스 {len(per_symbol_news[sym])}건 / 일정 뉴스 {len(per_symbol_event_news[sym])}건")
 
     ai_result, model_used = get_period_ai_analysis(
@@ -1862,7 +2011,14 @@ def run_period_report(this_period, last_period, period_label, report_key, holida
         per_symbol_event_news=per_symbol_event_news,
     )
     issue_analysis = (ai_result or {}).get("issue_analysis", f"이슈 분석 데이터를 생성하지 못했습니다.")
-    next_period_events = (ai_result or {}).get("next_period_events", {})
+    next_period_events = dict((ai_result or {}).get("next_period_events", {}) or {})
+
+    # 공식 캘린더가 있는데 AI가 '없음'으로 비우면 덮어쓴다.
+    if apple_official_items:
+        current = next_period_events.get("AAPL") or ""
+        if (not current) or ("없음" in current):
+            next_period_events["AAPL"] = format_apple_official_event_line(apple_official_items[0])
+            logger.info(f"AAPL 차기 일정: 공식 ICS로 보강 → {next_period_events['AAPL']}")
 
     date_range = f"{this_period[0]['date']} ~ {this_period[-1]['date']}"
 
