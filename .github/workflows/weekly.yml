@@ -3,13 +3,17 @@
 # GitHub schedule은 슬롯을 통째로 누락시킬 수 있어 정시 하나에 기대지 않는다.
 # 토요일 오전 창(07:30~12:00 KST) 안에서 여러 번 시도하고,
 # 이미 생성된 주차면 --skip-if-done으로 즉시 종료한다.
+#
+# 슬롯 분(minute)은 :00/:30을 피한다 — 정각은 GitHub 부하가 몰려 지연·누락이 잦다.
 name: Weekly Report
 
 on:
   schedule:
-    - cron: "30 22 * * 5"       # 토 07:30 KST (금 22:30 UTC)
-    - cron: "0 23 * * 5"        # 토 08:00 KST
-    - cron: "0 0,1,2 * * 6"     # 토 09:00~11:00 KST
+    - cron: "33,57 22 * * 5"    # 토 07:33, 07:57 KST (금 22시대 UTC)
+    - cron: "21,49 23 * * 5"    # 토 08:21, 08:49 KST
+    - cron: "13,41 0 * * 6"     # 토 09:13, 09:41 KST
+    - cron: "9,37 1 * * 6"      # 토 10:09, 10:37 KST
+    - cron: "7,33 2 * * 6"      # 토 11:07, 11:33 KST
   workflow_dispatch:
     inputs:
       force:
