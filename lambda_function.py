@@ -1455,8 +1455,53 @@ def search_stock_news(query, max_items=5):
         return []
 
 
+# 주간/월간 "차주·차월 체크"용. 종목명만 치면 주가·제품 기사가 대부분이라
+# 발표·시위 같은 일정 뉴스가 묻힌다. (2026-09-05 주간: 아이폰18 발표·삼성
+# 동행노조 시위가 언론에 있는데도 전부 '없음'으로 나옴)
+_EVENT_QUERY_TEMPLATES = [
+    "{name} (발표 OR 공개 OR 출시 OR 이벤트) when:21d",
+    "{name} (파업 OR 시위 OR 노조 OR 집회 OR 실적) when:21d",
+]
+_TICKER_EVENT_EXTRA = {
+    "AAPL": ["아이폰 (발표 OR 공개 OR 이벤트 OR 예약) when:21d"],
+    "005930.KS": ["삼성전자 (동행노조 OR 시위 OR 집회 OR 파업) when:21d"],
+}
+
+
+def _dedupe_news(items, limit):
+    seen, out = set(), []
+    for it in items:
+        title = (it or {}).get("title") or ""
+        key = re.sub(r"\s+", "", title)
+        if not key or key in seen:
+            continue
+        seen.add(key)
+        out.append(it)
+        if len(out) >= limit:
+            break
+    return out
+
+
+_EVENT_TITLE_HINT = re.compile(
+    r"발표|공개|출시|이벤트|파업|시위|집회|노조|실적|예약|임박|예고|체크|일정"
+)
+
+
+def search_stock_event_news(symbol, name, max_items=6):
+    """예정 일정(발표·출시·시위 등)에 가까운 헤드라인만 모은다."""
+    # 종목 전용 쿼리를 먼저 돌려서 일정 기사가 제품 기사에 밀리지 않게 한다.
+    queries = list(_TICKER_EVENT_EXTRA.get(symbol, []))
+    queries.extend(t.format(name=name) for t in _EVENT_QUERY_TEMPLATES)
+    collected = []
+    for q in queries:
+        collected.extend(search_stock_news(q, max_items=4))
+    deduped = _dedupe_news(collected, limit=max_items * 3)
+    hinted = [it for it in deduped if _EVENT_TITLE_HINT.search(it.get("title") or "")]
+    rest = [it for it in deduped if it not in hinted]
+    return (hinted + rest)[:max_items]
+
 def get_period_ai_analysis(macro_metrics, portfolio_metrics, period_news_titles, per_symbol_news,
-                            period_word="주", next_period_word="차주"):
+                            period_word="주", next_period_word="차주", per_symbol_event_news=None):
     # period_word: "주" 또는 "달" / next_period_word: "차주" 또는 "차월"
     # (주간/월간 리포트가 이 함수 하나를 공유함 - 로직은 동일하고 문구만 다름)
     api_key = clean_str(os.environ.get("GEMINI_API_KEY", ""))
@@ -1481,13 +1526,18 @@ def get_period_ai_analysis(macro_metrics, portfolio_metrics, period_news_titles,
 
     news_text = "\n".join([f"• {t}" for t in period_news_titles])
 
-    per_symbol_news_text_parts = []
-    for sym, name in MY_PORTFOLIO_TICKERS:
-        items = per_symbol_news.get(sym, [])
-        if items:
+    def _fmt_symbol_news(bucket):
+        parts = []
+        for sym, name in MY_PORTFOLIO_TICKERS:
+            items = (bucket or {}).get(sym, [])
+            if not items:
+                continue
             lines = "\n".join([f"  - {it['title']} ({it.get('publishedAt', '날짜 미상')})" for it in items])
-            per_symbol_news_text_parts.append(f"[{name}]\n{lines}")
-    per_symbol_news_text = "\n\n".join(per_symbol_news_text_parts) if per_symbol_news_text_parts else "(수집된 종목별 뉴스 없음)"
+            parts.append(f"[{name}]\n{lines}")
+        return "\n\n".join(parts) if parts else "(수집된 뉴스 없음)"
+
+    per_symbol_news_text = _fmt_symbol_news(per_symbol_news)
+    per_symbol_event_text = _fmt_symbol_news(per_symbol_event_news)
 
     prompt = f"""
 당신은 여의도 수석 스트래티지스트입니다. 아래는 이번 {period_word}(평일 기준) 시장 데이터와 뉴스입니다.
@@ -1496,8 +1546,10 @@ def get_period_ai_analysis(macro_metrics, portfolio_metrics, period_news_titles,
 - 등락률/가격 수치는 이미 위에 정확히 제공되어 있습니다. 본문에 새로운 숫자를 만들어 쓰지 말고, 원인과 영향만 서술하세요.
 
 [매우 중요 - {next_period_word} 이벤트는 사실만]
-- "next_period_events"의 각 종목 값은, 아래 [종목별 뉴스]에 실제로 명시된 날짜/일정이 있을 때만 채우세요.
-- 없으면 반드시 "확인된 예정 이벤트 없음"이라고 쓰세요. 추측하거나 지어내지 마세요.
+- "next_period_events"는 아래 [종목별 예정 일정 뉴스]를 우선 보고, 없으면 [종목별 일반 뉴스]를 보조로 보세요.
+- 발표·공개·출시·이벤트·파업·시위·집회·실적발표처럼 **일정 신호**가 헤드라인에 있으면 채우세요.
+- 정확한 날짜(예: 9월 9일)가 없어도 "이번 주/차주/임박/예고/예약판매"처럼 시점이 드러나면 포함하세요.
+- 일정 신호가 전혀 없으면 반드시 "확인된 예정 이벤트 없음"이라고 쓰세요. 추측하거나 지어내지 마세요.
 - 이벤트를 적을 땐 "어디에 어떤 종류의 영향(변동성 확대, 관련 종목 파급 등)"만 언급하고, 주가가 오를지 내릴지는 절대 판단하지 마세요.
 
 반드시 마크다운 없이 순수 JSON으로만 출력하세요.
@@ -1525,7 +1577,10 @@ JSON 포맷:
 [이번 {period_word} 수집된 일반 뉴스 헤드라인]
 {news_text}
 
-[종목별 뉴스 검색 결과]
+[종목별 예정 일정 뉴스]  ← next_period_events의 1순위 근거
+{per_symbol_event_text}
+
+[종목별 일반 뉴스]
 {per_symbol_news_text}
 """
     payload = {
@@ -1695,7 +1750,7 @@ def build_period_report_html(period_label, date_range, macro_metrics, portfolio_
     {events_html}
   </section>
   <footer>
-    <p>※ {next_period_word} 체크는 수집된 뉴스 기준이며, 언론에 보도되지 않은 일정은 포함되지 않을 수 있습니다.</p>
+    <p>※ {next_period_word} 체크는 수집된 뉴스(발표·출시·시위 등 일정 검색 포함) 기준이며, 언론에 보도되지 않은 일정은 포함되지 않을 수 있습니다.</p>
     <p><a href="../">← 모닝 팩터 대시보드</a></p>
   </footer>
 </div>
@@ -1795,12 +1850,16 @@ def run_period_report(this_period, last_period, period_label, report_key, holida
                 period_news_titles.append(title)
 
     per_symbol_news = {}
+    per_symbol_event_news = {}
     for sym, name in MY_PORTFOLIO_TICKERS:
         per_symbol_news[sym] = search_stock_news(name)
+        per_symbol_event_news[sym] = search_stock_event_news(sym, name)
+        logger.info(f"{name} 뉴스 {len(per_symbol_news[sym])}건 / 일정 뉴스 {len(per_symbol_event_news[sym])}건")
 
     ai_result, model_used = get_period_ai_analysis(
         macro_metrics, portfolio_metrics, period_news_titles, per_symbol_news,
-        period_word=period_word, next_period_word=next_period_word
+        period_word=period_word, next_period_word=next_period_word,
+        per_symbol_event_news=per_symbol_event_news,
     )
     issue_analysis = (ai_result or {}).get("issue_analysis", f"이슈 분석 데이터를 생성하지 못했습니다.")
     next_period_events = (ai_result or {}).get("next_period_events", {})
