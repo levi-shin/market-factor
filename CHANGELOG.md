@@ -8,6 +8,44 @@
 
 ---
 
+## [0.6.0] - 2026-09-07
+
+GitHub `schedule`의 지연을 우회하는 외부 시계를 선택 구성으로 추가했습니다.
+
+### 배경
+
+0.5.1에서 슬롯을 촘촘하게 깔고 정각을 피했지만, 그건 **누락**을 메꾸는 대책이지
+**지연**을 없애지는 못합니다. 07:30 브리핑이 09:11에 도착하는 건 그대로입니다.
+
+`workflow_dispatch`로 띄운 실행은 스케줄 큐를 타지 않고 몇 초 안에 시작합니다.
+그래서 외부에서 시계를 들고 API를 호출하는 구조를 얹었습니다.
+
+### 추가
+
+- **`infra/eventbridge-dispatch.yaml`** — EventBridge 규칙이 GitHub REST API를 호출
+  - `Rule (cron, UTC)` → `API Destination` → `Connection (Bearer PAT)`
+  - Lambda·S3 없이 시계 역할만 하며, 데이터는 그대로 저장소에 남음
+  - 워크플로 4개가 API Destination 하나를 공유(경로 `*`를 규칙별로 채움)
+  - 세션마다 정시 슬롯 + 40분 뒤 보충 슬롯, 총 8개 규칙
+  - 월간은 day-of-month `L`(마지막 날) + UTC 22:40 = KST 1일 07:40로 정확히 한 번만
+- **`infra/README.md`** — 배포·토큰 발급·교체·비용·구현 메모
+
+### 설계
+
+- **시계 두 개.** 저장소의 GitHub cron은 그대로 두고 EventBridge를 주 시계로 얹음.
+  AWS 장애나 PAT 만료 시 0.5.1 수준으로 자연스럽게 되돌아감.
+- **중복은 dispatch 입력으로 방지.** `daily`는 `session=auto`로 깨워 창 판정과
+  metadata 완료 검사를 그대로 타고, `weekly`/`monthly`는 입력을 비워
+  `force=false` 기본값으로 `--skip-if-done`이 걸림.
+  `session=close`처럼 세션을 명시하면 중복 검사를 건너뛰므로 자동 스케줄에서는 쓰지 않음.
+
+### 문서
+
+- README 서두의 "AWS는 쓰지 않습니다" 문구를 실제 구성에 맞게 정정
+  (수집·분석·저장은 Actions, EventBridge는 선택적인 시계)
+
+---
+
 ## [0.5.1] - 2026-09-07
 
 창 안의 슬롯을 촘촘하게 만들고, 정각을 피해 흩뿌렸습니다.
