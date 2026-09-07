@@ -495,6 +495,22 @@ GEMINI_RETRY_DELAY_SEC = 4
 GEMINI_MAX_RETRIES_PER_MODEL = 2  # 일반 일시 오류(500/502/504): 같은 모델 최대 2번
 GEMINI_HTTP_TIMEOUT = 90  # 장문 한국어 JSON — Actions에서도 여유 있게
 
+# ⚠️ 후보를 한 바퀴 다 돌고도 실패하면 "기다렸다가 처음부터 다시" 돈다.
+#
+# 예전엔 한 바퀴만 돌고 포기했다. 503이 나면 대기 없이 다음 모델로 넘기다 보니
+# 후보 3개가 42초 만에 전부 소진되고 끝났다. (2026-09-07 장마감 실패)
+# 정작 Google이 주는 메시지는 "Spikes in demand are usually temporary.
+# Please try again later." 인데, 그 later를 한 번도 기다리지 않은 셈이다.
+#
+# 라운드 사이에 점점 길게 쉬면서 스파이크가 지나가길 기다린다.
+# 최악의 경우 대기 30+90+240초 + 호출 4바퀴 ≈ 9분으로, 워크플로 timeout(25분) 안에 든다.
+GEMINI_MAX_ROUNDS = int(os.environ.get("GEMINI_MAX_ROUNDS", "4"))
+GEMINI_ROUND_DELAYS_SEC = (30, 90, 240)
+GEMINI_TOTAL_BUDGET_SEC = int(os.environ.get("GEMINI_TOTAL_BUDGET_SEC", "720"))
+# 같은 라운드 안에서 수요 폭주로 다음 후보로 넘어갈 때의 최소 간격.
+# 세 모델이 같은 백엔드 혼잡을 공유하는 경우가 있어 곧바로 때리면 같이 막힌다.
+GEMINI_CAPACITY_GAP_SEC = 3
+
 
 def _is_transient_network_error(exc):
     # urllib timeout / 연결 끊김은 HTTP status가 아니라 URLError/TimeoutError로 옴.
@@ -591,11 +607,12 @@ def _is_usable_analysis(parsed, context_label="Gemini"):
     return True
 
 
-def call_gemini_json(payload, headers, timeout=None, context_label="Gemini"):
-    # 모델 폴백 리스트를 순서대로 시도하되, 각 모델마다 "일시적 오류/타임아웃"이면
-    # 짧게 재시도하고, 그래도 실패하거나 영구적 오류(404 등)면 다음 모델로.
-    timeout = timeout or GEMINI_HTTP_TIMEOUT
-    logger.info(f"{context_label} 모델 후보(중복 제거): {GEMINI_MODEL_FALLBACKS}")
+def _try_model_chain(payload, headers, timeout, context_label):
+    """후보 모델을 순서대로 한 바퀴 시도.
+
+    반환: (parsed, model, permanent) — permanent가 True면 재시도해도
+    소용없는 실패(인증 오류 등)라 바깥 라운드 루프를 즉시 끝낸다.
+    """
     for model in GEMINI_MODEL_FALLBACKS:
         url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
         model_payload = _payload_for_model(payload, model)
@@ -616,18 +633,21 @@ def call_gemini_json(payload, headers, timeout=None, context_label="Gemini"):
                 nonempty = sum(1 for v in parsed.values() if isinstance(v, str) and len(v.strip()) >= 40)
                 logger.info(f"✅ {context_label} 성공 (모델: {model}, 시도: {attempt}, "
                             f"필드 {len(parsed)}개/유효문장 {nonempty}개, overall {len(str(parsed.get('overall','')))}자)")
-                return parsed, model
+                return parsed, model, False
 
             except urllib.error.HTTPError as e:
                 if e.code == 404:
                     logger.warning(f"모델 {model} 사용 불가(404). 다음 후보 모델로 넘어갑니다.")
                     break  # 이 모델은 재시도 의미 없음 -> 다음 모델로
 
-                # 503/429: 수요 폭주 — 재시도해도 같은 모델이 또 막히는 경우가 많음.
-                # 바로 다음 후보(3.7 / 2.5 / 2.0 등)로 넘어가서 성공 확률을 높임.
+                # 503/429: 수요 폭주 — 같은 모델을 곧바로 다시 때려봐야 또 막힌다.
+                # 다음 후보로 넘기되, 후보들이 같은 백엔드 혼잡을 공유하는 경우가 있어
+                # 최소 간격은 두고 넘어간다. 한 바퀴를 다 돌고도 안 되면 바깥 라운드
+                # 루프가 더 길게 쉬었다가 처음부터 다시 시도한다.
                 if e.code in CAPACITY_HTTP_CODES:
                     logger.warning(f"{context_label} 수요 폭주(HTTP {e.code}, 모델: {model}). "
-                                    f"같은 모델 재시도 없이 다음 후보로 넘어갑니다.")
+                                    f"{GEMINI_CAPACITY_GAP_SEC}초 후 다음 후보로 넘어갑니다.")
+                    time.sleep(GEMINI_CAPACITY_GAP_SEC)
                     break
 
                 if e.code in TRANSIENT_HTTP_CODES and attempt < GEMINI_MAX_RETRIES_PER_MODEL:
@@ -642,7 +662,7 @@ def call_gemini_json(payload, headers, timeout=None, context_label="Gemini"):
                     break  # 재시도 소진 -> 다음 모델로
 
                 logger.error(f"{context_label} 호출 실패 (모델: {model}, HTTP {e.code}): {e}")
-                return None, None  # 영구적 오류(인증 실패 등)로 판단, 바로 포기
+                return None, None, True  # 영구적 오류(인증 실패 등) — 기다려도 소용없음
 
             except Exception as e:
                 if _is_transient_network_error(e) and attempt < GEMINI_MAX_RETRIES_PER_MODEL:
@@ -655,9 +675,52 @@ def call_gemini_json(payload, headers, timeout=None, context_label="Gemini"):
                                     f"(모델: {model}): {e}. 다음 후보 모델로 넘어갑니다.")
                     break
                 logger.error(f"{context_label} 호출 실패 (모델: {model}): {e}")
-                return None, None
+                return None, None, True
 
-    logger.error(f"{context_label}: 모든 후보 모델 실패: {GEMINI_MODEL_FALLBACKS}")
+    return None, None, False
+
+
+def call_gemini_json(payload, headers, timeout=None, context_label="Gemini"):
+    # 후보 모델을 한 바퀴 돌고, 전부 실패하면 점점 길게 쉬었다가 처음부터 다시 돈다.
+    # 수요 폭주(503)는 대개 몇 분이면 지나가므로 42초 만에 포기하지 않는 게 핵심이다.
+    timeout = timeout or GEMINI_HTTP_TIMEOUT
+    logger.info(f"{context_label} 모델 후보(중복 제거): {GEMINI_MODEL_FALLBACKS}")
+    started = time.monotonic()
+
+    for round_no in range(1, GEMINI_MAX_ROUNDS + 1):
+        round_started = time.monotonic()
+        parsed, model, permanent = _try_model_chain(payload, headers, timeout, context_label)
+        round_took = time.monotonic() - round_started
+        if parsed is not None:
+            if round_no > 1:
+                logger.info(f"{context_label}: {round_no}번째 라운드에서 성공 "
+                            f"(대기 포함 {time.monotonic() - started:.0f}초 소요)")
+            return parsed, model
+
+        if permanent:
+            logger.error(f"{context_label}: 재시도해도 소용없는 오류라 중단합니다.")
+            return None, None
+
+        if round_no >= GEMINI_MAX_ROUNDS:
+            break
+
+        delay = GEMINI_ROUND_DELAYS_SEC[min(round_no - 1, len(GEMINI_ROUND_DELAYS_SEC) - 1)]
+        elapsed = time.monotonic() - started
+        # 대기뿐 아니라 "다음 라운드도 이번만큼 걸린다"고 보고 예산을 확인한다.
+        # 모델이 매번 타임아웃(90초)까지 끌면 한 라운드가 수 분이라, 대기만
+        # 따지면 워크플로 timeout을 넘길 수 있다.
+        if elapsed + delay + round_took >= GEMINI_TOTAL_BUDGET_SEC:
+            logger.error(f"{context_label}: 시간 예산({GEMINI_TOTAL_BUDGET_SEC}초) 소진 "
+                         f"({elapsed:.0f}초 경과, 라운드당 {round_took:.0f}초). 이번 실행은 포기합니다.")
+            break
+
+        logger.warning(f"{context_label}: 후보 모델 전부 실패(라운드 {round_no}/{GEMINI_MAX_ROUNDS}). "
+                       f"{delay}초 쉬었다가 처음부터 다시 시도합니다.")
+        time.sleep(delay)
+
+    logger.error(f"{context_label}: 모든 후보 모델 실패 "
+                 f"({time.monotonic() - started:.0f}초, 후보 {GEMINI_MODEL_FALLBACKS}). "
+                 f"metadata가 failed로 남으므로 남은 슬롯이 다시 시도합니다.")
     return None, None
 
 
