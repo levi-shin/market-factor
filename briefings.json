@@ -661,39 +661,29 @@
   {
     "date": "2026-09-07",
     "metrics": {
-      "usdkrw": 1345.5,
-      "usdkrw_pct": -0.03640443093930929,
-      "kospi": 6687.21,
-      "kospi_pct": 0.0,
+      "usdkrw": 1342.9,
+      "usdkrw_pct": -0.19323671497583864,
+      "kospi": 6995.39,
+      "kospi_pct": 4.6084989106069685,
       "nasdaq": 26506.99,
       "nasdaq_pct": 0.0,
       "sp500": 7718.6,
       "sp500_pct": 0.0,
       "us10y": 4.784,
       "wti": 91.48,
-      "wti_pct": 0.28502521376891593,
+      "wti_pct": 0.0,
       "gold_intl": 4476.6,
-      "gold_intl_pct": -0.013401232913415845,
-      "gold_kr": 193652.33,
-      "gold_kr_pct": -0.0498015936303611,
-      "btc": 109430000.0,
-      "btc_pct": 0.1996117642749881,
-      "gasoline": 1859.24,
-      "premium_gasoline": 2314.6,
-      "diesel": 1843.69,
+      "gold_intl_pct": 0.0,
+      "gold_kr": 193278.12,
+      "gold_kr_pct": -0.19323805708921338,
+      "btc": 107975000.0,
+      "btc_pct": -1.3296171068262816,
+      "gasoline": 1859.31,
+      "premium_gasoline": 2314.25,
+      "diesel": 1844.22,
       "fear_score": 50
     },
     "portfolio": {
-      "AAPL": {
-        "name": "애플",
-        "price": 319.97,
-        "change_rate": 0.0
-      },
-      "SPCX": {
-        "name": "스페이스X(SPCX)",
-        "price": 147.95,
-        "change_rate": 0.0
-      },
       "TSLA": {
         "name": "테슬라",
         "price": 354.08,
@@ -709,47 +699,57 @@
         "price": 35.95,
         "change_rate": 0.0
       },
-      "005930.KS": {
-        "name": "삼성전자",
-        "price": 255500.0,
+      "SPCX": {
+        "name": "스페이스X(SPCX)",
+        "price": 147.95,
         "change_rate": 0.0
       },
       "MSFT": {
         "name": "마이크로소프트",
         "price": 499.7,
         "change_rate": 0.0
+      },
+      "005930.KS": {
+        "name": "삼성전자",
+        "price": 270000.0,
+        "change_rate": 5.6751467710371815
+      },
+      "AAPL": {
+        "name": "애플",
+        "price": 319.97,
+        "change_rate": 0.0
       }
     },
     "news": [
       {
-        "title": "영업이익 전망 급증한 한올바이오파마… 이뮤노반트發 모멘텀과 숨은 리스크는",
-        "url": "https://www.hankyung.com/article/202609066823i",
-        "publishedAt": "Mon, 07 Sep 2026 08:30:02 +0900"
+        "title": "이번주 '저PBR 기업 망신주기'案 확정...코스피 25%·코스닥 10%로",
+        "url": "https://www.hankyung.com/article/202609078565i",
+        "publishedAt": "Mon, 07 Sep 2026 16:01:59 +0900"
       },
       {
-        "title": "퇴직연금에 똑같이 1억 넣었는데…10년 뒤 9200만원 차이 난 이유",
-        "url": "https://www.hankyung.com/article/202608203374i",
-        "publishedAt": "Mon, 07 Sep 2026 08:25:06 +0900"
+        "title": "\"매달 10% 분배금 따박따박\"…개미들 수백억씩 베팅하는 ETF",
+        "url": "https://www.hankyung.com/article/202609078951i",
+        "publishedAt": "Mon, 07 Sep 2026 15:54:28 +0900"
       },
       {
-        "title": "\"삼전닉스 메모리 재고 10일 미만까지 뚝↓…내년 물량 고갈\"-KB",
-        "url": "https://www.hankyung.com/article/2026090773736",
-        "publishedAt": "Mon, 07 Sep 2026 08:12:10 +0900"
+        "title": "가전 넘어 로봇·AI까지…LG전자, 신사업 기대에 주가 급등",
+        "url": "https://www.hankyung.com/article/202609078818i",
+        "publishedAt": "Mon, 07 Sep 2026 15:54:23 +0900"
       },
       {
-        "title": "\"CJ CGV, 극장 수요 증가·국민성장펀드 투자 유치…목표가↑\"-KB",
-        "url": "https://www.hankyung.com/article/2026090773106",
-        "publishedAt": "Mon, 07 Sep 2026 08:10:13 +0900"
+        "title": "'커피 한 잔과 쇼핑을'...월마트, 던킨과 도넛·커피 배달 협력",
+        "url": "https://www.hankyung.com/article/202609078617i",
+        "publishedAt": "Mon, 07 Sep 2026 15:46:45 +0900"
       },
       {
-        "title": "\"두산퓨얼셀, 美 데이터센터 연료전지 수주…투자의견·목표가↑\"-NH",
-        "url": "https://www.hankyung.com/article/2026090773276",
-        "publishedAt": "Mon, 07 Sep 2026 08:04:58 +0900"
+        "title": "AI 주식관리 시대 열었다... 하나증권 신규 MTS '하나증권V' 출시",
+        "url": "https://www.hankyung.com/article/202609079010i",
+        "publishedAt": "Mon, 07 Sep 2026 15:46:10 +0900"
       },
       {
-        "title": "5조원 굴리는 PB의 조언…\"투자를 망치는 근본적 원인은 조급함\"",
-        "url": "https://www.hankyung.com/article/202608251859i",
-        "publishedAt": "Mon, 07 Sep 2026 08:00:17 +0900"
+        "title": "중국 주춤한 사이 브라질 증시 '훨훨'…외국인이 돌아선 이유는",
+        "url": "https://www.hankyung.com/article/202609078785i",
+        "publishedAt": "Mon, 07 Sep 2026 15:45:23 +0900"
       }
     ],
     "reasons": {

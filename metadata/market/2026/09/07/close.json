@@ -1,0 +1,10 @@
+{
+  "date": "2026-09-07",
+  "domain": "market",
+  "analysisType": "close",
+  "generatedAt": "2026-09-07T16:40:53.897973+09:00",
+  "analysisVersion": "0.1",
+  "promptVersion": "market-analysis-0.1",
+  "model": null,
+  "status": "failed"
+}
