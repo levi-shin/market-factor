@@ -1465,6 +1465,22 @@ _EVENT_QUERY_TEMPLATES = [
 _TICKER_EVENT_EXTRA = {
     "AAPL": ["아이폰 (발표 OR 공개 OR 이벤트 OR 예약) when:21d"],
     "005930.KS": ["삼성전자 (동행노조 OR 시위 OR 집회 OR 파업) when:21d"],
+    "BOTZ": ["BOTZ ETF (실적 OR 편입 OR 리밸런싱) when:21d", "로봇 ETF (출시 OR 실적) when:21d"],
+    "SPCX": ["스페이스X (상장 OR 락업 OR 발사 OR 공모) when:21d", "SPCX (락업 OR 해제 OR 실적) when:21d"],
+    "NVDA": ["엔비디아 (실적 OR 발표 OR 출시 OR GTC) when:21d"],
+    "TSLA": ["테슬라 (공개 OR 출시 OR 실적 OR 로보택시 OR 사이버캡) when:21d"],
+    "MSFT": ["마이크로소프트 (실적 OR 공개 OR 빌드 OR Azure) when:21d"],
+}
+
+# 일정 검색용 짧은 이름. 표시명에 괄호·ETF가 섞이면 검색이 깨진다.
+_TICKER_SEARCH_NAME = {
+    "NVDA": "엔비디아",
+    "AAPL": "애플",
+    "TSLA": "테슬라",
+    "005930.KS": "삼성전자",
+    "MSFT": "마이크로소프트",
+    "SPCX": "스페이스X",
+    "BOTZ": "BOTZ",
 }
 
 
@@ -1490,8 +1506,9 @@ _EVENT_TITLE_HINT = re.compile(
 def search_stock_event_news(symbol, name, max_items=6):
     """예정 일정(발표·출시·시위 등)에 가까운 헤드라인만 모은다."""
     # 종목 전용 쿼리를 먼저 돌려서 일정 기사가 제품 기사에 밀리지 않게 한다.
+    search_name = _TICKER_SEARCH_NAME.get(symbol, name)
     queries = list(_TICKER_EVENT_EXTRA.get(symbol, []))
-    queries.extend(t.format(name=name) for t in _EVENT_QUERY_TEMPLATES)
+    queries.extend(t.format(name=search_name) for t in _EVENT_QUERY_TEMPLATES)
     collected = []
     for q in queries:
         collected.extend(search_stock_news(q, max_items=4))
@@ -2008,7 +2025,8 @@ def run_period_report(this_period, last_period, period_label, report_key, holida
         logger.warning(f"Apple 공식 일정 처리 실패(무시): {e}")
 
     for sym, name in MY_PORTFOLIO_TICKERS:
-        per_symbol_news[sym] = search_stock_news(name)
+        search_name = _TICKER_SEARCH_NAME.get(sym, name)
+        per_symbol_news[sym] = search_stock_news(search_name)
         events = search_stock_event_news(sym, name)
         if sym == "AAPL" and apple_official_items:
             # 공식 ICS를 맨 앞에 붙인다. AI가 놓쳐도 아래에서 보강한다.
