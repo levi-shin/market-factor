@@ -35,7 +35,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          for p in briefings.json history.json raw analysis evidence metadata reports; do
+          for p in briefings.json history.json reports.json raw analysis evidence metadata reports; do
             if [ -e "$p" ]; then
               git add "$p"
             fi
