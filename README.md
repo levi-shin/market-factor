@@ -2,7 +2,12 @@
 
 국내외 시장·환율·원자재·보유종목을 매일 자동 수집해 AI가 등락 원인을 분석하고, 아침/장마감 브리핑과 주간·월간 리포트를 Slack으로 보내는 개인용 자동화 시스템입니다.
 
-**GitHub Actions만 사용합니다.** AWS Lambda / S3 / EventBridge는 쓰지 않습니다.
+**수집·분석·저장은 전부 GitHub Actions에서 돕니다.** AWS Lambda와 S3는 쓰지 않고,
+데이터는 모두 이 저장소에 커밋됩니다.
+
+다만 GitHub의 `schedule`이 정시를 자주 놓쳐서, **EventBridge를 외부 시계로 얹을 수
+있습니다**(선택). 워크플로를 `workflow_dispatch`로 깨우기만 하고 데이터는 건드리지
+않습니다. → [`infra/README.md`](infra/README.md)
 
 ## 구성
 
@@ -12,6 +17,7 @@
 - `reports/` — 주간·월간 HTML 리포트
 - `raw/` · `analysis/` · `evidence/` · `metadata/` — 일자별 상세 데이터
 - `.github/workflows/` — 아침 / 장마감 / 주간 / 월간 / 재분석 스케줄
+- `infra/` — (선택) 워크플로를 정시에 깨우는 EventBridge 스케줄러
 - `CHANGELOG.md` — 변경 이력
 
 ## 스케줄 (Asia/Seoul)
@@ -65,6 +71,22 @@ AI가 실패한 날은 metadata가 기록되지 않으므로 남은 슬롯이 �
 
 수동 실행(`workflow_dispatch`)은 `session` 입력으로 `auto` / `morning` / `close`를 고를 수 있고,
 `morning`·`close`를 직접 지정하면 중복 검사를 무시하고 강제 실행합니다.
+
+### 정시성이 필요하면 — EventBridge 시계 (선택)
+
+창을 촘촘하게 깔아도 GitHub `schedule` 자체의 지연은 없앨 수 없습니다.
+07:30 브리핑이 09:11에 오는 걸 막으려면 외부 시계가 필요합니다.
+
+`infra/eventbridge-dispatch.yaml`을 배포하면 EventBridge가 cron으로 GitHub REST API를
+호출해 워크플로를 깨웁니다. `workflow_dispatch`로 뜬 실행은 스케줄 큐를 타지 않아
+**몇 초 안에 시작**합니다. Lambda도 S3도 없이 시계 역할만 합니다.
+
+위의 GitHub cron은 **그대로 둡니다.** EventBridge가 주 시계, GitHub cron이 백업이라
+AWS가 죽거나 토큰이 만료돼도 지금 수준으로 되돌아갈 뿐 브리핑이 멈추지 않습니다.
+EventBridge는 `session=auto`로 깨우기 때문에 시계가 둘이어도 중복 수집이나
+중복 Slack 알림은 생기지 않습니다.
+
+배포 방법과 비용은 [`infra/README.md`](infra/README.md)에 있습니다.
 
 ## GitHub Secrets
 
