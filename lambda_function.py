@@ -1028,14 +1028,28 @@ def save_briefings(bucket_name=None, briefings=None):
 
 
 def get_previous_snapshot():
-    # briefings.json의 마지막 레코드 = 가장 최근에 저장된 실행 결과.
-    # (오늘 아침 실행이라면 어제 16:00 종가, 오늘 16:00 실행이라면 오늘 07:30 값)
+    """등락률 계산의 기준이 되는 직전 거래일 스냅샷.
+
+    ⚠️ 오늘 레코드는 건너뛴다. briefings.json은 하루에 한 레코드라
+    아침·장마감이 같은 레코드를 덮어쓰는데, 마지막 레코드를 그냥 쓰면
+    같은 날 두 번째 실행부터 자기 자신과 비교해서 등락이 0%가 된다.
+
+    2026-09-07 관측: 장마감이 두 번 돌면서(16:40 AI 실패 → 18:12 성공)
+    삼성전자가 255,500 → 270,000인데 "+0.00% 상승"으로 기록됐다.
+    두 번째 실행이 첫 번째 실행이 저장해 둔 270,000과 비교한 탓이다.
+
+    브리핑 문구도 "전 거래일 대비"라고 말하므로 기준은 전날이 맞다.
+    """
     try:
         briefings = load_briefings()
-        if briefings:
-            return briefings[-1]
     except Exception as e:
         logger.warning(f"이전 스냅샷 조회 실패 (최초 실행이거나 기록 없음): {e}")
+        return None
+
+    today_str, _ = kst_date_str()
+    for record in reversed(briefings or []):
+        if record.get("date") != today_str:
+            return record
     return None
 
 
@@ -1044,6 +1058,7 @@ def recompute_pct_vs_previous(numeric_data, pct_data, portfolio_map):
     if not prev:
         logger.info("이전 스냅샷 없음 - 이번 1회만 Yahoo 자체 pct 값을 그대로 사용")
         return pct_data, portfolio_map
+    logger.info(f"등락률 기준일: {prev.get('date')} (오늘 레코드는 제외)")
 
     prev_metrics = prev.get("metrics", {})
     new_pct_data = dict(pct_data)
