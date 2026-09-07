@@ -4,27 +4,27 @@
   "analysisType": "close",
   "market": {
     "numeric": {
-      "usdkrw": 1343.68,
+      "usdkrw": 1344.51,
       "us10y": 4.784,
       "sp500": 7718.6,
       "nasdaq": 26506.99,
       "kospi": 6995.39,
-      "btc": 108299000.0,
+      "btc": 108180000.0,
       "gold_intl": 4476.6,
-      "gold_kr": 193390.39,
+      "gold_kr": 193509.85,
       "wti": 91.48,
       "copper": 6.6825
     },
     "pct": {
-      "usdkrw": 0.05808325266214705,
+      "usdkrw": -0.10995624038811716,
       "us10y": 0.0,
       "sp500": 0.0,
       "nasdaq": 0.0,
-      "kospi": 0.0,
-      "btc": 0.30006946052326927,
-      "gold_intl": 0.0,
-      "gold_kr": 0.05808727858074087,
-      "wti": 0.0,
+      "kospi": 4.6084989106069685,
+      "btc": -0.9449511042742555,
+      "gold_intl": -0.013401232913415845,
+      "gold_kr": -0.12334010601974307,
+      "wti": 0.28502521376891593,
       "copper": 1.296043656207362
     },
     "oil": {
@@ -35,6 +35,16 @@
     "fearScore": 50
   },
   "portfolio": {
+    "SPCX": {
+      "name": "스페이스X(SPCX)",
+      "price": 147.95,
+      "change_rate": 0.0
+    },
+    "AAPL": {
+      "name": "애플",
+      "price": 319.97,
+      "change_rate": 0.0
+    },
     "TSLA": {
       "name": "테슬라",
       "price": 354.08,
@@ -45,29 +55,19 @@
       "price": 230.36,
       "change_rate": 0.0
     },
-    "BOTZ": {
-      "name": "로보틱스&AI ETF(BOTZ)",
-      "price": 35.95,
-      "change_rate": 0.0
-    },
-    "SPCX": {
-      "name": "스페이스X(SPCX)",
-      "price": 147.95,
-      "change_rate": 0.0
+    "005930.KS": {
+      "name": "삼성전자",
+      "price": 270000.0,
+      "change_rate": 5.6751467710371815
     },
     "MSFT": {
       "name": "마이크로소프트",
       "price": 499.7,
       "change_rate": 0.0
     },
-    "005930.KS": {
-      "name": "삼성전자",
-      "price": 270000.0,
-      "change_rate": 0.0
-    },
-    "AAPL": {
-      "name": "애플",
-      "price": 319.97,
+    "BOTZ": {
+      "name": "로보틱스&AI ETF(BOTZ)",
+      "price": 35.95,
       "change_rate": 0.0
     }
   }
