@@ -1459,17 +1459,17 @@ def search_stock_news(query, max_items=5):
 # 발표·시위 같은 일정 뉴스가 묻힌다. (2026-09-05 주간: 아이폰18 발표·삼성
 # 동행노조 시위가 언론에 있는데도 전부 '없음'으로 나옴)
 _EVENT_QUERY_TEMPLATES = [
-    "{name} (발표 OR 공개 OR 출시 OR 이벤트) when:21d",
-    "{name} (파업 OR 시위 OR 노조 OR 집회 OR 실적) when:21d",
+    "{name} (발표 OR 공개 OR 출시 OR 이벤트) when:{when}",
+    "{name} (파업 OR 시위 OR 노조 OR 집회 OR 실적) when:{when}",
 ]
 _TICKER_EVENT_EXTRA = {
-    "AAPL": ["아이폰 (발표 OR 공개 OR 이벤트 OR 예약) when:21d"],
-    "005930.KS": ["삼성전자 (동행노조 OR 시위 OR 집회 OR 파업) when:21d"],
-    "BOTZ": ["BOTZ ETF (실적 OR 편입 OR 리밸런싱) when:21d", "로봇 ETF (출시 OR 실적) when:21d"],
-    "SPCX": ["스페이스X (상장 OR 락업 OR 발사 OR 공모) when:21d", "SPCX (락업 OR 해제 OR 실적) when:21d"],
-    "NVDA": ["엔비디아 (실적 OR 발표 OR 출시 OR GTC) when:21d"],
-    "TSLA": ["테슬라 (공개 OR 출시 OR 실적 OR 로보택시 OR 사이버캡) when:21d"],
-    "MSFT": ["마이크로소프트 (실적 OR 공개 OR 빌드 OR Azure) when:21d"],
+    "AAPL": ["아이폰 (발표 OR 공개 OR 이벤트 OR 예약) when:{when}"],
+    "005930.KS": ["삼성전자 (동행노조 OR 시위 OR 집회 OR 파업) when:{when}"],
+    "BOTZ": ["BOTZ ETF (실적 OR 편입 OR 리밸런싱) when:{when}", "로봇 ETF (출시 OR 실적) when:{when}"],
+    "SPCX": ["스페이스X (상장 OR 락업 OR 발사 OR 공모) when:{when}", "SPCX (락업 OR 해제 OR 실적) when:{when}"],
+    "NVDA": ["엔비디아 (실적 OR 발표 OR 출시 OR GTC) when:{when}"],
+    "TSLA": ["테슬라 (공개 OR 출시 OR 실적 OR 로보택시 OR 사이버캡) when:{when}"],
+    "MSFT": ["마이크로소프트 (실적 OR 공개 OR 빌드 OR Azure) when:{when}"],
 }
 
 # 일정 검색용 짧은 이름. 표시명에 괄호·ETF가 섞이면 검색이 깨진다.
@@ -1481,6 +1481,12 @@ _TICKER_SEARCH_NAME = {
     "MSFT": "마이크로소프트",
     "SPCX": "스페이스X",
     "BOTZ": "BOTZ",
+}
+
+# 주간=최근 3주, 월간=차월까지 커버하려고 더 길게.
+_PERIOD_NEWS_WHEN = {
+    "주": "21d",
+    "달": "60d",
 }
 
 
@@ -1503,12 +1509,15 @@ _EVENT_TITLE_HINT = re.compile(
 )
 
 
-def search_stock_event_news(symbol, name, max_items=6):
-    """예정 일정(발표·출시·시위 등)에 가까운 헤드라인만 모은다."""
-    # 종목 전용 쿼리를 먼저 돌려서 일정 기사가 제품 기사에 밀리지 않게 한다.
+def search_stock_event_news(symbol, name, max_items=6, period_word="주"):
+    """예정 일정(발표·출시·시위 등)에 가까운 헤드라인만 모은다.
+
+    period_word가 "달"이면 when:60d로 차월 일정을 더 넓게 커버한다.
+    """
+    when = _PERIOD_NEWS_WHEN.get(period_word, "21d")
     search_name = _TICKER_SEARCH_NAME.get(symbol, name)
-    queries = list(_TICKER_EVENT_EXTRA.get(symbol, []))
-    queries.extend(t.format(name=search_name) for t in _EVENT_QUERY_TEMPLATES)
+    queries = [t.format(name=search_name, when=when) for t in _TICKER_EVENT_EXTRA.get(symbol, [])]
+    queries.extend(t.format(name=search_name, when=when) for t in _EVENT_QUERY_TEMPLATES)
     collected = []
     for q in queries:
         collected.extend(search_stock_news(q, max_items=4))
@@ -2027,7 +2036,7 @@ def run_period_report(this_period, last_period, period_label, report_key, holida
     for sym, name in MY_PORTFOLIO_TICKERS:
         search_name = _TICKER_SEARCH_NAME.get(sym, name)
         per_symbol_news[sym] = search_stock_news(search_name)
-        events = search_stock_event_news(sym, name)
+        events = search_stock_event_news(sym, name, period_word=period_word)
         if sym == "AAPL" and apple_official_items:
             # 공식 ICS를 맨 앞에 붙인다. AI가 놓쳐도 아래에서 보강한다.
             events = apple_official_items + events
