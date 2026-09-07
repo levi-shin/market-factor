@@ -1633,7 +1633,12 @@ def apple_events_as_news_items(events, window_start, window_end):
 
 def format_apple_official_event_line(item):
     when = item["start_kst"].strftime("%m/%d %H:%M KST")
-    return f"{item['summary']} (공식 일정 {when}). 신제품 공개로 관련 종목 변동성 확대 가능"
+    return (
+        f"{item['summary']} 공식 일정({when}). "
+        f"신제품·서비스 공개를 앞두고 기대가 주가에 선반영되기 쉽고, "
+        f"당일·익일에는 발표 내용(가격·스펙·출시 일정)과 시장 눈높이의 간격에 따라 "
+        f"변동성이 커지며 공급망·경쟁 스마트폰 종목으로 파급될 수 있습니다."
+    )
 
 def get_period_ai_analysis(macro_metrics, portfolio_metrics, period_news_titles, per_symbol_news,
                             period_word="주", next_period_word="차주", per_symbol_event_news=None):
@@ -1680,13 +1685,17 @@ def get_period_ai_analysis(macro_metrics, portfolio_metrics, period_news_titles,
 [매우 중요 - 숫자 금지]
 - 등락률/가격 수치는 이미 위에 정확히 제공되어 있습니다. 본문에 새로운 숫자를 만들어 쓰지 말고, 원인과 영향만 서술하세요.
 
-[매우 중요 - {next_period_word} 이벤트는 사실만]
+[매우 중요 - {next_period_word} 이벤트 = 일정 사실 + 주가 영향 경로]
 - "next_period_events"는 아래 [종목별 예정 일정 뉴스]를 우선 보고, 없으면 [종목별 일반 뉴스]를 보조로 보세요.
 - 제목이 "[공식 캘린더]"로 시작하면 회사 공식 일정입니다. 뉴스보다 우선하고 반드시 반영하세요.
 - 발표·공개·출시·이벤트·파업·시위·집회·실적발표처럼 **일정 신호**가 헤드라인에 있으면 채우세요.
-- 정확한 날짜(예: 9월 9일)가 없어도 "이번 주/차주/임박/예고/예약판매"처럼 시점이 드러나면 포함하세요.
-- 일정 신호가 전혀 없으면 반드시 "확인된 예정 이벤트 없음"이라고 쓰세요. 추측하거나 지어내지 마세요.
-- 이벤트를 적을 땐 "어디에 어떤 종류의 영향(변동성 확대, 관련 종목 파급 등)"만 언급하고, 주가가 오를지 내릴지는 절대 판단하지 마세요.
+- 정확한 날짜가 없어도 "이번 주/차주/임박/예고/예약판매"처럼 시점이 드러나면 포함하세요.
+- 일정 신호가 전혀 없으면 반드시 "확인된 예정 이벤트 없음"이라고 쓰세요. 추측해서 일정을 만들지 마세요.
+- 일정이 있으면 **2~3문장**으로 쓰세요. 일정만 나열하고 끝내면 안 됩니다.
+  1) 언제·무엇이 있는지 (사실)
+  2) 이 종목 주가에 어떻게 닿는지 (기대 선반영, 이벤트 소화, 단기 변동성, 수급, 실적·가이던스 눈높이, 섹터·공급망 파급 등)
+  3) 시장이 흔히 보는 해석 축 한 줄 (예: 신제품 기대 vs 가격·가이던스 실망, 노조 리스크 vs 실적 모멘텀)
+- "반드시 상승/하락한다", 목표가, 매수·매도 조언은 금지. 영향 **경로와 해석 축**만 말하세요.
 
 반드시 마크다운 없이 순수 JSON으로만 출력하세요.
 
@@ -1694,7 +1703,7 @@ JSON 포맷:
 {{
   "issue_analysis": "이번 {period_word} 가장 임팩트 컸던 이슈 1~2개의 원인과 파급 영향을 3~4문장으로",
   "next_period_events": {{
-    "NVDA": "{next_period_word} 이벤트 사실 + 영향 범위, 또는 '확인된 예정 이벤트 없음'",
+    "NVDA": "일정 사실 + 이 종목 주가 영향 경로 2~3문장, 또는 '확인된 예정 이벤트 없음'",
     "AAPL": "...",
     "TSLA": "...",
     "005930.KS": "...",
@@ -1814,10 +1823,11 @@ def build_period_report_html(period_label, date_range, macro_metrics, portfolio_
         text = (next_period_events or {}).get(sym, "확인된 예정 이벤트 없음")
         is_none = "없음" in text
         name_style = 'style="color:#475569;"' if is_none else ''
+        impact_cls = "impact empty" if is_none else "impact"
         events_html_parts.append(f'''
         <div class="event">
           <div class="name" {name_style}>{name}</div>
-          <div class="impact">{text}</div>
+          <div class="{impact_cls}">{text}</div>
         </div>''')
     events_html = "".join(events_html_parts)
 
@@ -1852,7 +1862,8 @@ def build_period_report_html(period_label, date_range, macro_metrics, portfolio_
   .event {{ padding:14px 0; border-top:1px solid #1e293b; }}
   .event:first-of-type {{ border-top:none; }}
   .event .name {{ font-size:14px; color:#f1f5f9; font-weight:600; }}
-  .event .impact {{ font-size:12.5px; color:#64748b; margin-top:4px; }}
+  .event .impact {{ font-size:13.5px; color:#cbd5e1; margin-top:6px; line-height:1.7; }}
+  .event .impact.empty {{ color:#475569; font-size:12.5px; }}
   .holiday-note {{ background:#131b2e; border:1px solid #1e293b; border-radius:10px; padding:12px 16px; font-size:13px; color:#cbd5e1; margin-bottom:22px; }}
   .chart-box {{ height:180px; margin-top:4px; }}
   footer {{ padding:28px 0 8px; }}
@@ -1886,7 +1897,7 @@ def build_period_report_html(period_label, date_range, macro_metrics, portfolio_
     {events_html}
   </section>
   <footer>
-    <p>※ {next_period_word} 체크는 수집된 뉴스(발표·출시·시위 등 일정 검색 포함) 기준이며, 언론에 보도되지 않은 일정은 포함되지 않을 수 있습니다.</p>
+    <p>※ {next_period_word} 체크는 수집된 뉴스·공식 캘린더 기준의 일정과, 그 일정이 주가에 닿는 경로(선반영·변동성·수급·섹터 파급 등)를 함께 적습니다. 매수·매도 조언은 포함하지 않습니다.</p>
     <p><a href="../">← 모닝 팩터 대시보드</a></p>
   </footer>
 </div>
