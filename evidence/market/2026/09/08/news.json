@@ -1,0 +1,48 @@
+{
+  "date": "2026-09-08",
+  "domain": "market",
+  "sources": [
+    {
+      "id": "evidence-001",
+      "title": "연료전지 본고장 미국 뚫었다…두산퓨얼셀, 목표주가 줄상향에 날개",
+      "url": "https://www.hankyung.com/article/202609079368i",
+      "publishedAt": "Tue, 08 Sep 2026 08:26:02 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-002",
+      "title": "\"중국산 로봇의 역습\"…화낙·야스카와 실적호조에도 주가 부진",
+      "url": "https://www.hankyung.com/article/202609080045i",
+      "publishedAt": "Tue, 08 Sep 2026 08:20:03 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-003",
+      "title": "\"유한양행, 레이저티닙 처방 확대·기술이전 기대감 유효\"-현대차",
+      "url": "https://www.hankyung.com/article/2026090800446",
+      "publishedAt": "Tue, 08 Sep 2026 08:13:43 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-004",
+      "title": "\"DB하이텍, 中 AI·로봇 폭발적 성장 수혜주…목표가 20만원\"-KB",
+      "url": "https://www.hankyung.com/article/2026090899846",
+      "publishedAt": "Tue, 08 Sep 2026 08:05:07 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-005",
+      "title": "\"알테오젠, 기술이전 계약 자체보다 실적을 봐야…목표가↓\"-하나",
+      "url": "https://www.hankyung.com/article/2026090899886",
+      "publishedAt": "Tue, 08 Sep 2026 08:00:34 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-006",
+      "title": "[스타워즈] 16주 투자 대장정 개막…첫날 KB증권 스타투업 선두",
+      "url": "https://www.hankyung.com/article/2026090795986",
+      "publishedAt": "Tue, 08 Sep 2026 08:00:09 +0900",
+      "source": "한국경제"
+    }
+  ]
+}
