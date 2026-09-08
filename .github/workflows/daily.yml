@@ -99,7 +99,7 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           for p in briefings.json history.json reports.json raw analysis evidence metadata reports; do
             if [ -e "$p" ]; then
-              git add "$p"
+              git add -A "$p"
             fi
           done
           if git diff --staged --quiet; then
@@ -107,5 +107,29 @@ jobs:
             exit 0
           fi
           git commit -m "chore: update daily briefing data"
-          git pull --rebase --autostash origin "${{ github.ref_name }}" || true
-          git push
+
+          # 사이트/문서 PR이 동시에 main에 들어오면 briefings.json rebase 충돌이 난다.
+          # (2026-09-08 09:38: 브리핑은 성공했는데 커밋 푸시만 실패 → stale 유지)
+          # 데이터 파일은 이번 실행 결과(rebase 기준 theirs)를 우선한다.
+          git fetch origin "${{ github.ref_name }}"
+          if ! git pull --rebase --autostash origin "${{ github.ref_name }}"; then
+            echo "rebase conflict — preferring this run's briefing artifacts"
+            for p in briefings.json history.json reports.json; do
+              if [ -f "$p" ]; then
+                git checkout --theirs -- "$p" || true
+                git add -- "$p" || true
+              fi
+            done
+            for p in raw analysis evidence metadata reports; do
+              if [ -e "$p" ]; then
+                git checkout --theirs -- "$p" || true
+                git add -A -- "$p" || true
+              fi
+            done
+            GIT_EDITOR=true git rebase --continue || {
+              echo "rebase --continue failed; abort and merge with strategy"
+              git rebase --abort || true
+              git pull --no-rebase --autostash -X ours origin "${{ github.ref_name }}" || true
+            }
+          fi
+          git push origin "HEAD:${{ github.ref_name }}"
