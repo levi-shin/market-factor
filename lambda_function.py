@@ -10,6 +10,7 @@ import re
 import time
 from pathlib import Path
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from zoneinfo import ZoneInfo
 
 logging.basicConfig(
     level=logging.INFO,
@@ -595,14 +596,130 @@ def _fmt_num(value, decimals=1):
     return f"{value:,.{decimals}f}" if value is not None else "N/A"
 
 
-def build_prefixed_reasons(reasons_dict, numeric_data, pct_data, portfolio_map, oil_data, oil_diff):
+# 미국 주식·지수 현금장 휴장일 (NYSE/Nasdaq). 관측일(observed) 포함.
+# ⚠️ 매년 갱신 필요.
+US_EQUITY_HOLIDAYS_2026 = {
+    "2026-01-01": "신정",
+    "2026-01-19": "마틴 루터 킹 데이",
+    "2026-02-16": "프레지던츠 데이",
+    "2026-04-03": "성금요일",
+    "2026-05-25": "메모리얼 데이",
+    "2026-06-19": "준틴스",
+    "2026-07-03": "독립기념일(관측)",  # 7/4 토 → 7/3 금 휴장
+    "2026-09-07": "노동절",
+    "2026-11-26": "추수감사절",
+    "2026-12-25": "크리스마스",
+}
+
+US_EQUITY_MACRO_KEYS = {"nasdaq", "sp500"}
+US_EQUITY_STOCK_SYMS = {"NVDA", "AAPL", "TSLA", "MSFT", "SPCX", "BOTZ"}
+
+
+def _us_holiday_name(day):
+    key = day.isoformat()
+    for year_map in (US_EQUITY_HOLIDAYS_2026,):
+        if key in year_map:
+            return year_map[key]
+    return None
+
+
+def is_us_equity_trading_day(day):
+    if day.weekday() >= 5:
+        return False
+    return _us_holiday_name(day) is None
+
+
+def previous_us_equity_trading_day(day):
+    d = day - datetime.timedelta(days=1)
+    while not is_us_equity_trading_day(d):
+        d -= datetime.timedelta(days=1)
+    return d
+
+
+def describe_us_equity_session(now=None):
+    """미국 주식·지수 현금장 상태.
+
+    Returns dict:
+      live: 정규장 중이면 True
+      asof: 시세 기준일 (date)
+      note: 사람용 한 줄 (휴장/미개장/종가 안내)
+      short: Slack 등 짧은 표기
+    """
+    now = now or now_kst()
+    if now.tzinfo is None:
+        now = now.replace(tzinfo=datetime.timezone(datetime.timedelta(hours=9)))
+    et = now.astimezone(ZoneInfo("America/New_York"))
+    et_date = et.date()
+    minutes = et.hour * 60 + et.minute
+    open_m, close_m = 9 * 60 + 30, 16 * 60
+
+    if not is_us_equity_trading_day(et_date):
+        asof = previous_us_equity_trading_day(et_date)
+        holiday = _us_holiday_name(et_date)
+        if et_date.weekday() >= 5:
+            why = "주말 휴장"
+        elif holiday:
+            why = f"휴장({holiday})"
+        else:
+            why = "휴장"
+        note = (
+            f"오늘(ET {et_date.strftime('%m/%d')}) 미국 현금장 {why} — "
+            f"아래 수치는 직전 거래일 {asof.strftime('%m/%d')} 종가"
+        )
+        short = f"미국장 {why} · {asof.strftime('%m/%d')} 종가"
+        return {"live": False, "asof": asof, "note": note, "short": short, "why": why}
+
+    if minutes < open_m:
+        asof = previous_us_equity_trading_day(et_date)
+        note = (
+            f"미국 현금장 개장 전(ET) — "
+            f"아래 수치는 직전 거래일 {asof.strftime('%m/%d')} 종가"
+        )
+        short = f"미국장 개장 전 · {asof.strftime('%m/%d')} 종가"
+        return {"live": False, "asof": asof, "note": note, "short": short, "why": "개장 전"}
+
+    asof = et_date
+    if minutes >= close_m:
+        note = f"미국 현금장 정규장 종료 — {asof.strftime('%m/%d')} 종가"
+        short = f"미국장 {asof.strftime('%m/%d')} 종가"
+        return {"live": False, "asof": asof, "note": note, "short": short, "why": "정규장 종료"}
+
+    note = f"미국 현금장 정규장 중 — {asof.strftime('%m/%d')} 시세"
+    short = f"미국장 {asof.strftime('%m/%d')} 장중"
+    return {"live": True, "asof": asof, "note": note, "short": short, "why": "정규장"}
+
+
+def _price_prefix(subject, pct, value_str, *, stale_us_session=None, end_particle="(으)로"):
+    """등락 앞머리 문장. 미국장이 안 열린 날엔 '마감' 대신 직전 거래일 종가임을 명시."""
+    dir_word = _direction_word(pct)
+    pct_s = _pct_str(pct)
+    if stale_us_session:
+        asof = stale_us_session["asof"].strftime("%m/%d")
+        why = stale_us_session.get("why") or "휴장/미개장"
+        return (
+            f"{subject} 직전 미국 거래일({asof}) 종가 기준 전일 대비 {pct_s} {dir_word}한 "
+            f"{value_str}입니다. "
+            f"[오늘 브리핑 · 미국 현금장 {why} — 당일 신규 체결 없음] "
+        )
+    return (
+        f"{subject} 전 거래일 대비 {pct_s} {dir_word}한 "
+        f"{value_str}{end_particle} 마감했습니다. "
+    )
+
+
+def build_prefixed_reasons(reasons_dict, numeric_data, pct_data, portfolio_map, oil_data, oil_diff,
+                           asof_now=None):
     # reasons_dict: Gemini가 생성한 {symbol: "원인+영향 서술문"} 딕셔너리
     # 반환: 각 문장 앞에 "OOO는 전 거래일 대비 X% 상승/하락한 Y를 기록했습니다."
     #        형태의, 우리 코드가 직접 계산한 정확한 문장이 붙은 딕셔너리
+    # 미국 주식·지수는 휴장/개장 전이면 '오늘 마감'처럼 보이지 않게
+    # 직전 거래일 종가·휴장 사유를 앞에 붙인다.
     if not reasons_dict:
         return reasons_dict
 
     result = dict(reasons_dict)
+    us_session = describe_us_equity_session(asof_now)
+    stale_us = None if us_session.get("live") else us_session
 
     # (필드key, 주어, numeric_data/pct_data 키, 통화기호, 단위, 소수자리)
     macro_specs = [
@@ -621,8 +738,13 @@ def build_prefixed_reasons(reasons_dict, numeric_data, pct_data, portfolio_map, 
         pct = pct_data.get(data_key)
         if value is None:
             continue
-        prefix = (f"{subject} 전 거래일 대비 {_pct_str(pct)} {_direction_word(pct)}한 "
-                  f"{currency}{_fmt_num(value, decimals)}{unit}(으)로 마감했습니다. ")
+        value_str = f"{currency}{_fmt_num(value, decimals)}{unit}"
+        us_stale = stale_us if field_key in US_EQUITY_MACRO_KEYS else None
+        prefix = _price_prefix(
+            subject, pct, value_str,
+            stale_us_session=us_stale,
+            end_particle="(으)로",
+        )
         result[field_key] = prefix + (result[field_key] or "")
 
     # 보유 종목 (환율/포인트 표기가 종목마다 다름 - 국내(005930.KS)는 원화, 나머지는 달러)
@@ -643,8 +765,13 @@ def build_prefixed_reasons(reasons_dict, numeric_data, pct_data, portfolio_map, 
         is_domestic = sym.endswith(".KS")
         currency = "" if is_domestic else "$"
         unit = "원" if is_domestic else ""
-        prefix = (f"{subject} 전 거래일 대비 {_pct_str(pct)} {_direction_word(pct)}한 "
-                  f"{currency}{_fmt_num(price, 2)}{unit}에 마감했습니다. ")
+        value_str = f"{currency}{_fmt_num(price, 2)}{unit}"
+        us_stale = stale_us if (not is_domestic and sym in US_EQUITY_STOCK_SYMS) else None
+        prefix = _price_prefix(
+            subject, pct, value_str,
+            stale_us_session=us_stale,
+            end_particle="에",
+        )
         result[sym] = prefix + (result[sym] or "")
 
     # 국내 유가는 %가 아니라 원 단위 등락폭(diff)으로 표기하는 게 관례
@@ -662,6 +789,10 @@ def build_prefixed_reasons(reasons_dict, numeric_data, pct_data, portfolio_map, 
         word = "상승" if diff and diff > 0 else ("하락" if diff and diff < 0 else "보합")
         prefix = f"{subject} 전일 대비 {diff:+.2f}원 {word}한 {_fmt_num(price, 1)}원/L을 기록했습니다. "
         result[field_key] = prefix + (result[field_key] or "")
+
+    # overall 요약에도 미국장 상태를 한 줄 올려, 날짜만 보고 오늘 움직인 줄 아는 혼동을 막는다.
+    if stale_us and result.get("overall"):
+        result["overall"] = f"[{stale_us['note']}] " + result["overall"]
 
     return result
 
@@ -2630,6 +2761,10 @@ def lambda_handler(event, context):
         gas_sign = "+" if gas_diff > 0 else ""
 
         overall_summary = (reasons_dict or {}).get("overall", "시장 동향 분석 중입니다.")
+        us_session = describe_us_equity_session()
+        us_line = ""
+        if not us_session.get("live"):
+            us_line = f"\n🗓️ *미국 현금장:* {us_session['short']}\n"
         dash = site_base_url()
         dash_line = (
             f"🔗 <{dashboard_url()}|👉 항목별 개별 심층 사유 대시보드 열기>"
@@ -2638,7 +2773,7 @@ def lambda_handler(event, context):
         )
 
         compact_briefing = f"""☀️ *모닝 퀵 브리핑* ({weather_text})
-
+{us_line}
 💡 *AI 핵심 시장 요약*
 {overall_summary}
 
