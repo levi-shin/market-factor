@@ -14,6 +14,8 @@
     .view-hidden { display: none !important; }
     .nav-link.active { background: rgba(14, 165, 233, 0.15); color: #7dd3fc; }
     .nav-link.active svg { color: #38bdf8; }
+    body.modal-open { overflow: hidden; }
+    #reportModal[aria-hidden="true"] { display: none; }
   </style>
 </head>
 <body class="bg-slate-950 text-slate-100 min-h-screen font-sans antialiased">
@@ -210,6 +212,33 @@
     </div>
   </div>
 
+  <!-- 리포트 모달 (페이지 이동 대신 오버레이) -->
+  <div id="reportModal" class="fixed inset-0 z-50" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="reportModalTitle">
+    <div id="reportModalBackdrop" class="absolute inset-0 bg-black/70 backdrop-blur-[2px]"></div>
+    <div class="relative z-10 h-full w-full flex items-stretch md:items-center justify-center p-0 md:p-6 pointer-events-none">
+      <div class="pointer-events-auto w-full md:max-w-3xl lg:max-w-4xl h-full md:h-[min(92vh,900px)] bg-slate-950 md:rounded-2xl border-0 md:border border-slate-700 shadow-2xl flex flex-col overflow-hidden">
+        <div class="shrink-0 flex items-center justify-between gap-3 px-4 py-3 border-b border-slate-800 bg-slate-900/90">
+          <div class="min-w-0">
+            <div id="reportModalTitle" class="text-sm font-semibold text-slate-100 truncate">리포트</div>
+            <div id="reportModalSub" class="text-[11px] text-slate-500 num truncate"></div>
+          </div>
+          <div class="flex items-center gap-2 shrink-0">
+            <a id="reportModalOpenTab" href="#" target="_blank" rel="noopener"
+               class="hidden sm:inline-flex px-2.5 py-1.5 rounded-md text-xs text-slate-300 border border-slate-700 hover:border-sky-500/40 hover:text-sky-300 transition">
+              새 탭
+            </a>
+            <button type="button" id="reportModalClose"
+                    class="px-2.5 py-1.5 rounded-md text-xs text-slate-200 bg-slate-800 hover:bg-slate-700 transition"
+                    aria-label="닫기">
+              닫기
+            </button>
+          </div>
+        </div>
+        <iframe id="reportModalFrame" title="리포트 본문" class="flex-1 w-full bg-[#0b1120] border-0"></iframe>
+      </div>
+    </div>
+  </div>
+
   <script>
     const METRIC_GROUPS = [
       {
@@ -380,18 +409,73 @@
         ? 'bg-violet-500/15 text-violet-300 border-violet-500/30'
         : 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30';
       const gen = r.generatedAt ? formatKstDateTime(r.generatedAt) : '';
+      const title = r.headline || r.title || r.id || '리포트';
+      const sub = [r.id, r.dateRange].filter(Boolean).join(' · ');
+      // JSON을 data 속성에 넣지 않고 path/title만 — 클릭 시 reportsData에서 조회
       return `
-        <a href="${escapeHtml(r.path)}"
-           class="block rounded-xl border border-slate-800 bg-slate-900 px-4 py-3.5 hover:border-sky-500/40 hover:bg-slate-900/80 transition">
+        <button type="button"
+           data-report-path="${escapeHtml(r.path)}"
+           data-report-title="${escapeHtml(title)}"
+           data-report-sub="${escapeHtml(sub)}"
+           class="report-open w-full text-left rounded-xl border border-slate-800 bg-slate-900 px-4 py-3.5 hover:border-sky-500/40 hover:bg-slate-900/80 transition">
           <div class="flex items-center gap-2 mb-1.5 flex-wrap">
             <span class="text-[11px] px-1.5 py-0.5 rounded border ${badge}">${kind}</span>
             <span class="text-xs text-slate-400 num font-medium">${escapeHtml(r.id || '')}</span>
             <span class="text-xs text-slate-600">·</span>
             <span class="text-xs text-slate-500 num">${escapeHtml(r.dateRange || '')}</span>
           </div>
-          <div class="text-sm text-slate-100 leading-snug">${escapeHtml(r.headline || r.title || '')}</div>
+          <div class="text-sm text-slate-100 leading-snug">${escapeHtml(title)}</div>
           ${gen ? `<div class="text-[11px] text-slate-600 mt-2 num">생성 ${escapeHtml(gen)}</div>` : ''}
-        </a>`;
+        </button>`;
+    }
+
+    function openReportModal(path, title, sub) {
+      const modal = document.getElementById('reportModal');
+      const frame = document.getElementById('reportModalFrame');
+      const titleEl = document.getElementById('reportModalTitle');
+      const subEl = document.getElementById('reportModalSub');
+      const openTab = document.getElementById('reportModalOpenTab');
+      if (!modal || !frame) return;
+      titleEl.textContent = title || '리포트';
+      subEl.textContent = sub || '';
+      openTab.href = path;
+      frame.src = path;
+      modal.setAttribute('aria-hidden', 'false');
+      document.body.classList.add('modal-open');
+      document.getElementById('reportModalClose')?.focus();
+    }
+
+    function closeReportModal() {
+      const modal = document.getElementById('reportModal');
+      const frame = document.getElementById('reportModalFrame');
+      if (!modal) return;
+      modal.setAttribute('aria-hidden', 'true');
+      document.body.classList.remove('modal-open');
+      if (frame) frame.src = 'about:blank';
+    }
+
+    function bindReportOpeners(root) {
+      (root || document).querySelectorAll('.report-open').forEach(btn => {
+        if (btn.dataset.bound === '1') return;
+        btn.dataset.bound = '1';
+        btn.addEventListener('click', () => {
+          openReportModal(
+            btn.getAttribute('data-report-path'),
+            btn.getAttribute('data-report-title'),
+            btn.getAttribute('data-report-sub')
+          );
+        });
+      });
+    }
+
+    function bindReportModal() {
+      document.getElementById('reportModalClose')?.addEventListener('click', closeReportModal);
+      document.getElementById('reportModalBackdrop')?.addEventListener('click', closeReportModal);
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && document.getElementById('reportModal')?.getAttribute('aria-hidden') === 'false') {
+          closeReportModal();
+        }
+      });
     }
 
     /** dateRange "YYYY-MM-DD ~ YYYY-MM-DD" 또는 generatedAt / id에서 기간 추출 */
@@ -492,6 +576,7 @@
 
       empty.classList.add('hidden');
       list.innerHTML = filtered.map(reportCardHtml).join('');
+      bindReportOpeners(list);
     }
 
     function bindReportsFilters() {
@@ -537,6 +622,7 @@
         if (reportsData.length > 0) {
           previewList.innerHTML = reportsData.slice(0, 2).map(reportCardHtml).join('');
           previewWrap.classList.remove('hidden');
+          bindReportOpeners(previewList);
         }
       } catch (e) {
         console.warn('리포트 목록 로드 실패:', e);
@@ -892,6 +978,7 @@
     }
 
     bindNav();
+    bindReportModal();
     renderNav();
     const initial = (location.hash || '#dashboard').replace('#', '');
     setView(VIEW_TITLES[initial] ? initial : 'dashboard');
