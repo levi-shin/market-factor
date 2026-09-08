@@ -562,13 +562,33 @@ if not GEMINI_MODEL_FALLBACKS:
 # 방법 자체가 없어짐 (LLM이 숫자를 아예 안 씀).
 
 def _direction_word(pct):
+    """등락 방향어. 표시 단위(+.2f%)로 0.00%면 상승/하락이 아니라 동일(보합).
+
+    예전: `pct >= 0` → 0.0도 "상승"이 되어
+    "전 거래일 대비 +0.00% 상승한 …"처럼 모순 문장이 나왔다.
+    """
     if pct is None:
-        return "보합"
-    return "상승" if pct >= 0 else "하락"
+        return "동일"
+    try:
+        val = float(pct)
+    except (TypeError, ValueError):
+        return "동일"
+    # 화면에는 +.2f%로 반올림되므로 |pct| < 0.005 → "+0.00%"/"-0.00%"
+    if abs(val) < 0.005:
+        return "동일"
+    return "상승" if val > 0 else "하락"
 
 
 def _pct_str(pct):
-    return f"{pct:+.2f}%" if pct is not None else "변동 없음"
+    if pct is None:
+        return "변동 없음"
+    try:
+        val = float(pct)
+    except (TypeError, ValueError):
+        return "변동 없음"
+    if abs(val) < 0.005:
+        return "0.00%"
+    return f"{val:+.2f}%"
 
 
 def _fmt_num(value, decimals=1):
@@ -1879,12 +1899,13 @@ def build_period_report_html(period_label, date_range, macro_metrics, portfolio_
     def row(label, m, currency="", unit="", decimals=1):
         if not m or m.get("pct_this_week") is None:
             return f'<tr><td class="label">{label}</td><td colspan="2" class="muted">데이터 부족</td></tr>'
-        this_cls = "up" if m["pct_this_week"] >= 0 else "down"
+        this_cls = "flat" if abs(m["pct_this_week"]) < 0.005 else ("up" if m["pct_this_week"] > 0 else "down")
         vs_html = "N/A"
         vs_cls = "muted"
         if m.get("pct_vs_last_week") is not None:
-            vs_cls = "up" if m["pct_vs_last_week"] >= 0 else "down"
-            vs_html = f'{m["pct_vs_last_week"]:+.2f}{"%p" if unit == "%" else "%"}'
+            vs = m["pct_vs_last_week"]
+            vs_cls = "flat" if abs(vs) < 0.005 else ("up" if vs > 0 else "down")
+            vs_html = f'{vs:+.2f}{"%p" if unit == "%" else "%"}'
         return f'''<tr>
           <td class="label">{label}</td>
           <td class="num">{currency}{_fmt_num(m["start"], decimals)}{unit} → {currency}{_fmt_num(m["end"], decimals)}{unit}
@@ -1949,7 +1970,7 @@ def build_period_report_html(period_label, date_range, macro_metrics, portfolio_
   td {{ padding:9px 0; border-top:1px solid #1e293b; }}
   td:not(:first-child) {{ text-align:right; }}
   .label {{ color:#cbd5e1; }}
-  .up {{ color:#4ade80; }} .down {{ color:#f87171; }} .muted {{ color:#64748b; }}
+  .up {{ color:#4ade80; }} .down {{ color:#f87171; }} .flat {{ color:#94a3b8; }} .muted {{ color:#64748b; }}
   .issue p {{ font-size:14.5px; line-height:1.85; color:#cbd5e1; margin:0; white-space:pre-line; }}
   .event {{ padding:14px 0; border-top:1px solid #1e293b; }}
   .event:first-of-type {{ border-top:none; }}
