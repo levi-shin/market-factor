@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>01. 모닝 팩터 (Morning Factor) | Collection & Big Tech Insights</title>
+  <title>마켓 팩터 (Market Factor) | Collection & Big Tech Insights</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
@@ -21,16 +21,24 @@
     <header class="space-y-3">
       <div class="flex flex-wrap items-start justify-between gap-3">
         <div class="space-y-1">
-          <div class="flex items-center gap-2">
+          <div class="flex flex-wrap items-center gap-2">
             <h1 class="text-xl md:text-2xl font-bold text-white tracking-tight">
-              01. 모닝 팩터 (Morning Factor)
+              마켓 팩터 (Market Factor)
             </h1>
-            <span class="text-xs bg-sky-500/10 text-sky-400 border border-sky-500/20 px-2 py-0.5 rounded-md font-medium">
-              Live
+            <span id="liveBadge"
+                  class="inline-flex items-center gap-1.5 text-xs bg-sky-500/10 text-sky-400 border border-sky-500/20 px-2.5 py-0.5 rounded-md font-medium"
+                  title="briefings.json 마지막 갱신 시각 (KST)">
+              <span class="inline-block w-1.5 h-1.5 rounded-full bg-sky-400 animate-pulse" aria-hidden="true"></span>
+              <span>Live</span>
+              <span class="text-sky-500/50">·</span>
+              <span id="liveUpdatedAt" class="num text-sky-300/90">—</span>
             </span>
           </div>
           <p class="text-sm text-slate-400">
             Collection &amp; Big Tech Insights — 글로벌 시세 수집 및 항목별 AI 등락 원인 심층 분석
+          </p>
+          <p class="text-xs text-slate-500">
+            마지막 업데이트 <span id="lastUpdatedLabel" class="num text-slate-400">—</span>
           </p>
         </div>
         <nav id="reportNav" class="flex flex-wrap gap-2 text-xs">
@@ -293,20 +301,73 @@
       throw lastErr || new Error('브리핑 데이터 로딩 실패');
     }
 
+    function formatKstDateTime(isoOrDate) {
+      if (!isoOrDate) return null;
+      // 날짜만 있으면 일자만
+      if (/^\d{4}-\d{2}-\d{2}$/.test(isoOrDate)) {
+        return isoOrDate.replace(/-/g, '.') + ' (일자)';
+      }
+      const d = new Date(isoOrDate);
+      if (Number.isNaN(d.getTime())) return String(isoOrDate);
+      const parts = new Intl.DateTimeFormat('sv-SE', {
+        timeZone: 'Asia/Seoul',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false,
+      }).formatToParts(d);
+      const get = (t) => (parts.find(p => p.type === t) || {}).value || '';
+      return `${get('year')}.${get('month')}.${get('day')} ${get('hour')}:${get('minute')} KST`;
+    }
+
+    async function resolveUpdatedAt(latest) {
+      if (!latest) return null;
+      if (latest.updatedAt) return latest.updatedAt;
+      // 구 레코드 폴백: metadata morning/close generatedAt
+      const date = latest.date;
+      if (!date || !/^\d{4}-\d{2}-\d{2}$/.test(date)) return date || null;
+      const [y, m, d] = date.split('-');
+      for (const kind of ['close', 'morning']) {
+        try {
+          const res = await fetch(`./metadata/market/${y}/${m}/${d}/${kind}.json?t=${Date.now()}`);
+          if (!res.ok) continue;
+          const meta = await res.json();
+          if (meta && meta.generatedAt) return meta.generatedAt;
+        } catch (_) { /* ignore */ }
+      }
+      return date;
+    }
+
+    function setLastUpdatedDisplay(isoOrDate) {
+      const label = formatKstDateTime(isoOrDate) || '—';
+      const liveEl = document.getElementById('liveUpdatedAt');
+      const pageEl = document.getElementById('lastUpdatedLabel');
+      if (liveEl) liveEl.textContent = label;
+      if (pageEl) pageEl.textContent = label;
+      const badge = document.getElementById('liveBadge');
+      if (badge && isoOrDate) badge.title = `마지막 업데이트: ${label}`;
+    }
+
     async function loadData() {
       try {
         rawData = await fetchBriefings();
 
         if (Array.isArray(rawData) && rawData.length > 0) {
           selectedItemIndex = rawData.length - 1;
-          displayDetail(rawData[selectedItemIndex]);
+          const latest = rawData[selectedItemIndex];
+          setLastUpdatedDisplay(await resolveUpdatedAt(latest));
+          displayDetail(latest);
           renderRangeSelector();
           renderChart();
         } else {
+          setLastUpdatedDisplay(null);
           document.getElementById('selectedReason').innerText = "저장된 데이터가 없습니다.";
         }
       } catch (err) {
         console.error(err);
+        setLastUpdatedDisplay(null);
         document.getElementById('selectedReason').innerText = "데이터 로딩 실패: " + err.message;
       }
     }

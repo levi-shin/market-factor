@@ -1497,6 +1497,8 @@ def save_to_s3(numeric_data, pct_data, portfolio_map, oil_data, fear_score, news
 
     record = {
         "date": today_str,
+        # 대시보드 Live 뱃지/마지막 업데이트 표시용 (KST ISO)
+        "updatedAt": kst_now.isoformat(),
         "metrics": {
             "usdkrw": numeric_data.get("usdkrw"),
             "usdkrw_pct": pct_data.get("usdkrw"),
@@ -2142,7 +2144,7 @@ def build_period_report_html(period_label, date_range, macro_metrics, portfolio_
   </section>
   <footer>
     <p>※ {next_period_word} 체크는 수집된 뉴스·공식 캘린더 기준의 일정과, 그 일정이 주가에 닿는 경로(선반영·변동성·수급·섹터 파급 등)를 함께 적습니다. 매수·매도 조언은 포함하지 않습니다.</p>
-    <p><a href="../">← 모닝 팩터 대시보드</a></p>
+    <p><a href="../">← 마켓 팩터 대시보드</a></p>
   </footer>
 </div>
 <script>
@@ -2572,6 +2574,7 @@ def run_reanalyze_today():
     record = dict(record)
     record["reasons"] = reasons_dict
     record["reason"] = reasons_dict.get("overall", record.get("reason", "시장 동향 분석 중"))
+    record["updatedAt"] = now_kst().isoformat()
     briefings[idx] = record
     save_briefings(briefings)
 
