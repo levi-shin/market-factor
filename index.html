@@ -154,15 +154,52 @@
 
         <!-- ===== 리포트 ===== -->
         <section id="view-reports" class="view-hidden space-y-5">
-          <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 md:p-5">
-            <div class="flex items-center justify-between gap-3 mb-4">
+          <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 md:p-5 space-y-4">
+            <div class="flex flex-wrap items-start justify-between gap-3">
               <div>
-                <h3 class="text-sm font-semibold text-slate-300">주간 · 월간 리포트</h3>
-                <p class="text-xs text-slate-500 mt-0.5">별도 생성된 기간 리포트를 모아서 봅니다.</p>
+                <h3 class="text-sm font-semibold text-slate-300">리포트</h3>
+                <p class="text-xs text-slate-500 mt-0.5">주간·월간 리포트를 나눠 보고, 검색·기간으로 찾습니다.</p>
               </div>
               <span class="text-xs text-slate-500" id="reportsCount"></span>
             </div>
-            <div id="reportsQuick" class="flex flex-wrap gap-2 mb-4"></div>
+
+            <!-- 주간 / 월간 탭 -->
+            <div class="flex gap-1 p-1 rounded-lg bg-slate-950/60 border border-slate-800 w-fit" role="tablist" aria-label="리포트 종류">
+              <button type="button" data-report-tab="weekly"
+                      class="report-tab px-3.5 py-1.5 rounded-md text-xs font-medium transition bg-emerald-600/90 text-white">
+                주간 <span id="reportsWeeklyCount" class="opacity-80 num">0</span>
+              </button>
+              <button type="button" data-report-tab="monthly"
+                      class="report-tab px-3.5 py-1.5 rounded-md text-xs font-medium transition text-slate-400 hover:text-slate-200">
+                월간 <span id="reportsMonthlyCount" class="opacity-80 num">0</span>
+              </button>
+            </div>
+
+            <!-- 검색 · 기간 -->
+            <div class="grid grid-cols-1 md:grid-cols-12 gap-2">
+              <label class="md:col-span-5 block">
+                <span class="sr-only">검색</span>
+                <input id="reportsSearch" type="search" placeholder="제목·헤드라인·ID 검색"
+                       class="w-full rounded-lg bg-slate-950 border border-slate-700 px-3 py-2 text-sm text-slate-200 placeholder:text-slate-600 focus:outline-none focus:border-sky-500/50" />
+              </label>
+              <label class="md:col-span-3 block">
+                <span class="text-[11px] text-slate-500 mb-1 block">시작일</span>
+                <input id="reportsFrom" type="date"
+                       class="w-full rounded-lg bg-slate-950 border border-slate-700 px-3 py-2 text-sm text-slate-200 num focus:outline-none focus:border-sky-500/50" />
+              </label>
+              <label class="md:col-span-3 block">
+                <span class="text-[11px] text-slate-500 mb-1 block">종료일</span>
+                <input id="reportsTo" type="date"
+                       class="w-full rounded-lg bg-slate-950 border border-slate-700 px-3 py-2 text-sm text-slate-200 num focus:outline-none focus:border-sky-500/50" />
+              </label>
+              <div class="md:col-span-1 flex items-end">
+                <button type="button" id="reportsFilterReset"
+                        class="w-full rounded-lg border border-slate-700 px-2 py-2 text-xs text-slate-400 hover:text-slate-200 hover:border-slate-500 transition"
+                        title="검색·기간 초기화">초기화</button>
+              </div>
+            </div>
+
+            <div id="reportsQuick" class="flex flex-wrap gap-2"></div>
             <div id="reportsList" class="grid grid-cols-1 md:grid-cols-2 gap-2"></div>
             <p id="reportsEmpty" class="hidden text-sm text-slate-500 py-8 text-center">등록된 리포트가 없습니다.</p>
           </div>
@@ -236,6 +273,8 @@
     let currentRangeKey = '1m';
     let currentView = 'dashboard';
     let briefingChartReady = false;
+    let reportsTab = 'weekly'; // weekly | monthly
+    let reportsFilterBound = false;
 
     function escapeHtml(s) {
       return String(s ?? '').replace(/[&<>"']/g, c => (
@@ -320,62 +359,181 @@
       const badge = r.type === 'monthly'
         ? 'bg-violet-500/10 text-violet-300 border-violet-500/20'
         : 'bg-emerald-500/10 text-emerald-300 border-emerald-500/20';
+      const gen = r.generatedAt ? formatKstDateTime(r.generatedAt) : '';
       return `
         <a href="${escapeHtml(r.path)}"
            class="block rounded-xl border border-slate-800 bg-slate-950/40 px-4 py-3 hover:border-sky-500/40 transition">
-          <div class="flex items-center gap-2 mb-1">
+          <div class="flex items-center gap-2 mb-1 flex-wrap">
             <span class="text-[11px] px-1.5 py-0.5 rounded border ${badge}">${kind}</span>
-            <span class="text-xs text-slate-500 num">${escapeHtml(r.dateRange || r.id || '')}</span>
+            <span class="text-xs text-slate-500 num">${escapeHtml(r.id || '')}</span>
+            <span class="text-xs text-slate-600 num">${escapeHtml(r.dateRange || '')}</span>
           </div>
           <div class="text-sm text-slate-200 leading-snug line-clamp-2">${escapeHtml(r.headline || r.title || '')}</div>
+          ${gen ? `<div class="text-[11px] text-slate-600 mt-1.5 num">생성 ${escapeHtml(gen)}</div>` : ''}
         </a>`;
     }
 
-    async function loadReports() {
+    /** dateRange "YYYY-MM-DD ~ YYYY-MM-DD" 또는 generatedAt / id에서 기간 추출 */
+    function reportPeriod(r) {
+      const range = String(r.dateRange || '');
+      const m = range.match(/(\d{4}-\d{2}-\d{2})\s*[~\-–]\s*(\d{4}-\d{2}-\d{2})/);
+      if (m) return { start: m[1], end: m[2] };
+      if (r.type === 'monthly' && /^\d{4}-\d{2}/.test(String(r.id || ''))) {
+        const ym = String(r.id).slice(0, 7);
+        return { start: `${ym}-01`, end: `${ym}-31` };
+      }
+      if (r.generatedAt) {
+        const d = String(r.generatedAt).slice(0, 10);
+        if (/^\d{4}-\d{2}-\d{2}$/.test(d)) return { start: d, end: d };
+      }
+      return { start: null, end: null };
+    }
+
+    function reportOverlapsFilter(r, from, to) {
+      if (!from && !to) return true;
+      const { start, end } = reportPeriod(r);
+      const s = start || end;
+      const e = end || start;
+      if (!s && !e) return true;
+      if (from && e && e < from) return false;
+      if (to && s && s > to) return false;
+      return true;
+    }
+
+    function reportMatchesSearch(r, q) {
+      if (!q) return true;
+      const hay = [r.id, r.title, r.headline, r.dateRange, r.type]
+        .map(x => String(x || '').toLowerCase())
+        .join(' ');
+      return hay.includes(q);
+    }
+
+    function getFilteredReports() {
+      const q = (document.getElementById('reportsSearch')?.value || '').trim().toLowerCase();
+      const from = document.getElementById('reportsFrom')?.value || '';
+      const to = document.getElementById('reportsTo')?.value || '';
+      return (reportsData || []).filter(r => {
+        if (r.type !== reportsTab) return false;
+        if (!reportMatchesSearch(r, q)) return false;
+        if (!reportOverlapsFilter(r, from, to)) return false;
+        return true;
+      });
+    }
+
+    function setReportsTab(tab) {
+      reportsTab = tab === 'monthly' ? 'monthly' : 'weekly';
+      document.querySelectorAll('.report-tab').forEach(btn => {
+        const active = btn.getAttribute('data-report-tab') === reportsTab;
+        btn.classList.toggle('bg-emerald-600/90', active && reportsTab === 'weekly');
+        btn.classList.toggle('bg-violet-600/90', active && reportsTab === 'monthly');
+        btn.classList.toggle('text-white', active);
+        btn.classList.toggle('text-slate-400', !active);
+        if (!active) {
+          btn.classList.remove('bg-emerald-600/90', 'bg-violet-600/90', 'text-white');
+          btn.classList.add('text-slate-400');
+        } else {
+          btn.classList.remove('text-slate-400');
+        }
+      });
+      renderReportsList();
+    }
+
+    function renderReportsList() {
       const list = document.getElementById('reportsList');
       const quick = document.getElementById('reportsQuick');
       const empty = document.getElementById('reportsEmpty');
       const count = document.getElementById('reportsCount');
+      const weeklyN = (reportsData || []).filter(r => r.type === 'weekly').length;
+      const monthlyN = (reportsData || []).filter(r => r.type === 'monthly').length;
+      const wEl = document.getElementById('reportsWeeklyCount');
+      const mEl = document.getElementById('reportsMonthlyCount');
+      if (wEl) wEl.textContent = String(weeklyN);
+      if (mEl) mEl.textContent = String(monthlyN);
+
+      if (!Array.isArray(reportsData) || reportsData.length === 0) {
+        list.innerHTML = '';
+        quick.innerHTML = '';
+        count.textContent = '0건';
+        empty.classList.remove('hidden');
+        empty.textContent = '등록된 리포트가 없습니다.';
+        return;
+      }
+
+      const filtered = getFilteredReports();
+      const kindLabel = reportsTab === 'monthly' ? '월간' : '주간';
+      count.textContent = `${kindLabel} ${filtered.length}건 / 전체 ${reportsData.length}건`;
+
+      const latestOfTab = (reportsData || []).find(r => r.type === reportsTab);
+      if (latestOfTab) {
+        quick.innerHTML = `<a href="${escapeHtml(latestOfTab.path)}"
+          class="px-3 py-1.5 rounded-md bg-slate-800 text-slate-200 border border-slate-700 hover:border-sky-500/50 hover:text-sky-300 transition text-xs">
+          최신 ${kindLabel} ${escapeHtml(latestOfTab.id)}</a>`;
+      } else {
+        quick.innerHTML = '';
+      }
+
+      if (filtered.length === 0) {
+        list.innerHTML = '';
+        empty.classList.remove('hidden');
+        const hasType = (reportsData || []).some(r => r.type === reportsTab);
+        empty.textContent = hasType
+          ? '검색·기간 조건에 맞는 리포트가 없습니다.'
+          : `아직 ${kindLabel} 리포트가 없습니다.`;
+        return;
+      }
+
+      empty.classList.add('hidden');
+      list.innerHTML = filtered.map(reportCardHtml).join('');
+    }
+
+    function bindReportsFilters() {
+      if (reportsFilterBound) return;
+      reportsFilterBound = true;
+      document.querySelectorAll('[data-report-tab]').forEach(btn => {
+        btn.addEventListener('click', () => setReportsTab(btn.getAttribute('data-report-tab')));
+      });
+      const search = document.getElementById('reportsSearch');
+      const from = document.getElementById('reportsFrom');
+      const to = document.getElementById('reportsTo');
+      const reset = document.getElementById('reportsFilterReset');
+      let debounce = null;
+      const rerender = () => renderReportsList();
+      search?.addEventListener('input', () => {
+        clearTimeout(debounce);
+        debounce = setTimeout(rerender, 150);
+      });
+      from?.addEventListener('change', rerender);
+      to?.addEventListener('change', rerender);
+      reset?.addEventListener('click', () => {
+        if (search) search.value = '';
+        if (from) from.value = '';
+        if (to) to.value = '';
+        rerender();
+      });
+    }
+
+    async function loadReports() {
+      const empty = document.getElementById('reportsEmpty');
+      bindReportsFilters();
       try {
         const res = await fetch(REPORTS_URL + '?t=' + Date.now());
         if (!res.ok) throw new Error('reports.json ' + res.status);
         reportsData = await res.json();
-        if (!Array.isArray(reportsData) || reportsData.length === 0) {
-          list.innerHTML = '';
-          quick.innerHTML = '';
-          count.textContent = '0건';
-          empty.classList.remove('hidden');
-          return;
-        }
-        empty.classList.add('hidden');
-        count.textContent = `${reportsData.length}건`;
+        if (!Array.isArray(reportsData)) reportsData = [];
 
-        const latestWeekly = reportsData.find(r => r.type === 'weekly');
-        const latestMonthly = reportsData.find(r => r.type === 'monthly');
-        const chips = [];
-        if (latestWeekly) {
-          chips.push(`<a href="${escapeHtml(latestWeekly.path)}"
-            class="px-3 py-1.5 rounded-md bg-slate-800 text-slate-200 border border-slate-700 hover:border-sky-500/50 hover:text-sky-300 transition text-xs">
-            최신 주간 ${escapeHtml(latestWeekly.id)}</a>`);
-        }
-        if (latestMonthly) {
-          chips.push(`<a href="${escapeHtml(latestMonthly.path)}"
-            class="px-3 py-1.5 rounded-md bg-slate-800 text-slate-200 border border-slate-700 hover:border-sky-500/50 hover:text-sky-300 transition text-xs">
-            최신 월간 ${escapeHtml(String(latestMonthly.id).replace(/-monthly$/, ''))}</a>`);
-        }
-        quick.innerHTML = chips.join('');
-        list.innerHTML = reportsData.map(reportCardHtml).join('');
+        setReportsTab(reportsTab);
 
-        // 대시보드 미리보기 (최대 2건)
+        // 대시보드 미리보기 (최대 2건, 종류 무관 최신순 가정)
         const previewWrap = document.getElementById('dashReportsPreview');
         const previewList = document.getElementById('dashReportsList');
-        previewList.innerHTML = reportsData.slice(0, 2).map(reportCardHtml).join('');
-        previewWrap.classList.remove('hidden');
+        if (reportsData.length > 0) {
+          previewList.innerHTML = reportsData.slice(0, 2).map(reportCardHtml).join('');
+          previewWrap.classList.remove('hidden');
+        }
       } catch (e) {
         console.warn('리포트 목록 로드 실패:', e);
-        list.innerHTML = '';
-        quick.innerHTML = '';
-        count.textContent = '';
+        reportsData = [];
+        renderReportsList();
         empty.classList.remove('hidden');
         empty.textContent = '리포트 목록을 불러오지 못했습니다.';
       }
