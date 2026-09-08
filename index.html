@@ -11,90 +11,164 @@
     .num { font-variant-numeric: tabular-nums; }
     ::-webkit-scrollbar { height: 6px; width: 6px; }
     ::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
+    .view-hidden { display: none !important; }
+    .nav-link.active { background: rgba(14, 165, 233, 0.15); color: #7dd3fc; }
+    .nav-link.active svg { color: #38bdf8; }
   </style>
 </head>
 <body class="bg-slate-950 text-slate-100 min-h-screen font-sans antialiased">
 
-  <div class="max-w-6xl mx-auto p-4 md:p-8 space-y-5">
+  <div class="min-h-screen md:flex">
 
-    <!-- 헤더 -->
-    <header class="space-y-3">
-      <div class="flex flex-wrap items-start justify-between gap-3">
-        <div class="space-y-1">
-          <div class="flex flex-wrap items-center gap-2">
-            <h1 class="text-xl md:text-2xl font-bold text-white tracking-tight">
-              마켓 팩터 (Market Factor)
-            </h1>
-            <span id="liveBadge"
-                  class="inline-flex items-center gap-1.5 text-xs bg-sky-500/10 text-sky-400 border border-sky-500/20 px-2.5 py-0.5 rounded-md font-medium"
-                  title="briefings.json 마지막 갱신 시각 (KST)">
-              <span class="inline-block w-1.5 h-1.5 rounded-full bg-sky-400 animate-pulse" aria-hidden="true"></span>
-              <span>Live</span>
-              <span class="text-sky-500/50">·</span>
-              <span id="liveUpdatedAt" class="num text-sky-300/90">—</span>
-            </span>
+    <!-- 왼쪽 사이드바 (데스크톱) -->
+    <aside class="hidden md:flex md:w-56 lg:w-60 shrink-0 flex-col border-r border-slate-800 bg-slate-950/95 sticky top-0 h-screen">
+      <div class="px-4 pt-6 pb-4 border-b border-slate-800/80">
+        <div class="text-xs text-slate-500 tracking-wide mb-1">Market Factor</div>
+        <div class="text-base font-bold text-white leading-tight">마켓 팩터</div>
+      </div>
+      <nav class="flex-1 p-3 space-y-1" aria-label="주요 메뉴">
+        <button type="button" data-view="dashboard" class="nav-link active w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-slate-300 hover:bg-slate-900 transition text-left">
+          <svg class="w-4 h-4 text-slate-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M3 13h8V3H3v10zm10 8h8V3h-8v18zM3 21h8v-6H3v6z"/></svg>
+          대시보드
+        </button>
+        <button type="button" data-view="briefing" class="nav-link w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-slate-300 hover:bg-slate-900 transition text-left">
+          <svg class="w-4 h-4 text-slate-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M7 12h10M7 8h10M7 16h6M5 4h14a1 1 0 011 1v14a1 1 0 01-1 1H5a1 1 0 01-1-1V5a1 1 0 011-1z"/></svg>
+          브리핑
+        </button>
+        <button type="button" data-view="reports" class="nav-link w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-slate-300 hover:bg-slate-900 transition text-left">
+          <svg class="w-4 h-4 text-slate-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M9 17v-6m4 6V7m4 10v-3M5 21h14a1 1 0 001-1V4a1 1 0 00-1-1H5a1 1 0 00-1 1v16a1 1 0 001 1z"/></svg>
+          리포트
+        </button>
+      </nav>
+      <div class="p-4 border-t border-slate-800 text-[11px] text-slate-600 leading-relaxed">
+        로그인·종목 편집은 이후 연결 예정
+      </div>
+    </aside>
+
+    <!-- 메인 -->
+    <div class="flex-1 min-w-0 flex flex-col min-h-screen">
+
+      <!-- 상단 바 -->
+      <header class="sticky top-0 z-20 border-b border-slate-800/80 bg-slate-950/90 backdrop-blur px-4 md:px-6 py-3">
+        <div class="flex flex-wrap items-center justify-between gap-2">
+          <div class="min-w-0">
+            <div class="md:hidden text-sm font-semibold text-white mb-0.5">마켓 팩터</div>
+            <h2 id="pageTitle" class="text-base md:text-lg font-semibold text-white truncate">대시보드</h2>
           </div>
-          <p class="text-sm text-slate-400">
-            Collection &amp; Big Tech Insights — 글로벌 시세 수집 및 항목별 AI 등락 원인 심층 분석
-          </p>
-          <p class="text-xs text-slate-500">
-            마지막 업데이트 <span id="lastUpdatedLabel" class="num text-slate-400">—</span>
-          </p>
-        </div>
-        <nav id="reportNav" class="flex flex-wrap gap-2 text-xs">
-          <!-- reports.json에서 최신 주간/월간 링크를 채움 -->
-        </nav>
-      </div>
-    </header>
-
-    <!-- 주간 · 월간 리포트 목록 -->
-    <section id="reportsPanel" class="bg-slate-900 border border-slate-800 rounded-2xl p-4 md:p-5 hidden">
-      <div class="flex items-center justify-between gap-3 mb-3">
-        <h2 class="text-sm font-semibold text-slate-300">주간 · 월간 리포트</h2>
-        <span class="text-xs text-slate-500" id="reportsCount"></span>
-      </div>
-      <div id="reportsList" class="grid grid-cols-1 md:grid-cols-2 gap-2"></div>
-    </section>
-
-    <!-- 지표 선택 네비게이션 (자산군별 그룹) -->
-    <nav class="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-3" id="metricNav">
-      <!-- JS METRIC_GROUPS로부터 동적 렌더링 -->
-    </nav>
-
-    <!-- 본문: 차트 및 AI 인과 분석 -->
-    <div class="grid grid-cols-1 lg:grid-cols-5 gap-5">
-
-      <!-- 차트 영역 -->
-      <div class="lg:col-span-3 bg-slate-900 p-4 md:p-5 rounded-2xl border border-slate-800 shadow-2xl flex flex-col">
-        <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
-          <h2 id="chartTitle" class="text-sm font-semibold text-slate-300">달러/원 환율 (원)</h2>
-          <!-- 기간 선택 - 데이터가 쌓일수록(1개월/6개월) x축이 빽빽해지는 걸
-               막기 위해 기본으로는 최근 구간만 보여주고, 필요하면 넓힘 -->
-          <div class="flex gap-1" id="rangeSelector"></div>
-        </div>
-        <div class="h-[320px] md:h-[400px] w-full">
-          <canvas id="macroChart"></canvas>
-        </div>
-        <p class="text-xs text-slate-500 mt-2" id="rangeInfo"></p>
-      </div>
-
-      <!-- AI 심층 사유 분석 카드 -->
-      <div class="lg:col-span-2 bg-slate-900 p-5 md:p-6 rounded-2xl border border-sky-500/30 shadow-2xl flex flex-col">
-        <div class="flex items-start justify-between gap-3 border-b border-slate-800 pb-3 mb-4">
-          <div>
-            <div class="text-sky-400 font-bold text-base md:text-lg" id="selectedTitle">항목별 심층 분석</div>
-            <div class="text-xs text-slate-500 mt-0.5" id="selectedDate">-</div>
-          </div>
-          <span id="selectedBadge" class="shrink-0 text-xs text-sky-400 bg-sky-950/80 px-3 py-1 rounded-full border border-sky-800 whitespace-nowrap">
-            달러/원 환율 분석
+          <span id="liveBadge"
+                class="inline-flex items-center gap-1.5 text-xs bg-sky-500/10 text-sky-400 border border-sky-500/20 px-2.5 py-0.5 rounded-md font-medium"
+                title="briefings.json 마지막 갱신 시각 (KST)">
+            <span class="inline-block w-1.5 h-1.5 rounded-full bg-sky-400 animate-pulse" aria-hidden="true"></span>
+            <span>Live</span>
+            <span class="text-sky-500/50">·</span>
+            <span id="liveUpdatedAt" class="num text-sky-300/90">—</span>
           </span>
         </div>
+        <p class="text-xs text-slate-500 mt-1">
+          마지막 업데이트 <span id="lastUpdatedLabel" class="num text-slate-400">—</span>
+        </p>
+      </header>
 
-        <div id="selectedReason" class="text-slate-200 leading-relaxed text-sm md:text-base whitespace-pre-line overflow-y-auto max-h-[420px] pr-1">
-          데이터를 불러오는 중입니다...
-        </div>
-      </div>
+      <!-- 모바일 하단 탭 -->
+      <nav class="md:hidden fixed bottom-0 inset-x-0 z-30 border-t border-slate-800 bg-slate-950/95 backdrop-blur px-2 py-1.5 grid grid-cols-3 gap-1" aria-label="모바일 메뉴">
+        <button type="button" data-view="dashboard" class="nav-link active flex flex-col items-center gap-0.5 py-2 rounded-lg text-[11px] text-slate-400">대시보드</button>
+        <button type="button" data-view="briefing" class="nav-link flex flex-col items-center gap-0.5 py-2 rounded-lg text-[11px] text-slate-400">브리핑</button>
+        <button type="button" data-view="reports" class="nav-link flex flex-col items-center gap-0.5 py-2 rounded-lg text-[11px] text-slate-400">리포트</button>
+      </nav>
 
+      <main class="flex-1 p-4 md:p-6 pb-24 md:pb-8 space-y-5 max-w-6xl w-full mx-auto">
+
+        <!-- ===== 대시보드 ===== -->
+        <section id="view-dashboard" class="space-y-5">
+          <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 md:p-6">
+            <div class="text-xs text-slate-500 mb-2">오늘의 요약</div>
+            <p id="dashOverall" class="text-sm md:text-base text-slate-200 leading-relaxed whitespace-pre-line">
+              데이터를 불러오는 중입니다...
+            </p>
+            <div class="mt-4 flex flex-wrap gap-2">
+              <button type="button" data-go="briefing"
+                      class="px-3 py-1.5 rounded-md text-xs font-medium bg-sky-600 text-white hover:bg-sky-500 transition">
+                브리핑에서 자세히 보기
+              </button>
+              <button type="button" data-go="reports"
+                      class="px-3 py-1.5 rounded-md text-xs font-medium bg-slate-800 text-slate-200 border border-slate-700 hover:border-sky-500/40 transition">
+                리포트 목록
+              </button>
+            </div>
+          </div>
+
+          <div>
+            <div class="flex items-center justify-between mb-3">
+              <h3 class="text-sm font-semibold text-slate-300">주요 지표</h3>
+              <span id="dashBriefingDate" class="text-xs text-slate-500 num">—</span>
+            </div>
+            <div id="dashMetricGrid" class="grid grid-cols-2 lg:grid-cols-4 gap-3"></div>
+          </div>
+
+          <div>
+            <h3 class="text-sm font-semibold text-slate-300 mb-3">포트폴리오</h3>
+            <div id="dashPortfolioGrid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3"></div>
+          </div>
+
+          <div id="dashReportsPreview" class="hidden">
+            <div class="flex items-center justify-between mb-3">
+              <h3 class="text-sm font-semibold text-slate-300">최근 리포트</h3>
+              <button type="button" data-go="reports" class="text-xs text-sky-400 hover:text-sky-300">전체 보기</button>
+            </div>
+            <div id="dashReportsList" class="grid grid-cols-1 md:grid-cols-2 gap-2"></div>
+          </div>
+        </section>
+
+        <!-- ===== 브리핑 (기존 메인 화면) ===== -->
+        <section id="view-briefing" class="view-hidden space-y-5">
+          <nav class="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-3" id="metricNav"></nav>
+
+          <div class="grid grid-cols-1 lg:grid-cols-5 gap-5">
+            <div class="lg:col-span-3 bg-slate-900 p-4 md:p-5 rounded-2xl border border-slate-800 shadow-2xl flex flex-col">
+              <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+                <h3 id="chartTitle" class="text-sm font-semibold text-slate-300">달러/원 환율 (원)</h3>
+                <div class="flex gap-1" id="rangeSelector"></div>
+              </div>
+              <div class="h-[320px] md:h-[400px] w-full">
+                <canvas id="macroChart"></canvas>
+              </div>
+              <p class="text-xs text-slate-500 mt-2" id="rangeInfo"></p>
+            </div>
+
+            <div class="lg:col-span-2 bg-slate-900 p-5 md:p-6 rounded-2xl border border-sky-500/30 shadow-2xl flex flex-col">
+              <div class="flex items-start justify-between gap-3 border-b border-slate-800 pb-3 mb-4">
+                <div>
+                  <div class="text-sky-400 font-bold text-base md:text-lg" id="selectedTitle">항목별 심층 분석</div>
+                  <div class="text-xs text-slate-500 mt-0.5" id="selectedDate">-</div>
+                </div>
+                <span id="selectedBadge" class="shrink-0 text-xs text-sky-400 bg-sky-950/80 px-3 py-1 rounded-full border border-sky-800 whitespace-nowrap">
+                  달러/원 환율 분석
+                </span>
+              </div>
+              <div id="selectedReason" class="text-slate-200 leading-relaxed text-sm md:text-base whitespace-pre-line overflow-y-auto max-h-[420px] pr-1">
+                데이터를 불러오는 중입니다...
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ===== 리포트 ===== -->
+        <section id="view-reports" class="view-hidden space-y-5">
+          <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 md:p-5">
+            <div class="flex items-center justify-between gap-3 mb-4">
+              <div>
+                <h3 class="text-sm font-semibold text-slate-300">주간 · 월간 리포트</h3>
+                <p class="text-xs text-slate-500 mt-0.5">별도 생성된 기간 리포트를 모아서 봅니다.</p>
+              </div>
+              <span class="text-xs text-slate-500" id="reportsCount"></span>
+            </div>
+            <div id="reportsQuick" class="flex flex-wrap gap-2 mb-4"></div>
+            <div id="reportsList" class="grid grid-cols-1 md:grid-cols-2 gap-2"></div>
+            <p id="reportsEmpty" class="hidden text-sm text-slate-500 py-8 text-center">등록된 리포트가 없습니다.</p>
+          </div>
+        </section>
+
+      </main>
     </div>
   </div>
 
@@ -103,20 +177,20 @@
       {
         label: '환율 · 지수',
         items: [
-          { key: 'usdkrw', label: '환율', full: '달러/원 환율 (원)', color: '#38bdf8' },
-          { key: 'kospi', label: '코스피', full: '코스피 지수 (pt)', color: '#f43f5e' },
-          { key: 'nasdaq', label: '나스닥', full: '나스닥 지수 (pt)', color: '#818cf8' },
-          { key: 'sp500', label: 'S&P500', full: 'S&P 500 지수 (pt)', color: '#60a5fa' },
+          { key: 'usdkrw', label: '환율', full: '달러/원 환율 (원)', color: '#38bdf8', dashDigits: 1, unit: '원' },
+          { key: 'kospi', label: '코스피', full: '코스피 지수 (pt)', color: '#f43f5e', dashDigits: 1, unit: '' },
+          { key: 'nasdaq', label: '나스닥', full: '나스닥 지수 (pt)', color: '#818cf8', dashDigits: 1, unit: '' },
+          { key: 'sp500', label: 'S&P500', full: 'S&P 500 지수 (pt)', color: '#60a5fa', dashDigits: 1, unit: '' },
         ]
       },
       {
         label: '원자재 · 자산',
         items: [
-          { key: 'wti', label: 'WTI유가', full: 'WTI 유가 ($/배럴)', color: '#f59e0b' },
-          { key: 'premium_gasoline', label: '고급유', full: '고급 휘발유 (원/L)', color: '#fb7185' },
-          { key: 'gasoline', label: '일반유', full: '일반 휘발유 (원/L)', color: '#10b981' },
-          { key: 'gold_kr', label: '국내금', full: '국내 금 (원/1g)', color: '#eab308' },
-          { key: 'btc', label: '비트코인', full: '비트코인 (원)', color: '#f97316' },
+          { key: 'wti', label: 'WTI유가', full: 'WTI 유가 ($/배럴)', color: '#f59e0b', dashDigits: 2, unit: '$' },
+          { key: 'premium_gasoline', label: '고급유', full: '고급 휘발유 (원/L)', color: '#fb7185', dashDigits: 1, unit: '원' },
+          { key: 'gasoline', label: '일반유', full: '일반 휘발유 (원/L)', color: '#10b981', dashDigits: 1, unit: '원' },
+          { key: 'gold_kr', label: '국내금', full: '국내 금 (원/1g)', color: '#eab308', dashDigits: 1, unit: '원' },
+          { key: 'btc', label: '비트코인', full: '비트코인 (원)', color: '#f97316', dashDigits: 0, unit: '원' },
         ]
       },
       {
@@ -127,15 +201,19 @@
           { key: 'TSLA', label: '테슬라', full: '테슬라 ($)', color: '#e11d48' },
           { key: '005930.KS', label: '삼성전자', full: '삼성전자 (원)', color: '#3b82f6' },
           { key: 'MSFT', label: 'MSFT', full: '마이크로소프트 ($)', color: '#06b6d4' },
-          // 브리핑 저장 키는 SPCX (구 SPCX.O와 호환 처리는 extractValue/displayDetail에서)
           { key: 'SPCX', label: 'SPCX', full: '스페이스X(SPCX) ($)', color: '#c084fc' },
           { key: 'BOTZ', label: 'BOTZ', full: '로보틱스&AI ETF (BOTZ) ($)', color: '#2dd4bf' },
         ]
       },
     ];
 
-    // 기간 선택 옵션. days=null은 "전체". 데이터는 하루 1개씩 쌓이므로
-    // "최근 N개 레코드"로 근사해도 충분함 (정확한 날짜 계산 대신 count 기반).
+    const DASH_METRIC_KEYS = ['usdkrw', 'kospi', 'nasdaq', 'sp500', 'wti', 'btc', 'gold_kr', 'gasoline'];
+    const VIEW_TITLES = {
+      dashboard: '대시보드',
+      briefing: '브리핑',
+      reports: '리포트',
+    };
+
     const RANGE_OPTIONS = [
       { key: '1w', label: '1주', days: 7 },
       { key: '1m', label: '1개월', days: 30 },
@@ -144,20 +222,20 @@
       { key: 'all', label: '전체', days: null },
     ];
 
-    // 일별 브리핑 누적 파일 (구 history.json → briefings.json)
     const BRIEFINGS_URL = './briefings.json';
     const LEGACY_BRIEFINGS_URL = './history.json';
     const REPORTS_URL = './reports.json';
 
     let rawData = [];
+    let reportsData = [];
     let chartInstance = null;
     let currentKey = 'usdkrw';
     let currentLabel = '달러/원 환율 (원)';
     let currentColor = '#38bdf8';
     let selectedItemIndex = -1;
-    // 기본값: 데이터가 적을 땐 어차피 전체가 다 보이고, 쌓이기 시작하면
-    // 1개월 정도가 "한눈에 보기 + 너무 빽빽하지 않기"의 균형점이라 기본값으로 둠.
     let currentRangeKey = '1m';
+    let currentView = 'dashboard';
+    let briefingChartReady = false;
 
     function escapeHtml(s) {
       return String(s ?? '').replace(/[&<>"']/g, c => (
@@ -165,55 +243,208 @@
       ));
     }
 
+    function findMetricMeta(key) {
+      for (const g of METRIC_GROUPS) {
+        const hit = g.items.find(i => i.key === key);
+        if (hit) return hit;
+      }
+      return null;
+    }
+
+    function pctClass(pct) {
+      if (pct == null || Number.isNaN(Number(pct))) return 'text-slate-400';
+      const v = Number(pct);
+      if (Math.abs(v) < 0.005) return 'text-slate-400';
+      return v > 0 ? 'text-emerald-400' : 'text-rose-400';
+    }
+
+    function formatPct(pct) {
+      if (pct == null || Number.isNaN(Number(pct))) return '—';
+      const v = Number(pct);
+      if (Math.abs(v) < 0.005) return '0.00%';
+      return `${v > 0 ? '+' : ''}${v.toFixed(2)}%`;
+    }
+
+    function formatValue(val, meta) {
+      if (val == null || Number.isNaN(Number(val))) return '—';
+      const n = Number(val);
+      const digits = meta?.dashDigits ?? 2;
+      if (meta?.key === 'btc') return `${(n / 100000000).toFixed(2)}억`;
+      const unit = meta?.unit || '';
+      const body = n.toLocaleString('ko-KR', {
+        minimumFractionDigits: digits,
+        maximumFractionDigits: digits,
+      });
+      if (unit === '$') return `$${body}`;
+      return unit ? `${body}${unit}` : body;
+    }
+
+    function setView(view) {
+      if (!VIEW_TITLES[view]) view = 'dashboard';
+      currentView = view;
+      Object.keys(VIEW_TITLES).forEach(v => {
+        const el = document.getElementById('view-' + v);
+        if (!el) return;
+        el.classList.toggle('view-hidden', v !== view);
+      });
+      document.querySelectorAll('.nav-link').forEach(btn => {
+        btn.classList.toggle('active', btn.getAttribute('data-view') === view);
+      });
+      const title = document.getElementById('pageTitle');
+      if (title) title.textContent = VIEW_TITLES[view];
+      if (location.hash.replace('#', '') !== view) {
+        history.replaceState(null, '', '#' + view);
+      }
+      if (view === 'briefing' && !briefingChartReady && rawData.length) {
+        displayDetail(rawData[selectedItemIndex] || rawData[rawData.length - 1]);
+        renderRangeSelector();
+        renderChart();
+        briefingChartReady = true;
+      } else if (view === 'briefing' && chartInstance) {
+        // 숨겨진 차트는 크기 재계산이 필요할 수 있음
+        requestAnimationFrame(() => chartInstance && chartInstance.resize());
+      }
+    }
+
+    function bindNav() {
+      document.querySelectorAll('[data-view]').forEach(btn => {
+        btn.addEventListener('click', () => setView(btn.getAttribute('data-view')));
+      });
+      document.querySelectorAll('[data-go]').forEach(btn => {
+        btn.addEventListener('click', () => setView(btn.getAttribute('data-go')));
+      });
+    }
+
+    function reportCardHtml(r) {
+      const kind = r.type === 'monthly' ? '월간' : '주간';
+      const badge = r.type === 'monthly'
+        ? 'bg-violet-500/10 text-violet-300 border-violet-500/20'
+        : 'bg-emerald-500/10 text-emerald-300 border-emerald-500/20';
+      return `
+        <a href="${escapeHtml(r.path)}"
+           class="block rounded-xl border border-slate-800 bg-slate-950/40 px-4 py-3 hover:border-sky-500/40 transition">
+          <div class="flex items-center gap-2 mb-1">
+            <span class="text-[11px] px-1.5 py-0.5 rounded border ${badge}">${kind}</span>
+            <span class="text-xs text-slate-500 num">${escapeHtml(r.dateRange || r.id || '')}</span>
+          </div>
+          <div class="text-sm text-slate-200 leading-snug line-clamp-2">${escapeHtml(r.headline || r.title || '')}</div>
+        </a>`;
+    }
+
     async function loadReports() {
-      const nav = document.getElementById('reportNav');
-      const panel = document.getElementById('reportsPanel');
       const list = document.getElementById('reportsList');
+      const quick = document.getElementById('reportsQuick');
+      const empty = document.getElementById('reportsEmpty');
+      const count = document.getElementById('reportsCount');
       try {
         const res = await fetch(REPORTS_URL + '?t=' + Date.now());
         if (!res.ok) throw new Error('reports.json ' + res.status);
-        const reports = await res.json();
-        if (!Array.isArray(reports) || reports.length === 0) {
-          nav.innerHTML = '';
+        reportsData = await res.json();
+        if (!Array.isArray(reportsData) || reportsData.length === 0) {
+          list.innerHTML = '';
+          quick.innerHTML = '';
+          count.textContent = '0건';
+          empty.classList.remove('hidden');
           return;
         }
+        empty.classList.add('hidden');
+        count.textContent = `${reportsData.length}건`;
 
-        const latestWeekly = reports.find(r => r.type === 'weekly');
-        const latestMonthly = reports.find(r => r.type === 'monthly');
+        const latestWeekly = reportsData.find(r => r.type === 'weekly');
+        const latestMonthly = reportsData.find(r => r.type === 'monthly');
         const chips = [];
         if (latestWeekly) {
           chips.push(`<a href="${escapeHtml(latestWeekly.path)}"
-            class="px-3 py-1.5 rounded-md bg-slate-800 text-slate-200 border border-slate-700 hover:border-sky-500/50 hover:text-sky-300 transition">
-            주간 ${escapeHtml(latestWeekly.id)}</a>`);
+            class="px-3 py-1.5 rounded-md bg-slate-800 text-slate-200 border border-slate-700 hover:border-sky-500/50 hover:text-sky-300 transition text-xs">
+            최신 주간 ${escapeHtml(latestWeekly.id)}</a>`);
         }
         if (latestMonthly) {
           chips.push(`<a href="${escapeHtml(latestMonthly.path)}"
-            class="px-3 py-1.5 rounded-md bg-slate-800 text-slate-200 border border-slate-700 hover:border-sky-500/50 hover:text-sky-300 transition">
-            월간 ${escapeHtml(String(latestMonthly.id).replace(/-monthly$/, ''))}</a>`);
+            class="px-3 py-1.5 rounded-md bg-slate-800 text-slate-200 border border-slate-700 hover:border-sky-500/50 hover:text-sky-300 transition text-xs">
+            최신 월간 ${escapeHtml(String(latestMonthly.id).replace(/-monthly$/, ''))}</a>`);
         }
-        nav.innerHTML = chips.join('');
+        quick.innerHTML = chips.join('');
+        list.innerHTML = reportsData.map(reportCardHtml).join('');
 
-        list.innerHTML = reports.map(r => {
-          const kind = r.type === 'monthly' ? '월간' : '주간';
-          const badge = r.type === 'monthly'
-            ? 'bg-violet-500/10 text-violet-300 border-violet-500/20'
-            : 'bg-emerald-500/10 text-emerald-300 border-emerald-500/20';
-          return `
-            <a href="${escapeHtml(r.path)}"
-               class="block rounded-xl border border-slate-800 bg-slate-950/40 px-4 py-3 hover:border-sky-500/40 transition">
-              <div class="flex items-center gap-2 mb-1">
-                <span class="text-[11px] px-1.5 py-0.5 rounded border ${badge}">${kind}</span>
-                <span class="text-xs text-slate-500 num">${escapeHtml(r.dateRange || r.id || '')}</span>
-              </div>
-              <div class="text-sm text-slate-200 leading-snug line-clamp-2">${escapeHtml(r.headline || r.title || '')}</div>
-            </a>`;
-        }).join('');
-        document.getElementById('reportsCount').textContent = `${reports.length}건`;
-        panel.classList.remove('hidden');
+        // 대시보드 미리보기 (최대 2건)
+        const previewWrap = document.getElementById('dashReportsPreview');
+        const previewList = document.getElementById('dashReportsList');
+        previewList.innerHTML = reportsData.slice(0, 2).map(reportCardHtml).join('');
+        previewWrap.classList.remove('hidden');
       } catch (e) {
         console.warn('리포트 목록 로드 실패:', e);
-        nav.innerHTML = '';
+        list.innerHTML = '';
+        quick.innerHTML = '';
+        count.textContent = '';
+        empty.classList.remove('hidden');
+        empty.textContent = '리포트 목록을 불러오지 못했습니다.';
       }
+    }
+
+    function renderDashboard(latest) {
+      const overallEl = document.getElementById('dashOverall');
+      const dateEl = document.getElementById('dashBriefingDate');
+      const metricGrid = document.getElementById('dashMetricGrid');
+      const portGrid = document.getElementById('dashPortfolioGrid');
+
+      if (!latest) {
+        overallEl.textContent = '저장된 브리핑이 없습니다.';
+        metricGrid.innerHTML = '';
+        portGrid.innerHTML = '';
+        return;
+      }
+
+      const overall = (latest.reasons && latest.reasons.overall) || latest.reason || '요약 없음';
+      overallEl.textContent = overall;
+      dateEl.textContent = latest.date || '—';
+
+      metricGrid.innerHTML = DASH_METRIC_KEYS.map(key => {
+        const meta = findMetricMeta(key) || { key, label: key, dashDigits: 2 };
+        const val = extractValue(latest, key);
+        const pct = latest.metrics ? latest.metrics[`${key}_pct`] : null;
+        return `
+          <button type="button"
+                  class="text-left rounded-xl border border-slate-800 bg-slate-900/80 px-3.5 py-3 hover:border-sky-500/40 transition"
+                  onclick="openBriefingMetric('${escapeHtml(key)}')">
+            <div class="text-[11px] text-slate-500 mb-1">${escapeHtml(meta.label)}</div>
+            <div class="text-base font-semibold text-slate-100 num">${escapeHtml(formatValue(val, meta))}</div>
+            <div class="text-xs mt-1 num ${pctClass(pct)}">${escapeHtml(formatPct(pct))}</div>
+          </button>`;
+      }).join('');
+
+      const portfolio = latest.portfolio || {};
+      const portItems = METRIC_GROUPS.find(g => g.label.includes('포트폴리오'))?.items || [];
+      portGrid.innerHTML = portItems.map(meta => {
+        const info = portfolio[meta.key] || portfolio[meta.key.replace('.O', '')] || {};
+        const price = info.price;
+        const pct = info.change_rate;
+        const isKr = meta.key.endsWith('.KS');
+        const valueStr = price == null ? '—' : (
+          isKr
+            ? `${Number(price).toLocaleString('ko-KR')}원`
+            : `$${Number(price).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+        );
+        return `
+          <button type="button"
+                  class="text-left rounded-xl border border-slate-800 bg-slate-900/80 px-3.5 py-3 hover:border-sky-500/40 transition"
+                  onclick="openBriefingMetric('${escapeHtml(meta.key)}')">
+            <div class="text-[11px] text-slate-500 mb-1">${escapeHtml(meta.label)}</div>
+            <div class="text-sm font-semibold text-slate-100 num">${escapeHtml(valueStr)}</div>
+            <div class="text-xs mt-1 num ${pctClass(pct)}">${escapeHtml(formatPct(pct))}</div>
+          </button>`;
+      }).join('');
+    }
+
+    function openBriefingMetric(key) {
+      const meta = findMetricMeta(key);
+      if (!meta) {
+        setView('briefing');
+        return;
+      }
+      setView('briefing');
+      // metricNav 버튼 동기화
+      const btn = document.querySelector(`#metricNav .btn[data-key="${CSS.escape(key)}"]`);
+      changeMetric(meta.key, meta.full, meta.color, btn);
     }
 
     function renderRangeSelector() {
@@ -272,7 +503,6 @@
       if (item.metrics && item.metrics[key] !== undefined && item.metrics[key] !== null) return item.metrics[key];
       if (item.portfolio) {
         if (item.portfolio[key] && item.portfolio[key].price !== undefined) return item.portfolio[key].price;
-        // 키가 SPCX / SPCX.O 호환 처리
         const altKey = key.includes('.') ? key.split('.')[0] : key + '.O';
         if (item.portfolio[altKey] && item.portfolio[altKey].price !== undefined) return item.portfolio[altKey].price;
       }
@@ -303,7 +533,6 @@
 
     function formatKstDateTime(isoOrDate) {
       if (!isoOrDate) return null;
-      // 날짜만 있으면 일자만
       if (/^\d{4}-\d{2}-\d{2}$/.test(isoOrDate)) {
         return isoOrDate.replace(/-/g, '.') + ' (일자)';
       }
@@ -325,7 +554,6 @@
     async function resolveUpdatedAt(latest) {
       if (!latest) return null;
       if (latest.updatedAt) return latest.updatedAt;
-      // 구 레코드 폴백: metadata morning/close generatedAt
       const date = latest.date;
       if (!date || !/^\d{4}-\d{2}-\d{2}$/.test(date)) return date || null;
       const [y, m, d] = date.split('-');
@@ -358,17 +586,24 @@
           selectedItemIndex = rawData.length - 1;
           const latest = rawData[selectedItemIndex];
           setLastUpdatedDisplay(await resolveUpdatedAt(latest));
-          displayDetail(latest);
-          renderRangeSelector();
-          renderChart();
+          renderDashboard(latest);
+          // 브리핑 뷰는 들어갈 때 차트 초기화 (첫 페인트 부담 감소)
+          if (currentView === 'briefing') {
+            displayDetail(latest);
+            renderRangeSelector();
+            renderChart();
+            briefingChartReady = true;
+          }
         } else {
           setLastUpdatedDisplay(null);
-          document.getElementById('selectedReason').innerText = "저장된 데이터가 없습니다.";
+          renderDashboard(null);
+          document.getElementById('selectedReason').innerText = '저장된 데이터가 없습니다.';
         }
       } catch (err) {
         console.error(err);
         setLastUpdatedDisplay(null);
-        document.getElementById('selectedReason').innerText = "데이터 로딩 실패: " + err.message;
+        document.getElementById('dashOverall').innerText = '데이터 로딩 실패: ' + err.message;
+        document.getElementById('selectedReason').innerText = '데이터 로딩 실패: ' + err.message;
       }
     }
 
@@ -379,8 +614,7 @@
       document.getElementById('selectedDate').innerText = item.date || '-';
       document.getElementById('selectedBadge').innerText = `${currentLabel} 전용 사유`;
 
-      let reasonText = "";
-
+      let reasonText = '';
       if (item.reasons) {
         if (item.reasons[currentKey]) {
           reasonText = item.reasons[currentKey];
@@ -392,15 +626,8 @@
           reasonText = item.reasons['SPCX.O'];
         }
       }
-
-      if (!reasonText && item.reason) {
-        reasonText = item.reason;
-      }
-
-      if (!reasonText) {
-        reasonText = "해당 일자의 분석 데이터가 존재하지 않습니다.";
-      }
-
+      if (!reasonText && item.reason) reasonText = item.reason;
+      if (!reasonText) reasonText = '해당 일자의 분석 데이터가 존재하지 않습니다.';
       document.getElementById('selectedReason').innerText = reasonText;
     }
 
@@ -408,12 +635,10 @@
       const canvas = document.getElementById('macroChart');
       if (!canvas) return;
       const ctx = canvas.getContext('2d');
-
       const filtered = getFilteredData();
       const labels = filtered.map(d => d.date);
       const values = filtered.map(d => extractValue(d, currentKey));
 
-      // 표시 중인 구간/개수를 텍스트로 안내 (몇 개 중 몇 개를 보고 있는지)
       const infoEl = document.getElementById('rangeInfo');
       if (infoEl) {
         infoEl.innerText = filtered.length < rawData.length
@@ -435,7 +660,6 @@
             borderWidth: 3,
             fill: true,
             tension: 0.25,
-            // 점이 많아지면(3개월/6개월/전체) 점 반경을 줄여서 서로 겹치지 않게 함
             pointRadius: filtered.length > 40 ? 2 : 5,
             pointHoverRadius: 8,
             pointBackgroundColor: currentColor,
@@ -449,7 +673,6 @@
           onClick: (e, elements) => {
             if (elements.length > 0) {
               const idx = elements[0].index;
-              // filtered 배열 기준 index를 rawData 기준 index로 환산
               const rawIndex = rawData.indexOf(filtered[idx]);
               selectedItemIndex = rawIndex >= 0 ? rawIndex : idx;
               displayDetail(rawData[selectedItemIndex]);
@@ -466,12 +689,7 @@
           scales: {
             x: {
               grid: { color: '#1e293b' },
-              ticks: {
-                color: '#94a3b8',
-                // 라벨이 많아지면 자동으로 솎아내서 겹침 방지
-                maxTicksLimit: 10,
-                autoSkip: true
-              }
+              ticks: { color: '#94a3b8', maxTicksLimit: 10, autoSkip: true }
             },
             y: { grid: { color: '#1e293b' }, ticks: { color: '#94a3b8' } }
           }
@@ -499,8 +717,15 @@
       renderChart();
     }
 
+    bindNav();
     renderNav();
+    const initial = (location.hash || '#dashboard').replace('#', '');
+    setView(VIEW_TITLES[initial] ? initial : 'dashboard');
     window.onload = () => { loadData(); loadReports(); };
+    window.addEventListener('hashchange', () => {
+      const v = location.hash.replace('#', '');
+      if (VIEW_TITLES[v]) setView(v);
+    });
   </script>
 </body>
 </html>
