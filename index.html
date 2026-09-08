@@ -153,56 +153,57 @@
         </section>
 
         <!-- ===== 리포트 ===== -->
-        <section id="view-reports" class="view-hidden space-y-5">
-          <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 md:p-5 space-y-4">
-            <div class="flex flex-wrap items-start justify-between gap-3">
-              <div>
-                <h3 class="text-sm font-semibold text-slate-300">리포트</h3>
-                <p class="text-xs text-slate-500 mt-0.5">주간·월간 리포트를 나눠 보고, 검색·기간으로 찾습니다.</p>
+        <section id="view-reports" class="view-hidden space-y-4">
+          <!-- 헤더 + 탭 -->
+          <div class="flex flex-wrap items-center justify-between gap-3">
+            <div class="flex items-center gap-3 flex-wrap">
+              <h3 class="text-sm font-semibold text-slate-200">리포트</h3>
+              <div class="flex gap-1 p-0.5 rounded-lg bg-slate-900 border border-slate-800" role="tablist" aria-label="리포트 종류">
+                <button type="button" data-report-tab="weekly"
+                        class="report-tab px-3 py-1.5 rounded-md text-xs font-medium transition bg-emerald-600 text-white">
+                  주간 <span id="reportsWeeklyCount" class="num opacity-90">0</span>
+                </button>
+                <button type="button" data-report-tab="monthly"
+                        class="report-tab px-3 py-1.5 rounded-md text-xs font-medium transition text-slate-400 hover:text-slate-200">
+                  월간 <span id="reportsMonthlyCount" class="num opacity-90">0</span>
+                </button>
               </div>
-              <span class="text-xs text-slate-500" id="reportsCount"></span>
             </div>
+            <span class="text-xs text-slate-500 num" id="reportsCount"></span>
+          </div>
 
-            <!-- 주간 / 월간 탭 -->
-            <div class="flex gap-1 p-1 rounded-lg bg-slate-950/60 border border-slate-800 w-fit" role="tablist" aria-label="리포트 종류">
-              <button type="button" data-report-tab="weekly"
-                      class="report-tab px-3.5 py-1.5 rounded-md text-xs font-medium transition bg-emerald-600/90 text-white">
-                주간 <span id="reportsWeeklyCount" class="opacity-80 num">0</span>
-              </button>
-              <button type="button" data-report-tab="monthly"
-                      class="report-tab px-3.5 py-1.5 rounded-md text-xs font-medium transition text-slate-400 hover:text-slate-200">
-                월간 <span id="reportsMonthlyCount" class="opacity-80 num">0</span>
-              </button>
-            </div>
-
-            <!-- 검색 · 기간 -->
-            <div class="grid grid-cols-1 md:grid-cols-12 gap-2">
-              <label class="md:col-span-5 block">
-                <span class="sr-only">검색</span>
-                <input id="reportsSearch" type="search" placeholder="제목·헤드라인·ID 검색"
-                       class="w-full rounded-lg bg-slate-950 border border-slate-700 px-3 py-2 text-sm text-slate-200 placeholder:text-slate-600 focus:outline-none focus:border-sky-500/50" />
+          <!-- 필터: 라벨·입력 높이 맞춤 -->
+          <div class="rounded-xl border border-slate-800 bg-slate-900/60 p-3">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 items-end">
+              <label class="block min-w-0">
+                <span class="text-[11px] text-slate-500 mb-1 block">검색</span>
+                <input id="reportsSearch" type="search" placeholder="제목 · 헤드라인 · ID"
+                       class="w-full h-10 rounded-lg bg-slate-950 border border-slate-700 px-3 text-sm text-slate-200 placeholder:text-slate-600 focus:outline-none focus:border-sky-500/50" />
               </label>
-              <label class="md:col-span-3 block">
+              <label class="block min-w-0">
                 <span class="text-[11px] text-slate-500 mb-1 block">시작일</span>
                 <input id="reportsFrom" type="date"
-                       class="w-full rounded-lg bg-slate-950 border border-slate-700 px-3 py-2 text-sm text-slate-200 num focus:outline-none focus:border-sky-500/50" />
+                       class="w-full h-10 rounded-lg bg-slate-950 border border-slate-700 px-3 text-sm text-slate-200 num focus:outline-none focus:border-sky-500/50" />
               </label>
-              <label class="md:col-span-3 block">
+              <label class="block min-w-0">
                 <span class="text-[11px] text-slate-500 mb-1 block">종료일</span>
                 <input id="reportsTo" type="date"
-                       class="w-full rounded-lg bg-slate-950 border border-slate-700 px-3 py-2 text-sm text-slate-200 num focus:outline-none focus:border-sky-500/50" />
+                       class="w-full h-10 rounded-lg bg-slate-950 border border-slate-700 px-3 text-sm text-slate-200 num focus:outline-none focus:border-sky-500/50" />
               </label>
-              <div class="md:col-span-1 flex items-end">
+              <div class="flex gap-2">
                 <button type="button" id="reportsFilterReset"
-                        class="w-full rounded-lg border border-slate-700 px-2 py-2 text-xs text-slate-400 hover:text-slate-200 hover:border-slate-500 transition"
-                        title="검색·기간 초기화">초기화</button>
+                        class="h-10 flex-1 rounded-lg border border-slate-700 px-3 text-xs text-slate-300 hover:bg-slate-800 hover:text-white transition">
+                  초기화
+                </button>
               </div>
             </div>
-
-            <div id="reportsQuick" class="flex flex-wrap gap-2"></div>
-            <div id="reportsList" class="grid grid-cols-1 md:grid-cols-2 gap-2"></div>
-            <p id="reportsEmpty" class="hidden text-sm text-slate-500 py-8 text-center">등록된 리포트가 없습니다.</p>
           </div>
+
+          <!-- 목록 -->
+          <div id="reportsList" class="space-y-2"></div>
+          <p id="reportsEmpty" class="hidden text-sm text-slate-500 py-10 text-center rounded-xl border border-dashed border-slate-800">
+            등록된 리포트가 없습니다.
+          </p>
         </section>
 
       </main>
@@ -376,19 +377,20 @@
     function reportCardHtml(r) {
       const kind = r.type === 'monthly' ? '월간' : '주간';
       const badge = r.type === 'monthly'
-        ? 'bg-violet-500/10 text-violet-300 border-violet-500/20'
-        : 'bg-emerald-500/10 text-emerald-300 border-emerald-500/20';
+        ? 'bg-violet-500/15 text-violet-300 border-violet-500/30'
+        : 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30';
       const gen = r.generatedAt ? formatKstDateTime(r.generatedAt) : '';
       return `
         <a href="${escapeHtml(r.path)}"
-           class="block rounded-xl border border-slate-800 bg-slate-950/40 px-4 py-3 hover:border-sky-500/40 transition">
-          <div class="flex items-center gap-2 mb-1 flex-wrap">
+           class="block rounded-xl border border-slate-800 bg-slate-900 px-4 py-3.5 hover:border-sky-500/40 hover:bg-slate-900/80 transition">
+          <div class="flex items-center gap-2 mb-1.5 flex-wrap">
             <span class="text-[11px] px-1.5 py-0.5 rounded border ${badge}">${kind}</span>
-            <span class="text-xs text-slate-500 num">${escapeHtml(r.id || '')}</span>
-            <span class="text-xs text-slate-600 num">${escapeHtml(r.dateRange || '')}</span>
+            <span class="text-xs text-slate-400 num font-medium">${escapeHtml(r.id || '')}</span>
+            <span class="text-xs text-slate-600">·</span>
+            <span class="text-xs text-slate-500 num">${escapeHtml(r.dateRange || '')}</span>
           </div>
-          <div class="text-sm text-slate-200 leading-snug line-clamp-2">${escapeHtml(r.headline || r.title || '')}</div>
-          ${gen ? `<div class="text-[11px] text-slate-600 mt-1.5 num">생성 ${escapeHtml(gen)}</div>` : ''}
+          <div class="text-sm text-slate-100 leading-snug">${escapeHtml(r.headline || r.title || '')}</div>
+          ${gen ? `<div class="text-[11px] text-slate-600 mt-2 num">생성 ${escapeHtml(gen)}</div>` : ''}
         </a>`;
     }
 
@@ -443,11 +445,11 @@
       reportsTab = tab === 'monthly' ? 'monthly' : 'weekly';
       document.querySelectorAll('.report-tab').forEach(btn => {
         const active = btn.getAttribute('data-report-tab') === reportsTab;
-        btn.className = 'report-tab px-3.5 py-1.5 rounded-md text-xs font-medium transition';
+        btn.className = 'report-tab px-3 py-1.5 rounded-md text-xs font-medium transition';
         if (active && reportsTab === 'weekly') {
-          btn.classList.add('bg-emerald-600/90', 'text-white');
+          btn.classList.add('bg-emerald-600', 'text-white');
         } else if (active && reportsTab === 'monthly') {
-          btn.classList.add('bg-violet-600/90', 'text-white');
+          btn.classList.add('bg-violet-600', 'text-white');
         } else {
           btn.classList.add('text-slate-400', 'hover:text-slate-200');
         }
@@ -457,7 +459,6 @@
 
     function renderReportsList() {
       const list = document.getElementById('reportsList');
-      const quick = document.getElementById('reportsQuick');
       const empty = document.getElementById('reportsEmpty');
       const count = document.getElementById('reportsCount');
       const weeklyN = (reportsData || []).filter(r => r.type === 'weekly').length;
@@ -469,7 +470,6 @@
 
       if (!Array.isArray(reportsData) || reportsData.length === 0) {
         list.innerHTML = '';
-        quick.innerHTML = '';
         count.textContent = '0건';
         empty.classList.remove('hidden');
         empty.textContent = '등록된 리포트가 없습니다.';
@@ -478,23 +478,14 @@
 
       const filtered = getFilteredReports();
       const kindLabel = reportsTab === 'monthly' ? '월간' : '주간';
-      count.textContent = `${kindLabel} ${filtered.length}건 / 전체 ${reportsData.length}건`;
-
-      const latestOfTab = (reportsData || []).find(r => r.type === reportsTab);
-      if (latestOfTab) {
-        quick.innerHTML = `<a href="${escapeHtml(latestOfTab.path)}"
-          class="px-3 py-1.5 rounded-md bg-slate-800 text-slate-200 border border-slate-700 hover:border-sky-500/50 hover:text-sky-300 transition text-xs">
-          최신 ${kindLabel} ${escapeHtml(latestOfTab.id)}</a>`;
-      } else {
-        quick.innerHTML = '';
-      }
+      count.textContent = `${filtered.length}건 표시`;
 
       if (filtered.length === 0) {
         list.innerHTML = '';
         empty.classList.remove('hidden');
         const hasType = (reportsData || []).some(r => r.type === reportsTab);
         empty.textContent = hasType
-          ? '검색·기간 조건에 맞는 리포트가 없습니다.'
+          ? '조건에 맞는 리포트가 없습니다.'
           : `아직 ${kindLabel} 리포트가 없습니다.`;
         return;
       }
