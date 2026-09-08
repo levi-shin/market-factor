@@ -1,0 +1,74 @@
+{
+  "date": "2026-09-08",
+  "domain": "market",
+  "analysisType": "close",
+  "market": {
+    "numeric": {
+      "usdkrw": 1346.34,
+      "us10y": 4.784,
+      "sp500": 7718.6,
+      "nasdaq": 26506.99,
+      "kospi": 6954.52,
+      "btc": 106696000.0,
+      "gold_intl": 4447.1,
+      "gold_kr": 192496.3,
+      "wti": 94.1,
+      "copper": 6.771
+    },
+    "pct": {
+      "usdkrw": 0.13610906575629242,
+      "us10y": 0.0,
+      "sp500": 0.0,
+      "nasdaq": 0.0,
+      "kospi": -0.5842419078850484,
+      "btc": -1.3717877611388425,
+      "gold_intl": -0.6589822633248447,
+      "gold_kr": -0.5237717873276309,
+      "wti": 2.8640139921294163,
+      "copper": 1.324354657687988
+    },
+    "oil": {
+      "gasoline": 1859.18,
+      "premium_gasoline": 2313.52,
+      "diesel": 1844.08
+    },
+    "fearScore": 50
+  },
+  "portfolio": {
+    "AAPL": {
+      "name": "애플",
+      "price": 319.97,
+      "change_rate": 0.0
+    },
+    "TSLA": {
+      "name": "테슬라",
+      "price": 354.08,
+      "change_rate": 0.0
+    },
+    "SPCX": {
+      "name": "스페이스X(SPCX)",
+      "price": 147.95,
+      "change_rate": 0.0
+    },
+    "MSFT": {
+      "name": "마이크로소프트",
+      "price": 499.7,
+      "change_rate": 0.0
+    },
+    "BOTZ": {
+      "name": "로보틱스&AI ETF(BOTZ)",
+      "price": 35.95,
+      "change_rate": 0.0
+    },
+    "NVDA": {
+      "name": "엔비디아",
+      "price": 230.36,
+      "change_rate": 0.0
+    },
+    "005930.KS": {
+      "name": "삼성전자",
+      "price": 269500.0,
+      "change_rate": -0.1851851851851852
+    }
+  }
+}
