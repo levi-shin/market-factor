@@ -300,7 +300,73 @@ MARKET_ITEMS = [
 ]
 
 
+def _parse_naver_number(val):
+    if val is None:
+        return None
+    try:
+        return float(str(val).replace(",", "").replace("%", "").replace("+", "").strip())
+    except (TypeError, ValueError):
+        return None
+
+
+def get_naver_kr_stock(code):
+    """국내 주식 실시간/당일 시세. Yahoo ^KS/.KS는 장중에 전일 종가에 멈추는 경우가 있다."""
+    url = f"https://m.stock.naver.com/api/stock/{code}/basic"
+    headers = {"Referer": "https://m.stock.naver.com/"}
+    res = json.loads(http_get(url, headers=headers, timeout=5))
+    curr = _parse_naver_number(res.get("closePrice") or res.get("tradePrice"))
+    pct = _parse_naver_number(res.get("fluctuationsRatio"))
+    prev_diff = _parse_naver_number(res.get("compareToPreviousClosePrice"))
+    if curr is None:
+        return None, None
+    if pct is None and prev_diff is not None and curr - prev_diff:
+        prev = curr - prev_diff
+        if prev:
+            pct = prev_diff / prev * 100
+    return curr, (pct if pct is not None else 0.0)
+
+
+def get_naver_kr_index(index_code="KOSPI"):
+    """국내 지수. Yahoo ^KS11은 장중에도 전일 종가만 주는 경우가 있다 (2026-09-08 관측)."""
+    url = f"https://m.stock.naver.com/api/index/{index_code}/basic"
+    headers = {"Referer": "https://m.stock.naver.com/"}
+    res = json.loads(http_get(url, headers=headers, timeout=5))
+    curr = _parse_naver_number(res.get("closePrice") or res.get("tradePrice"))
+    pct = _parse_naver_number(res.get("fluctuationsRatio"))
+    prev_diff = _parse_naver_number(res.get("compareToPreviousClosePrice"))
+    status = res.get("marketStatus")
+    if curr is None:
+        return None, None, status
+    if pct is None and prev_diff is not None:
+        prev = curr - prev_diff
+        if prev:
+            pct = prev_diff / prev * 100
+    return curr, (pct if pct is not None else 0.0), status
+
+
 def get_stock_price_any(symbol, name):
+    # 국내 지수/종목은 네이버를 먼저 본다.
+    # 2026-09-08: Yahoo ^KS11·005930.KS가 전일 종가(6995.39 / 270000)에 멈춰
+    # 장중 실제 시세(코스피 7074, 삼성 272750)와 어긋나 등락이 전부 0%가 됐다.
+    if symbol == "^KS11" or "코스피" in name:
+        try:
+            curr, pct, status = get_naver_kr_index("KOSPI")
+            if curr is not None:
+                logger.info(f"코스피 네이버 시세: {curr} ({pct:+.2f}%) status={status}")
+                return f"• {name}: {curr:,.2f} ({pct:+.2f}%)", curr, pct
+        except Exception as e:
+            logger.warning(f"코스피 네이버 조회 실패, Yahoo 폴백: {e}")
+
+    if symbol.endswith(".KS"):
+        code = symbol.replace(".KS", "")
+        try:
+            curr, pct = get_naver_kr_stock(code)
+            if curr is not None:
+                logger.info(f"{name} 네이버 시세: {curr} ({pct:+.2f}%)")
+                return f"• {name}: {curr:,.2f} ({pct:+.2f}%)", curr, pct
+        except Exception as e:
+            logger.warning(f"{name} 네이버 조회 실패, Yahoo 폴백: {e}")
+
     try:
         url = f"https://query1.finance.yahoo.com/v8/finance/chart/{symbol}?interval=1d&range=2d"
         data = json.loads(http_get(url, timeout=4))
@@ -1172,7 +1238,7 @@ def recompute_pct_vs_previous(numeric_data, pct_data, portfolio_map, oil_data=No
     for key in list(pct_data.keys()):
         curr_val = numeric_data.get(key)
         prev_val = prev_metrics.get(key)
-        if curr_val is not None and prev_val:
+        if curr_val is not None and prev_val is not None and prev_val != 0:
             new_pct_data[key] = (curr_val - prev_val) / prev_val * 100
         # else: 이전 기록에 없는 키(신규 지표 등)는 Yahoo 자체 pct를 그대로 둠
 
@@ -1183,7 +1249,7 @@ def recompute_pct_vs_previous(numeric_data, pct_data, portfolio_map, oil_data=No
         curr_val = info.get("price")
         prev_info = prev_portfolio.get(sym)
         prev_val = prev_info.get("price") if prev_info else None
-        if curr_val is not None and prev_val:
+        if curr_val is not None and prev_val is not None and prev_val != 0:
             new_info["change_rate"] = (curr_val - prev_val) / prev_val * 100
         # else: 이전 기록에 없는 종목(예: 방금 추가한 BOTZ 최초 실행)은
         # get_stock_price_any가 계산한 값을 그대로 둠
