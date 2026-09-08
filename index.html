@@ -297,11 +297,30 @@
       return v > 0 ? 'text-emerald-400' : 'text-rose-400';
     }
 
+    function pctArrow(pct) {
+      if (pct == null || Number.isNaN(Number(pct))) return { sym: '·', label: '데이터 없음' };
+      const v = Number(pct);
+      if (Math.abs(v) < 0.005) return { sym: '▸', label: '동일' };
+      if (v > 0) return { sym: '▲', label: '상승' };
+      return { sym: '▼', label: '하락' };
+    }
+
     function formatPct(pct) {
       if (pct == null || Number.isNaN(Number(pct))) return '—';
       const v = Number(pct);
       if (Math.abs(v) < 0.005) return '0.00%';
       return `${v > 0 ? '+' : ''}${v.toFixed(2)}%`;
+    }
+
+    /** 대시보드용: 화살표 + 등락률 HTML */
+    function formatPctWithArrowHtml(pct) {
+      const arrow = pctArrow(pct);
+      const cls = pctClass(pct);
+      return `<span class="inline-flex items-center gap-1 ${cls}" title="${escapeHtml(arrow.label)}">
+        <span class="text-[11px] leading-none" aria-hidden="true">${arrow.sym}</span>
+        <span class="num">${escapeHtml(formatPct(pct))}</span>
+        <span class="sr-only">${escapeHtml(arrow.label)}</span>
+      </span>`;
     }
 
     function formatValue(val, meta) {
@@ -558,13 +577,17 @@
         const meta = findMetricMeta(key) || { key, label: key, dashDigits: 2 };
         const val = extractValue(latest, key);
         const pct = latest.metrics ? latest.metrics[`${key}_pct`] : null;
+        const arrow = pctArrow(pct);
         return `
           <button type="button"
                   class="text-left rounded-xl border border-slate-800 bg-slate-900/80 px-3.5 py-3 hover:border-sky-500/40 transition"
                   onclick="openBriefingMetric('${escapeHtml(key)}')">
-            <div class="text-[11px] text-slate-500 mb-1">${escapeHtml(meta.label)}</div>
+            <div class="flex items-center justify-between gap-2 mb-1">
+              <div class="text-[11px] text-slate-500">${escapeHtml(meta.label)}</div>
+              <div class="text-sm font-semibold leading-none ${pctClass(pct)}" aria-label="${escapeHtml(arrow.label)}" title="${escapeHtml(arrow.label)}">${arrow.sym}</div>
+            </div>
             <div class="text-base font-semibold text-slate-100 num">${escapeHtml(formatValue(val, meta))}</div>
-            <div class="text-xs mt-1 num ${pctClass(pct)}">${escapeHtml(formatPct(pct))}</div>
+            <div class="text-xs mt-1">${formatPctWithArrowHtml(pct)}</div>
           </button>`;
       }).join('');
 
@@ -574,6 +597,7 @@
         const info = portfolio[meta.key] || portfolio[meta.key.replace('.O', '')] || {};
         const price = info.price;
         const pct = info.change_rate;
+        const arrow = pctArrow(pct);
         const isKr = meta.key.endsWith('.KS');
         const valueStr = price == null ? '—' : (
           isKr
@@ -584,9 +608,12 @@
           <button type="button"
                   class="text-left rounded-xl border border-slate-800 bg-slate-900/80 px-3.5 py-3 hover:border-sky-500/40 transition"
                   onclick="openBriefingMetric('${escapeHtml(meta.key)}')">
-            <div class="text-[11px] text-slate-500 mb-1">${escapeHtml(meta.label)}</div>
+            <div class="flex items-center justify-between gap-2 mb-1">
+              <div class="text-[11px] text-slate-500">${escapeHtml(meta.label)}</div>
+              <div class="text-sm font-semibold leading-none ${pctClass(pct)}" aria-label="${escapeHtml(arrow.label)}" title="${escapeHtml(arrow.label)}">${arrow.sym}</div>
+            </div>
             <div class="text-sm font-semibold text-slate-100 num">${escapeHtml(valueStr)}</div>
-            <div class="text-xs mt-1 num ${pctClass(pct)}">${escapeHtml(formatPct(pct))}</div>
+            <div class="text-xs mt-1">${formatPctWithArrowHtml(pct)}</div>
           </button>`;
       }).join('');
     }
