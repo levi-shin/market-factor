@@ -8,6 +8,17 @@
 
 ---
 
+## [0.8.8] - 2026-09-08
+
+대시보드 브랜드명을 **마켓 팩터 (Market Factor)** 로 바꾸고,
+Live 뱃지·페이지에 마지막 업데이트 날짜/시간을 표시합니다.
+
+### 변경
+
+- `index.html` 제목: 모닝 팩터 → 마켓 팩터
+- Live 옆에 `YYYY.MM.DD HH:MM KST` 표시 + 헤더 하단 마지막 업데이트
+- `briefings.json`에 `updatedAt` 저장 (구 레코드는 metadata `generatedAt` 폴백)
+
 ## [0.8.7] - 2026-09-08
 
 미국 현금장이 쉬는 날(휴장·주말·개장 전)에는 나스닥 등이
@@ -560,7 +571,7 @@ AWS 의존을 완전히 제거하고 GitHub만으로 운영하도록 전환했�
 
 ### 추가
 
-- `index.html` — 모닝 팩터 대시보드 (차트 + 항목별 AI 분석)
+- `index.html` — 마켓 팩터 대시보드 (차트 + 항목별 AI 분석)
   - 포트폴리오 키를 저장 데이터와 맞춰 `SPCX.O` → `SPCX` 정렬 (구 키 호환 유지)
 - 기존 S3 `history.json` 데이터를 `briefings.json`으로 이관
 
