@@ -424,15 +424,13 @@
       reportsTab = tab === 'monthly' ? 'monthly' : 'weekly';
       document.querySelectorAll('.report-tab').forEach(btn => {
         const active = btn.getAttribute('data-report-tab') === reportsTab;
-        btn.classList.toggle('bg-emerald-600/90', active && reportsTab === 'weekly');
-        btn.classList.toggle('bg-violet-600/90', active && reportsTab === 'monthly');
-        btn.classList.toggle('text-white', active);
-        btn.classList.toggle('text-slate-400', !active);
-        if (!active) {
-          btn.classList.remove('bg-emerald-600/90', 'bg-violet-600/90', 'text-white');
-          btn.classList.add('text-slate-400');
+        btn.className = 'report-tab px-3.5 py-1.5 rounded-md text-xs font-medium transition';
+        if (active && reportsTab === 'weekly') {
+          btn.classList.add('bg-emerald-600/90', 'text-white');
+        } else if (active && reportsTab === 'monthly') {
+          btn.classList.add('bg-violet-600/90', 'text-white');
         } else {
-          btn.classList.remove('text-slate-400');
+          btn.classList.add('text-slate-400', 'hover:text-slate-200');
         }
       });
       renderReportsList();
