@@ -435,7 +435,7 @@
       const titleEl = document.getElementById('reportModalTitle');
       const subEl = document.getElementById('reportModalSub');
       const openTab = document.getElementById('reportModalOpenTab');
-      if (!modal || !frame) return;
+      if (!modal || !frame || !path) return;
       titleEl.textContent = title || '리포트';
       subEl.textContent = sub || '';
       openTab.href = path;
@@ -454,21 +454,19 @@
       if (frame) frame.src = 'about:blank';
     }
 
-    function bindReportOpeners(root) {
-      (root || document).querySelectorAll('.report-open').forEach(btn => {
-        if (btn.dataset.bound === '1') return;
-        btn.dataset.bound = '1';
-        btn.addEventListener('click', () => {
-          openReportModal(
-            btn.getAttribute('data-report-path'),
-            btn.getAttribute('data-report-title'),
-            btn.getAttribute('data-report-sub')
-          );
-        });
-      });
-    }
-
     function bindReportModal() {
+      // 목록이 다시 그려져도 클릭이 빠지지 않게 문서 위임
+      document.addEventListener('click', (e) => {
+        const btn = e.target.closest('.report-open');
+        if (!btn) return;
+        e.preventDefault();
+        e.stopPropagation();
+        openReportModal(
+          btn.getAttribute('data-report-path'),
+          btn.getAttribute('data-report-title'),
+          btn.getAttribute('data-report-sub')
+        );
+      });
       document.getElementById('reportModalClose')?.addEventListener('click', closeReportModal);
       document.getElementById('reportModalBackdrop')?.addEventListener('click', closeReportModal);
       document.addEventListener('keydown', (e) => {
@@ -576,7 +574,6 @@
 
       empty.classList.add('hidden');
       list.innerHTML = filtered.map(reportCardHtml).join('');
-      bindReportOpeners(list);
     }
 
     function bindReportsFilters() {
@@ -622,7 +619,6 @@
         if (reportsData.length > 0) {
           previewList.innerHTML = reportsData.slice(0, 2).map(reportCardHtml).join('');
           previewWrap.classList.remove('hidden');
-          bindReportOpeners(previewList);
         }
       } catch (e) {
         console.warn('리포트 목록 로드 실패:', e);
