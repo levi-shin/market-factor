@@ -6,5 +6,6 @@
   "analysisVersion": "0.1",
   "promptVersion": "market-analysis-0.1",
   "model": "gemini-3.7-flash",
-  "status": "published"
+  "status": "stale",
+  "note": "Yahoo stale KR prices at first publish; numbers patched pending full morning re-run"
 }

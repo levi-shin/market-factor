@@ -2258,6 +2258,50 @@ def is_analysis_already_published(analysis_type):
     return meta.get("status") == "published"
 
 
+def is_published_morning_kr_stale():
+    """이미 published된 아침 시세가 Yahoo 정체로 전일과 같고, 네이버 실시간이 다르면 True.
+
+    2026-09-08: 아침이 전일 종가(코스피 6995.39)로 published된 뒤 창 안 슬롯이
+    전부 skip되어, 네이버 수정이 main에 올라와도 장중 데이터가 하루 종일 0%로
+    남았다. published여도 국내 지수가 이 패턴이면 재수집한다.
+    """
+    try:
+        briefings = load_briefings()
+    except Exception:
+        return False
+
+    today_str, _ = kst_date_str()
+    today = next((r for r in reversed(briefings or []) if r.get("date") == today_str), None)
+    prev = next((r for r in reversed(briefings or []) if r.get("date") != today_str), None)
+    if not today or not prev:
+        return False
+
+    today_kospi = (today.get("metrics") or {}).get("kospi")
+    prev_kospi = (prev.get("metrics") or {}).get("kospi")
+    if today_kospi is None or prev_kospi is None:
+        return False
+    # 저장된 아침 코스피가 직전 브리핑과 사실상 동일할 때만 의심
+    if abs(float(today_kospi) - float(prev_kospi)) > 0.05:
+        return False
+
+    try:
+        live, _, status = get_naver_kr_index("KOSPI")
+    except Exception as e:
+        logger.warning(f"아침 시세 stale 판정용 네이버 조회 실패: {e}")
+        return False
+    if live is None:
+        return False
+
+    gap_pct = abs(live - float(today_kospi)) / float(today_kospi) * 100
+    if gap_pct < 0.15:
+        return False
+
+    logger.warning(
+        f"아침 국내 시세 stale 의심: 저장={today_kospi}, 직전={prev_kospi}, "
+        f"네이버={live} (gap={gap_pct:.2f}%, status={status}) → 재수집"
+    )
+    return True
+
 
 # 아침/장마감 각각 "이 시간대 안이면 아직 늦지 않았다"고 보는 창(KST).
 # GitHub schedule이 정시를 흘려도 창 안의 아무 슬롯이나 걸리면 그날 실행이 채워진다.
@@ -2273,6 +2317,7 @@ def resolve_auto_session(now=None):
 
     창 안이면서 아직 그날 성공 기록이 없는 세션만 고른다.
     아침과 장마감 창은 겹치지 않으므로 하나만 선택된다.
+    예외: 아침이 published여도 국내 시세가 전일 복제·네이버와 괴리면 재실행.
     """
     now = now or now_kst()
     weekday = now.weekday()
@@ -2283,6 +2328,8 @@ def resolve_auto_session(now=None):
         if weekday not in weekdays or not (start <= minutes < end):
             continue
         if is_analysis_already_published(session):
+            if session == "morning" and is_published_morning_kr_stale():
+                return session
             logger.info(f"{session} 세션은 오늘 이미 완료됨")
             continue
         return session

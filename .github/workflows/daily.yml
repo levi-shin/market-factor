@@ -43,6 +43,11 @@ on:
           - "auto"
           - "morning"
           - "close"
+      force:
+        description: "이미 published여도 강제 재실행 (잘못된 시세 고칠 때)"
+        required: false
+        default: false
+        type: boolean
 
 concurrency:
   group: market-briefing-daily
@@ -70,6 +75,17 @@ jobs:
           SITE_BASE_URL: ${{ secrets.SITE_BASE_URL }}
         run: |
           SESSION="${{ github.event.inputs.session || 'auto' }}"
+          FORCE="${{ github.event.inputs.force || 'false' }}"
+          # force면 오늘 morning/close published 마커를 지워 auto/skip 가드를 통과시킨다.
+          if [ "$FORCE" = "true" ]; then
+            TODAY_KST=$(TZ=Asia/Seoul date +%Y/%m/%d)
+            for kind in morning close; do
+              META="metadata/market/${TODAY_KST}/${kind}.json"
+              if [ -f "$META" ]; then
+                python -c "import json,pathlib; p=pathlib.Path('$META'); m=json.loads(p.read_text(encoding='utf-8')); m['status']='forced-rerun'; m['note']='workflow_dispatch force=true'; p.write_text(json.dumps(m, ensure_ascii=False, indent=2)+'\n', encoding='utf-8'); print('cleared', p)"
+              fi
+            done
+          fi
           case "$SESSION" in
             morning) python lambda_function.py --mode daily --send-notification true ;;
             close)   python lambda_function.py --mode daily --send-notification false ;;
