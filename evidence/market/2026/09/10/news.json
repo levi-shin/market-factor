@@ -1,0 +1,48 @@
+{
+  "date": "2026-09-10",
+  "domain": "market",
+  "sources": [
+    {
+      "id": "evidence-001",
+      "title": "\"액추에이터 수주잔고 50만대 이상\"…로보티즈 주가 5% 급등",
+      "url": "https://www.hankyung.com/article/2026091056636",
+      "publishedAt": "Thu, 10 Sep 2026 09:22:43 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-002",
+      "title": "디알텍, 수술용 엑스레이의 美FDA 인증 소식에 '급등'",
+      "url": "https://www.hankyung.com/article/2026091056576",
+      "publishedAt": "Thu, 10 Sep 2026 09:21:38 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-003",
+      "title": "샘표, 자사주 30% 소각 결정에 상한가",
+      "url": "https://www.hankyung.com/article/2026091056426",
+      "publishedAt": "Thu, 10 Sep 2026 09:16:53 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-004",
+      "title": "코스피, '네 마녀의 날' 경계감에 장 초반 보합권 등락",
+      "url": "https://www.hankyung.com/article/2026091055596",
+      "publishedAt": "Thu, 10 Sep 2026 09:12:31 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-005",
+      "title": "마스크팩 하나로 매출 두배…제닉, 주가 조정에도 \"여전히 저평가\"",
+      "url": "https://www.hankyung.com/article/202609094151i",
+      "publishedAt": "Thu, 10 Sep 2026 09:03:15 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-006",
+      "title": "SK하이닉스 매도한 1% 초고수들…'이 종목'에 몰렸다",
+      "url": "https://www.hankyung.com/article/202609105495i",
+      "publishedAt": "Thu, 10 Sep 2026 09:01:51 +0900",
+      "source": "한국경제"
+    }
+  ]
+}
