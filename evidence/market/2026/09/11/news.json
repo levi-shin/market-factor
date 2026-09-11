@@ -1,0 +1,48 @@
+{
+  "date": "2026-09-11",
+  "domain": "market",
+  "sources": [
+    {
+      "id": "evidence-001",
+      "title": "[속보] 코스피 3%대 급락 출발…6800선으로 밀려",
+      "url": "https://www.hankyung.com/article/2026091181406",
+      "publishedAt": "Fri, 11 Sep 2026 09:00:45 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-002",
+      "title": "올해 0.25% 상승 그친 LX홀딩스…자회사 실적·경영권 승계로 실마리 찾을까",
+      "url": "https://www.hankyung.com/article/202609118086i",
+      "publishedAt": "Fri, 11 Sep 2026 08:43:00 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-003",
+      "title": "\"LS, 전선·전력기기 호황 계속…주가 여력 충분\"-SK",
+      "url": "https://www.hankyung.com/article/2026091179726",
+      "publishedAt": "Fri, 11 Sep 2026 08:16:39 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-004",
+      "title": "\"중동 리스크 확대로 다음주 FOMC '깜짝 금리인상' 가능\"-IBK",
+      "url": "https://www.hankyung.com/article/2026091179256",
+      "publishedAt": "Fri, 11 Sep 2026 08:15:58 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-005",
+      "title": "유가 100달러·10년물 5% 시대?…드러켄밀러 \"AI 붐, 후반\" [김현석의 월스트리트나우]",
+      "url": "https://www.hankyung.com/article/202609117860i",
+      "publishedAt": "Fri, 11 Sep 2026 08:07:48 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-006",
+      "title": "'삼성전자, 드디어 터지나' 들썩…증권가서 '파격 전망' 나왔다 [분석+]",
+      "url": "https://www.hankyung.com/article/2026091178816",
+      "publishedAt": "Fri, 11 Sep 2026 08:06:15 +0900",
+      "source": "한국경제"
+    }
+  ]
+}
