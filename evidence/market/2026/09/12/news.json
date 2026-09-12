@@ -1,0 +1,48 @@
+{
+  "date": "2026-09-12",
+  "domain": "market",
+  "sources": [
+    {
+      "id": "evidence-001",
+      "title": "LG·LX의 희비…무엇이 두 형제회사 주가 갈랐나",
+      "url": "https://www.hankyung.com/article/202609120109i",
+      "publishedAt": "Sat, 12 Sep 2026 08:56:38 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-002",
+      "title": "높은 CPI, 확정된 인상…뉴욕 증시 뛴 이유는 \"비둘기파적 인상(한두 번)\" [김현석의 월스트리트나우]",
+      "url": "https://www.hankyung.com/article/202609129994i",
+      "publishedAt": "Sat, 12 Sep 2026 08:15:16 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-003",
+      "title": "외국인은 파는데…주가 23% 급등한 '이 종목'의 정체",
+      "url": "https://www.hankyung.com/article/202609119275i",
+      "publishedAt": "Sat, 12 Sep 2026 08:00:08 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-004",
+      "title": "\"반도체 산업은 항상 사이클\"…현재 국면에서 투자 전략은?",
+      "url": "https://www.hankyung.com/article/202609119361i",
+      "publishedAt": "Sat, 12 Sep 2026 08:00:03 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-005",
+      "title": "유가 하락·CPI 안도에 '숨통'…5일 만에 반등 [뉴욕증시 브리핑]",
+      "url": "https://www.hankyung.com/article/2026091200027",
+      "publishedAt": "Sat, 12 Sep 2026 07:12:34 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-006",
+      "title": "'적자 늪' 솔루스첨단소재, 가동률 회복 속 북미 공장 개설 기대로 급반등",
+      "url": "https://www.hankyung.com/article/202609119110i",
+      "publishedAt": "Sat, 12 Sep 2026 07:00:02 +0900",
+      "source": "한국경제"
+    }
+  ]
+}
