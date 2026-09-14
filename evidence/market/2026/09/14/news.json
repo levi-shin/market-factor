@@ -1,0 +1,48 @@
+{
+  "date": "2026-09-14",
+  "domain": "market",
+  "sources": [
+    {
+      "id": "evidence-001",
+      "title": "치열한 '7천피' 공방전…초고수는 다시 삼전닉스 담았다",
+      "url": "https://www.hankyung.com/article/202609141862i",
+      "publishedAt": "Mon, 14 Sep 2026 09:00:09 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-002",
+      "title": "일본 부동산 초호황에도 'J-리츠'는 썰렁…왜",
+      "url": "https://www.hankyung.com/article/202609131198i",
+      "publishedAt": "Mon, 14 Sep 2026 09:00:02 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-003",
+      "title": "\"롯데칠성, 올 하반기 원재료비 높아 비용 측면 불확실…목표가↓\"-현대차",
+      "url": "https://www.hankyung.com/article/2026091420216",
+      "publishedAt": "Mon, 14 Sep 2026 08:53:37 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-004",
+      "title": "\"FOMC 대응 전략…금융주로 방어 후 수출 증가 업종에 관심\"-한투",
+      "url": "https://www.hankyung.com/article/2026091420166",
+      "publishedAt": "Mon, 14 Sep 2026 08:53:14 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-005",
+      "title": "반도체·전력 인프라 쌍끌이…하반기 기대되는 소부장 5개 종목",
+      "url": "https://www.hankyung.com/article/202609142003i",
+      "publishedAt": "Mon, 14 Sep 2026 08:45:28 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-006",
+      "title": "\"아모레퍼시픽, 에스트라·일리윤이 성장 이끈다…목표가↑\"-한화",
+      "url": "https://www.hankyung.com/article/2026091419176",
+      "publishedAt": "Mon, 14 Sep 2026 08:18:17 +0900",
+      "source": "한국경제"
+    }
+  ]
+}
