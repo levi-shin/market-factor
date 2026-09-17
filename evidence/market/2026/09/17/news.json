@@ -1,0 +1,48 @@
+{
+  "date": "2026-09-17",
+  "domain": "market",
+  "sources": [
+    {
+      "id": "evidence-001",
+      "title": "코스피, 상승 출발 6780대…코스닥도 올라",
+      "url": "https://www.hankyung.com/article/2026091702366",
+      "publishedAt": "Thu, 17 Sep 2026 09:06:30 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-002",
+      "title": "30%→55% '역사적 추월'…삼전닉스 '최대 수혜' 전망 나왔다 [분석+]",
+      "url": "https://www.hankyung.com/article/2026091700256",
+      "publishedAt": "Thu, 17 Sep 2026 08:30:04 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-003",
+      "title": "美 금리 인상 후 환율 상승에 증권가 \"추세 전환은 아냐\"",
+      "url": "https://www.hankyung.com/article/2026091799727",
+      "publishedAt": "Thu, 17 Sep 2026 08:29:36 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-004",
+      "title": "Fed '매파적 금리 인상'에 코스피도 긴장…\"믿을 건 반도체\"",
+      "url": "https://www.hankyung.com/article/202609179965i",
+      "publishedAt": "Thu, 17 Sep 2026 08:24:02 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-005",
+      "title": "\"중대한 발걸음\" 워시, 추가 인상 예고…10년물도 동반 상승 [김현석의 월스트리트나우]",
+      "url": "https://www.hankyung.com/article/202609179982i",
+      "publishedAt": "Thu, 17 Sep 2026 08:20:50 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-006",
+      "title": "\"롯데에너지머티리얼즈, 모든 전방산업 수요 증가 중…목표가↑\"-NH",
+      "url": "https://www.hankyung.com/article/2026091799906",
+      "publishedAt": "Thu, 17 Sep 2026 08:16:56 +0900",
+      "source": "한국경제"
+    }
+  ]
+}
