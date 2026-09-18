@@ -1819,10 +1819,10 @@
   },
   {
     "date": "2026-09-18",
-    "updatedAt": "2026-09-18T16:26:37.553107+09:00",
+    "updatedAt": "2026-09-18T21:18:46.395767+09:00",
     "metrics": {
-      "usdkrw": 1381.9,
-      "usdkrw_pct": 0.0738659405596418,
+      "usdkrw": 1388.3,
+      "usdkrw_pct": 0.5373385087770005,
       "kospi": 6894.23,
       "kospi_pct": 2.6628307132401403,
       "nasdaq": 26418.299,
@@ -1830,29 +1830,34 @@
       "sp500": 7637.76,
       "sp500_pct": 1.138137744461259,
       "us10y": 4.947,
-      "wti": 100.2,
-      "wti_pct": -0.9000098902185705,
-      "gold_intl": 4433.3,
-      "gold_intl_pct": 1.6578766337995914,
-      "gold_kr": 196967.46,
-      "gold_kr_pct": 1.732969127671792,
-      "btc": 106836000.0,
-      "btc_pct": 1.372046683746086,
-      "gasoline": 1858.52,
-      "premium_gasoline": 2320.27,
-      "diesel": 1843.91,
+      "wti": 96.2,
+      "wti_pct": -4.856097319750763,
+      "gold_intl": 4419.2,
+      "gold_intl_pct": 1.3345562944278795,
+      "gold_kr": 197250.32,
+      "gold_kr_pct": 1.879065278007765,
+      "btc": 107473000.0,
+      "btc_pct": 1.9764683556314642,
+      "gasoline": 1858.56,
+      "premium_gasoline": 2320.71,
+      "diesel": 1843.8,
       "fear_score": 50
     },
     "portfolio": {
-      "SPCX": {
-        "name": "스페이스X(SPCX)",
-        "price": 154.81,
-        "change_rate": 2.6047189819724332
-      },
       "TSLA": {
         "name": "테슬라",
         "price": 366.2,
         "change_rate": 2.267649687220734
+      },
+      "AAPL": {
+        "name": "애플",
+        "price": 337.0,
+        "change_rate": 1.380824884931252
+      },
+      "SPCX": {
+        "name": "스페이스X(SPCX)",
+        "price": 154.81,
+        "change_rate": 2.6047189819724332
       },
       "NVDA": {
         "name": "엔비디아",
@@ -1869,47 +1874,42 @@
         "price": 497.75,
         "change_rate": 1.5194778706914112
       },
-      "AAPL": {
-        "name": "애플",
-        "price": 337.0,
-        "change_rate": 1.380824884931252
-      },
       "005930.KS": {
         "name": "삼성전자",
-        "price": 260500.0,
-        "change_rate": 2.559055118110236
+        "price": 260000.0,
+        "change_rate": 2.3622047244094486
       }
     },
     "news": [
       {
-        "title": "\"대출 안꼈다며 사기꾼아!\"…부동산 가짜광고 1만건 적발",
-        "url": "https://www.hankyung.com/article/202609183487i",
-        "publishedAt": "Fri, 18 Sep 2026 16:00:01 +0900"
+        "title": "긴축·AI 공포 이겨낸 증시…다음주에는 이 둘의 만남이 기다린다 [다음주 주요 변수 미리보기]",
+        "url": "https://www.hankyung.com/article/202609184415i",
+        "publishedAt": "Fri, 18 Sep 2026 19:21:30 +0900"
       },
       {
-        "title": "세후수익률, 서울 부동산이 코스피의 2배...\"부동산 팔고 주식 사면 세제혜택 줘야\"",
-        "url": "https://www.hankyung.com/article/202609183981i",
-        "publishedAt": "Fri, 18 Sep 2026 15:46:58 +0900"
+        "title": "\"골프장 300억이면 산다\"…韓 기업들 돈 싸들고 몰린 곳이",
+        "url": "https://www.hankyung.com/article/2026091845671",
+        "publishedAt": "Fri, 18 Sep 2026 19:00:02 +0900"
       },
       {
-        "title": "코스피, 美·日 기준금리 인상 소화하며 2.6% 반등 마감",
-        "url": "https://www.hankyung.com/article/2026091841056",
-        "publishedAt": "Fri, 18 Sep 2026 15:41:50 +0900"
+        "title": "유동원 \"AI 사이클, 아직 종료 아냐…美 성장주 매력\"",
+        "url": "https://www.hankyung.com/article/2026091844931",
+        "publishedAt": "Fri, 18 Sep 2026 18:01:04 +0900"
       },
       {
-        "title": "박스피에 이러지도 저러지도…\"부자들은 이렇게 버티고 있다\"",
-        "url": "https://www.hankyung.com/article/202609169057i",
-        "publishedAt": "Fri, 18 Sep 2026 14:33:08 +0900"
+        "title": "KB證, 외화채권 발행 주관액 고공행진",
+        "url": "https://www.hankyung.com/article/2026091844951",
+        "publishedAt": "Fri, 18 Sep 2026 17:59:53 +0900"
       },
       {
-        "title": "벅셔해서웨이, 日 5대 종합상사 지분 확대 검토",
-        "url": "https://www.hankyung.com/article/202609183730i",
-        "publishedAt": "Fri, 18 Sep 2026 14:02:28 +0900"
+        "title": "두산, 호실적·주주환원에 '껑충'",
+        "url": "https://www.hankyung.com/article/2026091844961",
+        "publishedAt": "Fri, 18 Sep 2026 17:59:11 +0900"
       },
       {
-        "title": "美 SEC, 토큰화 주식 5년간 허용…24시간 거래 눈앞에",
-        "url": "https://www.hankyung.com/article/202609183658i",
-        "publishedAt": "Fri, 18 Sep 2026 13:06:31 +0900"
+        "title": "美 '토큰 주식' 24시간 거래 길 열렸다",
+        "url": "https://www.hankyung.com/article/2026091845111",
+        "publishedAt": "Fri, 18 Sep 2026 17:58:48 +0900"
       }
     ],
     "reasons": {
