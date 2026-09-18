@@ -1819,25 +1819,25 @@
   },
   {
     "date": "2026-09-18",
-    "updatedAt": "2026-09-18T21:18:46.395767+09:00",
+    "updatedAt": "2026-09-18T22:05:45.617602+09:00",
     "metrics": {
-      "usdkrw": 1388.3,
-      "usdkrw_pct": 0.5373385087770005,
+      "usdkrw": 1387.46,
+      "usdkrw_pct": 0.4765077341984768,
       "kospi": 6894.23,
       "kospi_pct": 2.6628307132401403,
       "nasdaq": 26418.299,
       "nasdaq_pct": 1.6932320451771825,
       "sp500": 7637.76,
       "sp500_pct": 1.138137744461259,
-      "us10y": 4.947,
-      "wti": 96.2,
-      "wti_pct": -4.856097319750763,
-      "gold_intl": 4419.2,
-      "gold_intl_pct": 1.3345562944278795,
-      "gold_kr": 197250.32,
-      "gold_kr_pct": 1.879065278007765,
-      "btc": 107473000.0,
-      "btc_pct": 1.9764683556314642,
+      "us10y": 4.976,
+      "wti": 96.8,
+      "wti_pct": -4.26268420532094,
+      "gold_intl": 4408.3,
+      "gold_intl_pct": 1.0846136207291948,
+      "gold_kr": 196644.75,
+      "gold_kr_pct": 1.5662905988062112,
+      "btc": 107487000.0,
+      "btc_pct": 1.9897523484201536,
       "gasoline": 1858.56,
       "premium_gasoline": 2320.71,
       "diesel": 1843.8,
@@ -1849,25 +1849,25 @@
         "price": 366.2,
         "change_rate": 2.267649687220734
       },
-      "AAPL": {
-        "name": "애플",
-        "price": 337.0,
-        "change_rate": 1.380824884931252
-      },
-      "SPCX": {
-        "name": "스페이스X(SPCX)",
-        "price": 154.81,
-        "change_rate": 2.6047189819724332
+      "BOTZ": {
+        "name": "로보틱스&AI ETF(BOTZ)",
+        "price": 35.115,
+        "change_rate": 1.137672811059917
       },
       "NVDA": {
         "name": "엔비디아",
         "price": 219.34,
         "change_rate": 2.5432445067788674
       },
-      "BOTZ": {
-        "name": "로보틱스&AI ETF(BOTZ)",
-        "price": 35.115,
-        "change_rate": 1.137672811059917
+      "SPCX": {
+        "name": "스페이스X(SPCX)",
+        "price": 154.81,
+        "change_rate": 2.6047189819724332
+      },
+      "AAPL": {
+        "name": "애플",
+        "price": 337.0,
+        "change_rate": 1.380824884931252
       },
       "MSFT": {
         "name": "마이크로소프트",
@@ -1881,6 +1881,11 @@
       }
     },
     "news": [
+      {
+        "title": "\"주식할 돈으로 서울에 집 사랬잖아\"…20년 수익률 어떻길래",
+        "url": "https://www.hankyung.com/article/2026091844941",
+        "publishedAt": "Fri, 18 Sep 2026 21:00:05 +0900"
+      },
       {
         "title": "긴축·AI 공포 이겨낸 증시…다음주에는 이 둘의 만남이 기다린다 [다음주 주요 변수 미리보기]",
         "url": "https://www.hankyung.com/article/202609184415i",
@@ -1905,11 +1910,6 @@
         "title": "두산, 호실적·주주환원에 '껑충'",
         "url": "https://www.hankyung.com/article/2026091844961",
         "publishedAt": "Fri, 18 Sep 2026 17:59:11 +0900"
-      },
-      {
-        "title": "美 '토큰 주식' 24시간 거래 길 열렸다",
-        "url": "https://www.hankyung.com/article/2026091845111",
-        "publishedAt": "Fri, 18 Sep 2026 17:58:48 +0900"
       }
     ],
     "reasons": {
