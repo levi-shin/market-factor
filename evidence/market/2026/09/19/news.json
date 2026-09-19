@@ -1,0 +1,48 @@
+{
+  "date": "2026-09-19",
+  "domain": "market",
+  "sources": [
+    {
+      "id": "evidence-001",
+      "title": "워시는 언제, 얼마나 더 올릴까…모멘텀 되살아나는 반도체? [월가 백브리핑]",
+      "url": "https://www.hankyung.com/article/202609194944i",
+      "publishedAt": "Sat, 19 Sep 2026 08:26:52 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-002",
+      "title": "막판 10분 뛴 반도체, 아셴브레너가 돌아왔다…21~23일은 '나쁜 사흘' [김현석의 월스트리트나우]",
+      "url": "https://www.hankyung.com/article/202609194909i",
+      "publishedAt": "Sat, 19 Sep 2026 08:02:50 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-003",
+      "title": "개미들 \"환율 떨어질 때 더 고민\"…주목해야할 종목 찾아보니",
+      "url": "https://www.hankyung.com/article/202609183741i",
+      "publishedAt": "Sat, 19 Sep 2026 08:00:03 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-004",
+      "title": "\"주식할 돈으로 서울에 집 사랬잖아\"…20년 수익률 어떻길래",
+      "url": "https://www.hankyung.com/article/2026091844941",
+      "publishedAt": "Fri, 18 Sep 2026 21:00:05 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-005",
+      "title": "긴축·AI 공포 이겨낸 증시…이제 이 둘의 만남이 기다린다 [다음주 주요 변수 미리보기]",
+      "url": "https://www.hankyung.com/article/202609184415i",
+      "publishedAt": "Fri, 18 Sep 2026 19:21:30 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-006",
+      "title": "\"골프장 300억이면 산다\"…韓 기업들 돈 싸들고 몰린 곳이",
+      "url": "https://www.hankyung.com/article/2026091845671",
+      "publishedAt": "Fri, 18 Sep 2026 19:00:02 +0900",
+      "source": "한국경제"
+    }
+  ]
+}
