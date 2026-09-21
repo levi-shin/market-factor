@@ -1,0 +1,48 @@
+{
+  "date": "2026-09-21",
+  "domain": "market",
+  "sources": [
+    {
+      "id": "evidence-001",
+      "title": "\"연휴 전 돈 쓰려면 오늘 팔아야되는데\"…추석 전 주식 들고갈까",
+      "url": "https://www.hankyung.com/article/2026092170066",
+      "publishedAt": "Mon, 21 Sep 2026 08:51:43 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-002",
+      "title": "\"SK가스, 올해 실적 '상저하고' 전망\"-하나",
+      "url": "https://www.hankyung.com/article/2026092170636",
+      "publishedAt": "Mon, 21 Sep 2026 08:48:37 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-003",
+      "title": "\"롯데관광개발, 영업지표 개선에도 관광기금 부담 우려…목표가↓\"-메리츠",
+      "url": "https://www.hankyung.com/article/2026092170386",
+      "publishedAt": "Mon, 21 Sep 2026 08:46:21 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-004",
+      "title": "\"LG이노텍, 피할 수 없는 환율 역풍…목표가↓\"-메리츠",
+      "url": "https://www.hankyung.com/article/2026092169646",
+      "publishedAt": "Mon, 21 Sep 2026 08:36:27 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-005",
+      "title": "[스타워즈] 메리츠證 박성주, 매크로 불안 속 1위 사수",
+      "url": "https://www.hankyung.com/article/2026092167986",
+      "publishedAt": "Mon, 21 Sep 2026 08:28:14 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-006",
+      "title": "\"알테오젠 ALT-B4 특허 2043년까지…장기 독점 효과 커질 것\"-IBK",
+      "url": "https://www.hankyung.com/article/2026092169096",
+      "publishedAt": "Mon, 21 Sep 2026 08:21:01 +0900",
+      "source": "한국경제"
+    }
+  ]
+}
