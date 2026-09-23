@@ -1,0 +1,48 @@
+{
+  "date": "2026-09-23",
+  "domain": "market",
+  "sources": [
+    {
+      "id": "evidence-001",
+      "title": "유가·환율 겹호재에 일제히 상승…'신고가' 터졌다",
+      "url": "https://www.hankyung.com/article/202609221067i",
+      "publishedAt": "Wed, 23 Sep 2026 08:30:06 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-002",
+      "title": "\"대한항공, 내년 영업익 전망치 상향…목표가↑\"-KB",
+      "url": "https://www.hankyung.com/article/2026092323756",
+      "publishedAt": "Wed, 23 Sep 2026 08:20:52 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-003",
+      "title": "\"현대백, 연결실적 턴어라운드 기대…주가 반등 모색 구간\"-NH",
+      "url": "https://www.hankyung.com/article/2026092324426",
+      "publishedAt": "Wed, 23 Sep 2026 08:18:10 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-004",
+      "title": "\"LG생활건강, 3분기 실적 기대치 밑돌 듯…단기 모멘텀 부재\"-한국",
+      "url": "https://www.hankyung.com/article/2026092324486",
+      "publishedAt": "Wed, 23 Sep 2026 08:10:29 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-005",
+      "title": "메타에 폭탄 맞은 JP모건, 제2 SW 사태?…나스닥 기록인데 월가 \"주의\" [김현석의 월스트리트나우]",
+      "url": "https://www.hankyung.com/article/202609232271i",
+      "publishedAt": "Wed, 23 Sep 2026 08:01:08 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-006",
+      "title": "추석 끝나면 수익률 3배?…'연휴 징크스' 깬 코스피에 개미들 '들썩'",
+      "url": "https://www.hankyung.com/article/202609232157i",
+      "publishedAt": "Wed, 23 Sep 2026 08:00:05 +0900",
+      "source": "한국경제"
+    }
+  ]
+}
