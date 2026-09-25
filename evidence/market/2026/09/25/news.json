@@ -1,0 +1,48 @@
+{
+  "date": "2026-09-25",
+  "domain": "market",
+  "sources": [
+    {
+      "id": "evidence-001",
+      "title": "손절매 쏟아지는 채권, 10년 금리 5.2%…메타, 인텔 폭등 지속 [김현석의 월스트리트나우]",
+      "url": "https://www.hankyung.com/article/202609255572i",
+      "publishedAt": "Fri, 25 Sep 2026 08:30:35 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-002",
+      "title": "“악역도 피하지 말아요”…이형일 부총리 향한 쓴소리 [김익환의 부처 핸즈업]",
+      "url": "https://www.hankyung.com/article/202609245017i",
+      "publishedAt": "Fri, 25 Sep 2026 08:18:23 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-003",
+      "title": "\"채권의 시대 끝났다…자산배분 새 공식은 '주식·원자재·에너지'\"",
+      "url": "https://www.hankyung.com/article/202609255381i",
+      "publishedAt": "Fri, 25 Sep 2026 08:00:31 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-004",
+      "title": "미래에셋 실적 '나비효과' 된 2022년 스페이스X 회계처리",
+      "url": "https://www.hankyung.com/article/202609245315i",
+      "publishedAt": "Fri, 25 Sep 2026 08:00:09 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-005",
+      "title": "'주주환원 매력' 확 커진 삼전…배당주 투자 전략은?",
+      "url": "https://www.hankyung.com/article/202609233868i",
+      "publishedAt": "Fri, 25 Sep 2026 08:00:02 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-006",
+      "title": "'약국 2만4000곳 품은' 바로팜, 11월 상장 추진",
+      "url": "https://www.hankyung.com/article/202609221840i",
+      "publishedAt": "Fri, 25 Sep 2026 07:57:02 +0900",
+      "source": "한국경제"
+    }
+  ]
+}
