@@ -1,0 +1,48 @@
+{
+  "date": "2026-09-26",
+  "domain": "market",
+  "sources": [
+    {
+      "id": "evidence-001",
+      "title": "이란 협상 진전? 9월 계절성 무너뜨린 뉴욕 증시 [김현석의 월스트리트나우]",
+      "url": "https://www.hankyung.com/article/202609266153i",
+      "publishedAt": "Sat, 26 Sep 2026 08:11:41 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-002",
+      "title": "10년물 금리 2007년 이후 최고…美증시는 버텼다 [뉴욕증시 브리핑]",
+      "url": "https://www.hankyung.com/article/202609266166i",
+      "publishedAt": "Sat, 26 Sep 2026 05:38:59 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-003",
+      "title": "\"손주랑 삼전닉스 얘기하다 놀라\"…1억 굴리는 꼬마개미들 [분석+]",
+      "url": "https://www.hankyung.com/article/2026092179606",
+      "publishedAt": "Fri, 25 Sep 2026 20:49:28 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-004",
+      "title": "호재인 줄 알았는데 주가 '와르르'…개미들 고민 깊어진 까닭 [종목+]",
+      "url": "https://www.hankyung.com/article/2026092331506",
+      "publishedAt": "Fri, 25 Sep 2026 18:15:15 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-005",
+      "title": "시총 기준 강화로 코스닥서 8개 종목 퇴출…추가 상폐 우려도",
+      "url": "https://www.hankyung.com/article/2026092559667",
+      "publishedAt": "Fri, 25 Sep 2026 17:43:18 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-006",
+      "title": "\"한국보다 미국 주식 사겠다\"…펀드매니저들 3개월 만에 돌아섰다",
+      "url": "https://www.hankyung.com/article/202609221899i",
+      "publishedAt": "Fri, 25 Sep 2026 17:00:42 +0900",
+      "source": "한국경제"
+    }
+  ]
+}
