@@ -1,0 +1,48 @@
+{
+  "date": "2026-09-28",
+  "domain": "market",
+  "sources": [
+    {
+      "id": "evidence-001",
+      "title": "HLB, 美 FDA 항암 신약 승인에 상한가…그룹주도 줄줄이 上",
+      "url": "https://www.hankyung.com/article/2026092884536",
+      "publishedAt": "Mon, 28 Sep 2026 09:12:48 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-002",
+      "title": "삼성액티브운용, 'KoAct 고배당액티브' ETF 순자산 500억 돌파",
+      "url": "https://www.hankyung.com/article/2026092884226",
+      "publishedAt": "Mon, 28 Sep 2026 09:12:24 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-003",
+      "title": "\"넥스트 비트코인을 봐라\"…월가 전략가가 찍은 토큰화 수혜주는",
+      "url": "https://www.hankyung.com/article/202609288362i",
+      "publishedAt": "Mon, 28 Sep 2026 09:09:42 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-004",
+      "title": "코스피, 0.33% 내린 7057.86 출발…코스닥 0.12% 오른 845.48",
+      "url": "https://www.hankyung.com/article/2026092884126",
+      "publishedAt": "Mon, 28 Sep 2026 09:04:51 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-005",
+      "title": "'따따블' 새내기주 쓸어 담은 초고수들…반도체는 던졌다",
+      "url": "https://www.hankyung.com/article/202609288247i",
+      "publishedAt": "Mon, 28 Sep 2026 09:00:06 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-006",
+      "title": "한투운용, 'ACE 머니마켓액티브' ETF 순자산액 1조 돌파",
+      "url": "https://www.hankyung.com/article/2026092883686",
+      "publishedAt": "Mon, 28 Sep 2026 08:59:44 +0900",
+      "source": "한국경제"
+    }
+  ]
+}
