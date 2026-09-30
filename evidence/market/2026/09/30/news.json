@@ -1,0 +1,48 @@
+{
+  "date": "2026-09-30",
+  "domain": "market",
+  "sources": [
+    {
+      "id": "evidence-001",
+      "title": "앤트로픽 700조 투자 계획에 반도체株 들썩…소부장도 강세",
+      "url": "https://www.hankyung.com/article/2026093037846",
+      "publishedAt": "Wed, 30 Sep 2026 09:32:14 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-002",
+      "title": "\"사명도 바꿨는데\"…아리바이오홀딩스, 흡수합병 철회 소식에 '급락'",
+      "url": "https://www.hankyung.com/article/2026093037506",
+      "publishedAt": "Wed, 30 Sep 2026 09:24:11 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-003",
+      "title": "코스모로보틱스, '매출 부풀리기 의혹'에 하한가",
+      "url": "https://www.hankyung.com/article/2026093037256",
+      "publishedAt": "Wed, 30 Sep 2026 09:18:33 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-004",
+      "title": "트럼프, 알래스카 LNG 韓 투자 발표 가능성에…철강·강관주↑",
+      "url": "https://www.hankyung.com/article/2026093036786",
+      "publishedAt": "Wed, 30 Sep 2026 09:15:59 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-005",
+      "title": "반도체 호황에 더 걷힌 세금 63조…국채 상환·미래기금 '저울질'",
+      "url": "https://www.hankyung.com/article/202609303672i",
+      "publishedAt": "Wed, 30 Sep 2026 09:15:37 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-006",
+      "title": "덕산넵코어스, 코스닥 상장 첫날 80%대 급등",
+      "url": "https://www.hankyung.com/article/2026093036926",
+      "publishedAt": "Wed, 30 Sep 2026 09:14:27 +0900",
+      "source": "한국경제"
+    }
+  ]
+}
