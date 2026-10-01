@@ -109,7 +109,7 @@
     <h3>심리지수 (공포·탐욕)</h3>
     <div class="chart-box"><canvas id="fearGreedChart"></canvas></div>
     <p style="font-size:13px; color:#cbd5e1; margin-top:12px;">
-      이번 주 평균 <strong style="color:#f1f5f9;">50점</strong>
+      이번 주 평균 <strong style="color:#f1f5f9;">29점</strong>
     </p>
   </section>
   <section class="issue">
@@ -159,9 +159,9 @@
   new Chart(ctx, {
     type: 'line',
     data: { labels: ["월", "화", "수", "목", "금"], datasets: [{
-      data: [50, 50, 50, 50, 50], borderColor: '#38bdf8', backgroundColor: '#38bdf822',
-      borderWidth: 2.5, fill: true, tension: 0.3, pointRadius: 4,
-      pointBackgroundColor: (c) => { const v = c.raw; if (v>=75) return '#22c55e'; if (v>=55) return '#4ade80'; if (v>=45) return '#eab308'; if (v>=25) return '#f97316'; return '#ef4444'; },
+      data: [31, 28, 27, 28, 30], borderColor: '#38bdf8', backgroundColor: '#38bdf822',
+      borderWidth: 2.5, fill: true, tension: 0.3, pointRadius: 4, spanGaps: true,
+      pointBackgroundColor: (c) => { const v = c.raw; if (v==null) return '#64748b'; if (v>=75) return '#22c55e'; if (v>=55) return '#4ade80'; if (v>=45) return '#eab308'; if (v>=25) return '#f97316'; return '#ef4444'; },
       pointBorderColor: '#0b1120', pointBorderWidth: 2
     }]},
     options: { responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}},
