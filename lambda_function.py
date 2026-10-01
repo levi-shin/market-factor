@@ -484,15 +484,40 @@ def get_market_data():
     return "\n".join(results), numeric_data, pct_data
 
 def get_fear_and_greed():
+    """CNN Fear & Greed Index.
+
+    예전에는 UA가 빈약해 CNN이 HTTP 418로 막고, except에서 무조건
+    50점(중립)을 돌려줘서 Slack·리포트 차트가 전부 평평해졌다.
+    브라우저와 비슷한 Referer/UA를 붙이고, 실패 시 가짜 50을 쓰지 않는다.
+    """
+    url = "https://production.dataviz.cnn.io/index/fearandgreed/graphdata"
+    headers = {
+        "User-Agent": (
+            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
+            "AppleWebKit/537.36 (KHTML, like Gecko) "
+            "Chrome/124.0.0.0 Safari/537.36"
+        ),
+        "Accept": "application/json,text/plain,*/*",
+        "Accept-Language": "en-US,en;q=0.9",
+        "Referer": "https://edition.cnn.com/markets/fear-and-greed",
+        "Origin": "https://edition.cnn.com",
+    }
     try:
-        url = "https://production.dataviz.cnn.io/index/fearandgreed/graphdata"
-        res = json.loads(http_get(url, timeout=5))
-        score = round(res['fear_and_greed']['score'])
-        rating = res['fear_and_greed']['rating'].lower()
-        rating_kor = {"extreme fear": "극단적 공포 😱", "fear": "공포 😨", "neutral": "중립 😐", "greed": "탐욕 🤑", "extreme greed": "극단적 탐욕 🚀"}.get(rating, rating)
+        res = json.loads(http_get(url, headers=headers, timeout=8))
+        score = round(float(res["fear_and_greed"]["score"]))
+        rating = str(res["fear_and_greed"].get("rating") or "").lower()
+        rating_kor = {
+            "extreme fear": "극단적 공포 😱",
+            "fear": "공포 😨",
+            "neutral": "중립 😐",
+            "greed": "탐욕 🤑",
+            "extreme greed": "극단적 탐욕 🚀",
+        }.get(rating, rating or "알 수 없음")
+        logger.info(f"CNN 공포·탐욕 지수: {score} ({rating})")
         return f"{score}점 ({rating_kor})", score
-    except Exception:
-        return "50점 (중립 😐)", 50
+    except Exception as e:
+        logger.warning(f"CNN 공포·탐욕 지수 조회 실패 (가짜 50 사용 안 함): {e}")
+        return "수집 실패", None
 
 def get_news_headlines():
     # 기존: 제목 문자열만 반환.
@@ -2523,7 +2548,7 @@ def _texts_from_briefing_record(record):
             prev_val = prev_metrics.get(key)
             if curr is not None and prev_val is not None:
                 oil_diff[key] = curr - prev_val
-    fear_score = metrics.get("fear_score", 50)
+    fear_score = metrics.get("fear_score")  # 없으면 None (가짜 50 금지)
 
     market_text = build_market_text(numeric_data, pct_data)
     portfolio_text = build_portfolio_text(portfolio_map)

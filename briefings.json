@@ -22,7 +22,7 @@
       "gasoline": 1860.55,
       "premium_gasoline": 2318.11,
       "diesel": 1844.73,
-      "fear_score": 50
+      "fear_score": 49
     },
     "portfolio": {
       "NVDA": {
@@ -106,7 +106,7 @@
       "gasoline": 1860.26,
       "premium_gasoline": 2317.73,
       "diesel": 1844.52,
-      "fear_score": 50
+      "fear_score": 45
     },
     "portfolio": {
       "005930.KS": {
@@ -221,7 +221,7 @@
       "gasoline": 1859.88,
       "premium_gasoline": 2316.28,
       "diesel": 1844.33,
-      "fear_score": 50
+      "fear_score": 46
     },
     "portfolio": {
       "NVDA": {
@@ -336,7 +336,7 @@
       "gasoline": 1859.66,
       "premium_gasoline": 2315.09,
       "diesel": 1844.08,
-      "fear_score": 50
+      "fear_score": 48
     },
     "portfolio": {
       "NVDA": {
@@ -451,7 +451,7 @@
       "gasoline": 1859.48,
       "premium_gasoline": 2315.1,
       "diesel": 1844.0,
-      "fear_score": 50
+      "fear_score": 45
     },
     "portfolio": {
       "TSLA": {
@@ -566,7 +566,7 @@
       "gasoline": 1859.27,
       "premium_gasoline": 2314.68,
       "diesel": 1843.58,
-      "fear_score": 50
+      "fear_score": 45
     },
     "portfolio": {
       "SPCX": {
@@ -681,7 +681,7 @@
       "gasoline": 1859.31,
       "premium_gasoline": 2314.25,
       "diesel": 1844.22,
-      "fear_score": 50
+      "fear_score": 45
     },
     "portfolio": {
       "SPCX": {
@@ -797,7 +797,7 @@
       "gasoline": 1859.18,
       "premium_gasoline": 2313.52,
       "diesel": 1844.08,
-      "fear_score": 50
+      "fear_score": 39
     },
     "portfolio": {
       "AAPL": {
@@ -913,7 +913,7 @@
       "gasoline": 1858.98,
       "premium_gasoline": 2313.63,
       "diesel": 1844.03,
-      "fear_score": 50
+      "fear_score": 38
     },
     "portfolio": {
       "SPCX": {
@@ -1029,7 +1029,7 @@
       "gasoline": 1858.91,
       "premium_gasoline": 2313.79,
       "diesel": 1844.02,
-      "fear_score": 50
+      "fear_score": 32
     },
     "portfolio": {
       "BOTZ": {
@@ -1145,7 +1145,7 @@
       "gasoline": 1858.8,
       "premium_gasoline": 2314.08,
       "diesel": 1843.96,
-      "fear_score": 50
+      "fear_score": 33
     },
     "portfolio": {
       "TSLA": {
@@ -1261,7 +1261,7 @@
       "gasoline": 1858.8,
       "premium_gasoline": 2314.23,
       "diesel": 1843.52,
-      "fear_score": 50
+      "fear_score": 33
     },
     "portfolio": {
       "SPCX": {
@@ -1377,7 +1377,7 @@
       "gasoline": 1858.69,
       "premium_gasoline": 2314.32,
       "diesel": 1843.98,
-      "fear_score": 50
+      "fear_score": 31
     },
     "portfolio": {
       "SPCX": {
@@ -1493,7 +1493,7 @@
       "gasoline": 1858.54,
       "premium_gasoline": 2315.47,
       "diesel": 1843.92,
-      "fear_score": 50
+      "fear_score": 28
     },
     "portfolio": {
       "NVDA": {
@@ -1609,7 +1609,7 @@
       "gasoline": 1858.58,
       "premium_gasoline": 2316.77,
       "diesel": 1843.83,
-      "fear_score": 50
+      "fear_score": 27
     },
     "portfolio": {
       "TSLA": {
@@ -1725,7 +1725,7 @@
       "gasoline": 1858.6,
       "premium_gasoline": 2317.94,
       "diesel": 1844.04,
-      "fear_score": 50
+      "fear_score": 28
     },
     "portfolio": {
       "NVDA": {
@@ -1841,7 +1841,7 @@
       "gasoline": 1858.56,
       "premium_gasoline": 2320.71,
       "diesel": 1843.8,
-      "fear_score": 50
+      "fear_score": 30
     },
     "portfolio": {
       "TSLA": {
@@ -1957,7 +1957,7 @@
       "gasoline": 1858.43,
       "premium_gasoline": 2321.77,
       "diesel": 1843.36,
-      "fear_score": 50
+      "fear_score": 30
     },
     "portfolio": {
       "MSFT": {
@@ -2073,7 +2073,7 @@
       "gasoline": 1858.45,
       "premium_gasoline": 2324.08,
       "diesel": 1844.08,
-      "fear_score": 50
+      "fear_score": 34
     },
     "portfolio": {
       "BOTZ": {
@@ -2189,7 +2189,7 @@
       "gasoline": 1858.4,
       "premium_gasoline": 2326.03,
       "diesel": 1843.86,
-      "fear_score": 50
+      "fear_score": 35
     },
     "portfolio": {
       "SPCX": {
@@ -2305,7 +2305,7 @@
       "gasoline": 1858.47,
       "premium_gasoline": 2329.43,
       "diesel": 1843.84,
-      "fear_score": 50
+      "fear_score": 33
     },
     "portfolio": {
       "TSLA": {
@@ -2421,7 +2421,7 @@
       "gasoline": 1856.14,
       "premium_gasoline": 2330.48,
       "diesel": 1841.43,
-      "fear_score": 50
+      "fear_score": 36
     },
     "portfolio": {
       "TSLA": {
@@ -2537,7 +2537,7 @@
       "gasoline": 1856.02,
       "premium_gasoline": 2331.53,
       "diesel": 1841.38,
-      "fear_score": 50
+      "fear_score": 37
     },
     "portfolio": {
       "NVDA": {
@@ -2653,7 +2653,7 @@
       "gasoline": 1856.08,
       "premium_gasoline": 2331.93,
       "diesel": 1841.39,
-      "fear_score": 50
+      "fear_score": 37
     },
     "portfolio": {
       "TSLA": {
@@ -2769,7 +2769,7 @@
       "gasoline": 1858.22,
       "premium_gasoline": 2335.12,
       "diesel": 1843.81,
-      "fear_score": 50
+      "fear_score": 34
     },
     "portfolio": {
       "NVDA": {
@@ -2885,7 +2885,7 @@
       "gasoline": 1858.18,
       "premium_gasoline": 2337.67,
       "diesel": 1843.8,
-      "fear_score": 50
+      "fear_score": 29
     },
     "portfolio": {
       "TSLA": {
@@ -3001,7 +3001,7 @@
       "gasoline": 1857.96,
       "premium_gasoline": 2339.19,
       "diesel": 1843.84,
-      "fear_score": 50
+      "fear_score": 31
     },
     "portfolio": {
       "SPCX": {
@@ -3117,7 +3117,7 @@
       "gasoline": 1857.73,
       "premium_gasoline": 2340.97,
       "diesel": 1843.66,
-      "fear_score": 50
+      "fear_score": 31
     },
     "portfolio": {
       "SPCX": {
