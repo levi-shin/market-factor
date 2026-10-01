@@ -1,5 +1,14 @@
 [
   {
+    "type": "monthly",
+    "id": "2026-09-monthly",
+    "path": "reports/2026-09-monthly.html",
+    "title": "월간 마켓 리포트",
+    "dateRange": "2026-09-01 ~ 2026-09-30",
+    "headline": "이번 달은 테슬라가 -4.11%로 가장 크게 흔들렸습니다",
+    "generatedAt": "2026-10-01T10:25:28.545031+09:00"
+  },
+  {
     "type": "weekly",
     "id": "2026-W39",
     "path": "reports/2026-W39.html",
