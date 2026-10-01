@@ -1,0 +1,48 @@
+{
+  "date": "2026-10-01",
+  "domain": "market",
+  "sources": [
+    {
+      "id": "evidence-001",
+      "title": "외식업 위축에 주가 급락… 더본코리아 '지역개발' 승부수 통할까",
+      "url": "https://www.hankyung.com/article/202609305108i",
+      "publishedAt": "Thu, 01 Oct 2026 09:50:47 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-002",
+      "title": "\"심상찮더니 결국\"…트럼프 '알래스카 LNG' 한마디에 줄줄이 '급등' [종목+]",
+      "url": "https://www.hankyung.com/article/2026100167546",
+      "publishedAt": "Thu, 01 Oct 2026 09:38:29 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-003",
+      "title": "LF, 50억원 자사주 매입 결정에 6%대 강세",
+      "url": "https://www.hankyung.com/article/2026100166966",
+      "publishedAt": "Thu, 01 Oct 2026 09:30:24 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-004",
+      "title": "NC, 글로벌 겨냥한 '아이온2'의 스팀 1위 소식에 '급등'",
+      "url": "https://www.hankyung.com/article/2026100166986",
+      "publishedAt": "Thu, 01 Oct 2026 09:30:21 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-005",
+      "title": "마이크론 사상 최대 실적인데…'삼전닉스', 장 초반 하락",
+      "url": "https://www.hankyung.com/article/2026100165966",
+      "publishedAt": "Thu, 01 Oct 2026 09:20:47 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-006",
+      "title": "코스피 약세 출발…미 국채금리 튀자 외국인·기관 '팔자' 나서",
+      "url": "https://www.hankyung.com/article/2026100166196",
+      "publishedAt": "Thu, 01 Oct 2026 09:16:33 +0900",
+      "source": "한국경제"
+    }
+  ]
+}
