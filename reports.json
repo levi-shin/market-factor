@@ -1,5 +1,14 @@
 [
   {
+    "type": "weekly",
+    "id": "2026-W40",
+    "path": "reports/2026-W40.html",
+    "title": "주간 마켓 리포트",
+    "dateRange": "2026-09-28 ~ 2026-10-02",
+    "headline": "이번 주는 테슬라가 -4.84%로 가장 크게 흔들렸습니다",
+    "generatedAt": "2026-10-03T10:23:07.668732+09:00"
+  },
+  {
     "type": "monthly",
     "id": "2026-09-monthly",
     "path": "reports/2026-09-monthly.html",

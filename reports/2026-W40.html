@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="ko"><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>주간 마켓 리포트 · 2026-09-28 ~ 2026-10-02</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+  * { box-sizing: border-box; }
+  body { margin:0; background:#0b1120; color:#e2e8f0; font-family:'Pretendard',-apple-system,'Malgun Gothic',sans-serif; -webkit-font-smoothing:antialiased; }
+  .num { font-variant-numeric: tabular-nums; }
+  .wrap { max-width:720px; margin:0 auto; padding:0 20px 60px; }
+  .hero { padding:56px 0 40px; border-bottom:1px solid #1e293b; }
+  .hero .eyebrow { color:#64748b; font-size:13px; margin-bottom:10px; }
+  .hero .headline { font-size:34px; font-weight:800; line-height:1.3; letter-spacing:-0.5px; color:#f8fafc; }
+  section { padding:36px 0; border-bottom:1px solid #1e293b; }
+  section:last-of-type { border-bottom:none; }
+  h2 { font-size:15px; font-weight:700; color:#f1f5f9; margin:0 0 20px; }
+  h3 { font-size:12px; font-weight:600; color:#64748b; margin:24px 0 10px; }
+  h3:first-of-type { margin-top:0; }
+  table { width:100%; border-collapse:collapse; font-size:13.5px; }
+  th { text-align:right; color:#475569; font-weight:500; font-size:11px; padding:0 0 8px; }
+  th:first-child { text-align:left; }
+  td { padding:9px 0; border-top:1px solid #1e293b; }
+  td:not(:first-child) { text-align:right; }
+  .label { color:#cbd5e1; }
+  .up { color:#4ade80; } .down { color:#f87171; } .flat { color:#94a3b8; } .muted { color:#64748b; }
+  .issue p { font-size:14.5px; line-height:1.85; color:#cbd5e1; margin:0; white-space:pre-line; }
+  .event { padding:14px 0; border-top:1px solid #1e293b; }
+  .event:first-of-type { border-top:none; }
+  .event .name { font-size:14px; color:#f1f5f9; font-weight:600; }
+  .event .impact { font-size:13.5px; color:#cbd5e1; margin-top:6px; line-height:1.7; }
+  .event .impact.empty { color:#475569; font-size:12.5px; }
+  .holiday-note { background:#131b2e; border:1px solid #1e293b; border-radius:10px; padding:12px 16px; font-size:13px; color:#cbd5e1; margin-bottom:22px; }
+  .chart-box { height:180px; margin-top:4px; }
+  footer { padding:28px 0 8px; }
+  footer p { font-size:11.5px; color:#475569; line-height:1.6; margin:0 0 14px; }
+  footer a { color:#38bdf8; text-decoration:none; font-size:13px; }
+</style></head>
+<body><div class="wrap">
+  <div class="hero">
+    <div class="eyebrow">주간 마켓 리포트 · 2026-09-28 ~ 2026-10-02</div>
+    <div class="headline">이번 주는 테슬라가 -4.84%로 가장 크게 흔들렸습니다</div>
+  </div>
+  <section>
+    <h2>📈 이번 주 흐름</h2>
+    <h3>거시 · 자원 · 금리</h3>
+    <table><tr><th>지표</th><th>이번 주</th><th>전주 대비</th></tr><tr>
+          <td class="label">WTI</td>
+          <td class="num">$94.85 → $89.48
+            <span class="down">(-5.66%)</span></td>
+          <td class="num down">-4.46%</td>
+        </tr><tr>
+          <td class="label">국제 금</td>
+          <td class="num">$4,181.1 → $4,220.0
+            <span class="up">(+0.93%)</span></td>
+          <td class="num down">-2.05%</td>
+        </tr><tr>
+          <td class="label">코스피</td>
+          <td class="num">6,889.7 → 7,003.7
+            <span class="up">(+1.65%)</span></td>
+          <td class="num down">-1.09%</td>
+        </tr><tr>
+          <td class="label">나스닥</td>
+          <td class="num">27,068.7 → 26,871.6
+            <span class="down">(-0.73%)</span></td>
+          <td class="num down">-0.25%</td>
+        </tr><tr>
+          <td class="label">미 국채금리(10Y)</td>
+          <td class="num">5.18% → 5.24%
+            <span class="up">(+1.02%p)</span></td>
+          <td class="num up">+1.45%p</td>
+        </tr></table>
+    <h3>보유 · 관심 종목</h3>
+    <table><tr><th>종목</th><th>이번 주</th><th>전주 대비</th></tr><tr>
+          <td class="label">엔비디아</td>
+          <td class="num">$225.07 → $230.86
+            <span class="up">(+2.57%)</span></td>
+          <td class="num up">+2.80%</td>
+        </tr><tr>
+          <td class="label">애플</td>
+          <td class="num">$341.07 → $330.32
+            <span class="down">(-3.15%)</span></td>
+          <td class="num down">-1.67%</td>
+        </tr><tr>
+          <td class="label">테슬라</td>
+          <td class="num">$372.11 → $354.11
+            <span class="down">(-4.84%)</span></td>
+          <td class="num down">-6.31%</td>
+        </tr><tr>
+          <td class="label">삼성전자</td>
+          <td class="num">271,000.00원 → 276,000.00원
+            <span class="up">(+1.85%)</span></td>
+          <td class="num down">-3.66%</td>
+        </tr><tr>
+          <td class="label">마이크로소프트</td>
+          <td class="num">$516.17 → $512.80
+            <span class="down">(-0.65%)</span></td>
+          <td class="num up">+2.99%</td>
+        </tr><tr>
+          <td class="label">스페이스X(SPCX)</td>
+          <td class="num">$148.68 → $148.07
+            <span class="down">(-0.41%)</span></td>
+          <td class="num up">+0.03%</td>
+        </tr><tr>
+          <td class="label">로보틱스&AI ETF(BOTZ)</td>
+          <td class="num">$35.40 → $35.43
+            <span class="up">(+0.08%)</span></td>
+          <td class="num up">+0.60%</td>
+        </tr></table>
+    <h3>심리지수 (공포·탐욕)</h3>
+    <div class="chart-box"><canvas id="fearGreedChart"></canvas></div>
+    <p style="font-size:13px; color:#cbd5e1; margin-top:12px;">
+      이번 주 평균 <strong style="color:#f1f5f9;">30점</strong>
+    </p>
+  </section>
+  <section class="issue">
+    <h2>🔍 이번 주 이슈 분석</h2>
+    <p>이번 주 시장은 미 국채 금리 상승과 국제 유가 변동성 확대라는 거시적 악재 속에서도 국내외 기술주들의 실적 기대감이 충돌하며 혼조세를 보였습니다. 코스피는 외국인과 기관의 매도세 속에서 하락 압력을 받았으나 연말 랠리 기대감과 반도체 대형주의 반등에 힘입어 7,000선을 회복했습니다. 반면 나스닥은 기술주 중심의 경계감과 국채 금리 부담으로 소폭 하락 마감했습니다. 미중 정상회담을 둘러싼 불확실성 해소와 AI 및 반도체 업황에 대한 긍정적 전망이 증시 하방을 지지하는 핵심 원인으로 작용했습니다.</p>
+  </section>
+  <section>
+    <h2>📆 차주 체크</h2>
+    <div class="holiday-note">🗓️ 차주 국내 증시 휴장일: <strong>10/09(금)</strong></div>
+    
+        <div class="event">
+          <div class="name" >엔비디아</div>
+          <div class="impact">오는 11월 서울에서 주요 한국 대기업들과 함께 'AI 데이'를 개최할 예정이며, 보안 플랫폼 및 차세대 칩 매출 확대를 예고하고 있습니다. 이러한 대형 행사와 제품 라인업 기대감은 AI 생태계 내 주도권을 강화하여 단기 투자 심리에 긍정적 모멘텀으로 작동할 수 있습니다. 시장은 차세대 HBM 공급망 협력 성과라는 호재와 탈엔비디아 동맹 가속화라는 리스크 사이에서 모멘텀을 평가할 전망입니다.</div>
+        </div>
+        <div class="event">
+          <div class="name" >애플</div>
+          <div class="impact">10월 중 첫 폴더블폰 '아이폰 듀오' 출시 및 사전 예약과 더불어 신제품 3종 및 스마트홈 허브 공개가 예정되어 있습니다. 신제품 출시는 단기 수급 모멘텀을 자극할 수 있으나, 신규 폼팩터의 시장 반응과 실적 하방 리스크 우려가 동시에 존재합니다. 투자자들은 신제품 공개에 따른 매출 성장 기대감과 초기 품질 문제 및 4분기 실적 불확실성이라는 해석 축을 동시에 주시할 것입니다.</div>
+        </div>
+        <div class="event">
+          <div class="name" >테슬라</div>
+          <div class="impact">차세대 로드스터 공개 행사가 기상 악화로 인해 10월 15일로 연기되었으며, 3분기 인도량 발표가 임박해 있습니다. 행사 연기는 단기 기대감을 후퇴시킬 수 있으나 인도량 결과와 신기술 특허 공개는 주가 변동성을 확대하는 요인입니다. 시장은 3분기 인도량 실적 충격 여부와 차세대 제품 양산 능력에 대한 신뢰성이라는 두 갈래 시각으로 주가를 소화할 것입니다.</div>
+        </div>
+        <div class="event">
+          <div class="name" >삼성전자</div>
+          <div class="impact">다음 달 3분기 잠정 실적 발표가 예정된 가운데 노조의 회장 자택 앞 집회 등 노사 갈등 이슈가 이어지고 있습니다. 역대급 영업이익 전망은 실적 모멘텀으로 작용하여 주가 상방을 열어줄 수 있으나 노사 리스크는 단기적 잡음을 키울 수 있습니다. 시장은 분기 매출 100조 원 돌파 기대감과 노사 갈등에 따른 생산·경영 차질 우려를 함께 반영할 것입니다.</div>
+        </div>
+        <div class="event">
+          <div class="name" >마이크로소프트</div>
+          <div class="impact">윈도우 11 신규 업데이트 배포와 기존 버전의 10월 지원 종료가 예정되어 있으며 기업용 코파일럿 중심의 AI 전환 전략을 지속 추진 중입니다. OS 업데이트 및 기업용 AI 솔루션 확장은 장기 매출 안정성을 높여 수급에 긍정적인 영향을 미칠 수 있습니다. 투자자들은 기업용 AI 시장 선점에 따른 실적 가시성과 소비자 AI 시장 축소에 따른 성장 한계론을 중점적으로 살펴볼 것입니다.</div>
+        </div>
+        <div class="event">
+          <div class="name" >스페이스X(SPCX)</div>
+          <div class="impact">스타십의 첫 궤도 비행 및 구글 TPU 탑재 우주 데이터센터 실험 등 우주 임무 일정이 연이어 진행되고 있습니다. 성공적인 궤도 비행과 ISS 도킹 성과는 우주항공 섹터 전반의 투자 심리를 개선하고 테마성 수급을 유입시키는 경로로 작용합니다. 시장은 우주 기술 실증 성공에 따른 모멘텀과 발사 실패 또는 폭발 리스크에 따른 변동성을 핵심 축으로 관망할 것입니다.</div>
+        </div>
+        <div class="event">
+          <div class="name" style="color:#475569;">로보틱스&AI ETF(BOTZ)</div>
+          <div class="impact empty">확인된 예정 이벤트 없음</div>
+        </div>
+  </section>
+  <footer>
+    <p>※ 차주 체크는 수집된 뉴스·공식 캘린더 기준의 일정과, 그 일정이 주가에 닿는 경로(선반영·변동성·수급·섹터 파급 등)를 함께 적습니다. 매수·매도 조언은 포함하지 않습니다.</p>
+    <p><a href="../">← 마켓 팩터 대시보드</a></p>
+  </footer>
+</div>
+<script>
+  const ctx = document.getElementById('fearGreedChart').getContext('2d');
+  new Chart(ctx, {
+    type: 'line',
+    data: { labels: ["월", "화", "수", "목", "금"], datasets: [{
+      data: [34, 29, 31, 31, 27], borderColor: '#38bdf8', backgroundColor: '#38bdf822',
+      borderWidth: 2.5, fill: true, tension: 0.3, pointRadius: 4,
+      pointBackgroundColor: (c) => { const v = c.raw; if (v>=75) return '#22c55e'; if (v>=55) return '#4ade80'; if (v>=45) return '#eab308'; if (v>=25) return '#f97316'; return '#ef4444'; },
+      pointBorderColor: '#0b1120', pointBorderWidth: 2
+    }]},
+    options: { responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}},
+      scales: { y: {min:0,max:100,grid:{color:'#1e293b'},ticks:{color:'#64748b',stepSize:25}}, x:{grid:{display:false},ticks:{color:'#64748b'}} } }
+  });
+</script>
+</body></html>
