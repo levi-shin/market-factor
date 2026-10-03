@@ -1,0 +1,48 @@
+{
+  "date": "2026-10-03",
+  "domain": "market",
+  "sources": [
+    {
+      "id": "evidence-001",
+      "title": "하루에만 10% 오른 정유주…증권사들 \"내년 실적도 예상 웃돌 것\"",
+      "url": "https://www.hankyung.com/article/202610031573i",
+      "publishedAt": "Sat, 03 Oct 2026 09:31:58 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-002",
+      "title": "\"삼전·하닉 80% 담았는데 어쩌죠?\"…목표주가만 믿었다간",
+      "url": "https://www.hankyung.com/article/2026100315297",
+      "publishedAt": "Sat, 03 Oct 2026 08:34:42 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-003",
+      "title": "\"'부캉이' 뜨자 8억원 몰렸다\"…화제만 되면 코인부터 만들어",
+      "url": "https://www.hankyung.com/article/2026100315197",
+      "publishedAt": "Sat, 03 Oct 2026 08:17:10 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-004",
+      "title": "부진한 9월 고용에도 금리 상승 반전…그런데 5.5%가 한계? [김현석의 월스트리트나우]",
+      "url": "https://www.hankyung.com/article/202610031476i",
+      "publishedAt": "Sat, 03 Oct 2026 08:00:22 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-005",
+      "title": "\"다시 대세 상승기?\" 꿈틀대는 비트코인의 현 시점 투자전략",
+      "url": "https://www.hankyung.com/article/202610020535i",
+      "publishedAt": "Sat, 03 Oct 2026 08:00:08 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-006",
+      "title": "현대차 주가 70만→30만 '뚝'…한달만에 30% 뛴 협력사 있다는데 [대기업 협력사 전수분석]",
+      "url": "https://www.hankyung.com/article/202610020826i",
+      "publishedAt": "Sat, 03 Oct 2026 08:00:02 +0900",
+      "source": "한국경제"
+    }
+  ]
+}
