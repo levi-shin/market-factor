@@ -106,7 +106,8 @@
       "gasoline": 1860.26,
       "premium_gasoline": 2317.73,
       "diesel": 1844.52,
-      "fear_score": 45
+      "fear_score": 45,
+      "us10y_pct": 0.8050932203389936
     },
     "portfolio": {
       "005930.KS": {
@@ -221,7 +222,8 @@
       "gasoline": 1859.88,
       "premium_gasoline": 2316.28,
       "diesel": 1844.33,
-      "fear_score": 46
+      "fear_score": 46,
+      "us10y_pct": 0.7986464229805449
     },
     "portfolio": {
       "NVDA": {
@@ -336,7 +338,8 @@
       "gasoline": 1859.66,
       "premium_gasoline": 2315.09,
       "diesel": 1844.08,
-      "fear_score": 48
+      "fear_score": 48,
+      "us10y_pct": 0.0
     },
     "portfolio": {
       "NVDA": {
@@ -451,7 +454,8 @@
       "gasoline": 1859.48,
       "premium_gasoline": 2315.1,
       "diesel": 1844.0,
-      "fear_score": 45
+      "fear_score": 45,
+      "us10y_pct": -0.7089241034195307
     },
     "portfolio": {
       "TSLA": {
@@ -566,7 +570,8 @@
       "gasoline": 1859.27,
       "premium_gasoline": 2314.68,
       "diesel": 1843.58,
-      "fear_score": 45
+      "fear_score": 45,
+      "us10y_pct": 0.46199076018480145
     },
     "portfolio": {
       "SPCX": {
@@ -681,7 +686,8 @@
       "gasoline": 1859.31,
       "premium_gasoline": 2314.25,
       "diesel": 1844.22,
-      "fear_score": 45
+      "fear_score": 45,
+      "us10y_pct": 0.0
     },
     "portfolio": {
       "SPCX": {
@@ -797,7 +803,8 @@
       "gasoline": 1859.18,
       "premium_gasoline": 2313.52,
       "diesel": 1844.08,
-      "fear_score": 39
+      "fear_score": 39,
+      "us10y_pct": 0.0
     },
     "portfolio": {
       "AAPL": {
@@ -913,7 +920,8 @@
       "gasoline": 1858.98,
       "premium_gasoline": 2313.63,
       "diesel": 1844.03,
-      "fear_score": 38
+      "fear_score": 38,
+      "us10y_pct": 0.45986622073579103
     },
     "portfolio": {
       "SPCX": {
@@ -1029,7 +1037,8 @@
       "gasoline": 1858.91,
       "premium_gasoline": 2313.79,
       "diesel": 1844.02,
-      "fear_score": 32
+      "fear_score": 32,
+      "us10y_pct": 0.6450270495214252
     },
     "portfolio": {
       "BOTZ": {
@@ -1145,7 +1154,8 @@
       "gasoline": 1858.8,
       "premium_gasoline": 2314.08,
       "diesel": 1843.96,
-      "fear_score": 33
+      "fear_score": 33,
+      "us10y_pct": 2.212114947281377
     },
     "portfolio": {
       "TSLA": {
@@ -1261,7 +1271,8 @@
       "gasoline": 1858.8,
       "premium_gasoline": 2314.23,
       "diesel": 1843.52,
-      "fear_score": 33
+      "fear_score": 33,
+      "us10y_pct": 0.6270226537216766
     },
     "portfolio": {
       "SPCX": {
@@ -1377,7 +1388,8 @@
       "gasoline": 1858.69,
       "premium_gasoline": 2314.32,
       "diesel": 1843.98,
-      "fear_score": 31
+      "fear_score": 31,
+      "us10y_pct": 0.0
     },
     "portfolio": {
       "SPCX": {
@@ -1493,7 +1505,8 @@
       "gasoline": 1858.54,
       "premium_gasoline": 2315.47,
       "diesel": 1843.92,
-      "fear_score": 28
+      "fear_score": 28,
+      "us10y_pct": -0.2814070351758663
     },
     "portfolio": {
       "NVDA": {
@@ -1609,7 +1622,8 @@
       "gasoline": 1858.58,
       "premium_gasoline": 2316.77,
       "diesel": 1843.83,
-      "fear_score": 27
+      "fear_score": 27,
+      "us10y_pct": 0.7055029227978259
     },
     "portfolio": {
       "TSLA": {
@@ -1725,7 +1739,8 @@
       "gasoline": 1858.6,
       "premium_gasoline": 2317.94,
       "diesel": 1844.04,
-      "fear_score": 28
+      "fear_score": 28,
+      "us10y_pct": 0.2001601281024777
     },
     "portfolio": {
       "NVDA": {
@@ -1841,7 +1856,8 @@
       "gasoline": 1858.56,
       "premium_gasoline": 2320.71,
       "diesel": 1843.8,
-      "fear_score": 30
+      "fear_score": 30,
+      "us10y_pct": -0.5992808629644476
     },
     "portfolio": {
       "TSLA": {
@@ -1957,7 +1973,8 @@
       "gasoline": 1858.43,
       "premium_gasoline": 2321.77,
       "diesel": 1843.36,
-      "fear_score": 30
+      "fear_score": 30,
+      "us10y_pct": 0.4421221864951817
     },
     "portfolio": {
       "MSFT": {
@@ -2073,7 +2090,8 @@
       "gasoline": 1858.45,
       "premium_gasoline": 2324.08,
       "diesel": 1844.08,
-      "fear_score": 34
+      "fear_score": 34,
+      "us10y_pct": 0.0
     },
     "portfolio": {
       "BOTZ": {
@@ -2189,7 +2207,8 @@
       "gasoline": 1858.4,
       "premium_gasoline": 2326.03,
       "diesel": 1843.86,
-      "fear_score": 35
+      "fear_score": 35,
+      "us10y_pct": -0.7002801120448208
     },
     "portfolio": {
       "SPCX": {
@@ -2305,7 +2324,8 @@
       "gasoline": 1858.47,
       "premium_gasoline": 2329.43,
       "diesel": 1843.84,
-      "fear_score": 33
+      "fear_score": 33,
+      "us10y_pct": 0.10074551682449917
     },
     "portfolio": {
       "TSLA": {
@@ -2421,7 +2441,8 @@
       "gasoline": 1856.14,
       "premium_gasoline": 2330.48,
       "diesel": 1841.43,
-      "fear_score": 36
+      "fear_score": 36,
+      "us10y_pct": 2.9388083735909802
     },
     "portfolio": {
       "TSLA": {
@@ -2537,7 +2558,8 @@
       "gasoline": 1856.02,
       "premium_gasoline": 2331.53,
       "diesel": 1841.38,
-      "fear_score": 37
+      "fear_score": 37,
+      "us10y_pct": 0.9385999217833406
     },
     "portfolio": {
       "NVDA": {
@@ -2653,7 +2675,8 @@
       "gasoline": 1856.08,
       "premium_gasoline": 2331.93,
       "diesel": 1841.39,
-      "fear_score": 37
+      "fear_score": 37,
+      "us10y_pct": 0.4261913986826858
     },
     "portfolio": {
       "TSLA": {
@@ -2769,7 +2792,8 @@
       "gasoline": 1858.22,
       "premium_gasoline": 2335.12,
       "diesel": 1843.81,
-      "fear_score": 34
+      "fear_score": 34,
+      "us10y_pct": 0.0
     },
     "portfolio": {
       "NVDA": {
@@ -2885,7 +2909,8 @@
       "gasoline": 1858.18,
       "premium_gasoline": 2337.67,
       "diesel": 1843.8,
-      "fear_score": 29
+      "fear_score": 29,
+      "us10y_pct": 1.080246913580248
     },
     "portfolio": {
       "TSLA": {
@@ -3001,7 +3026,8 @@
       "gasoline": 1857.96,
       "premium_gasoline": 2339.19,
       "diesel": 1843.84,
-      "fear_score": 31
+      "fear_score": 31,
+      "us10y_pct": 0.2862595419847267
     },
     "portfolio": {
       "SPCX": {
@@ -3117,7 +3143,8 @@
       "gasoline": 1857.73,
       "premium_gasoline": 2340.97,
       "diesel": 1843.66,
-      "fear_score": 31
+      "fear_score": 31,
+      "us10y_pct": 0.7231208372978165
     },
     "portfolio": {
       "SPCX": {
@@ -3233,7 +3260,8 @@
       "gasoline": 1857.73,
       "premium_gasoline": 2343.5,
       "diesel": 1843.78,
-      "fear_score": 27
+      "fear_score": 27,
+      "us10y_pct": -1.058001133572644
     },
     "portfolio": {
       "SPCX": {
@@ -3349,7 +3377,8 @@
       "gasoline": 1857.53,
       "premium_gasoline": 2345.92,
       "diesel": 1843.1,
-      "fear_score": 31
+      "fear_score": 31,
+      "us10y_pct": 0.7637960664502584
     },
     "portfolio": {
       "TSLA": {
@@ -3465,7 +3494,8 @@
       "gasoline": 1857.63,
       "premium_gasoline": 2350.1,
       "diesel": 1843.13,
-      "fear_score": 31
+      "fear_score": 31,
+      "us10y_pct": 0.0
     },
     "portfolio": {
       "NVDA": {

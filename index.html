@@ -242,12 +242,13 @@
   <script>
     const METRIC_GROUPS = [
       {
-        label: '환율 · 지수',
+        label: '환율 · 지수 · 금리',
         items: [
           { key: 'usdkrw', label: '환율', full: '달러/원 환율 (원)', color: '#38bdf8', dashDigits: 1, unit: '원' },
           { key: 'kospi', label: '코스피', full: '코스피 지수 (pt)', color: '#f43f5e', dashDigits: 1, unit: '' },
           { key: 'nasdaq', label: '나스닥', full: '나스닥 지수 (pt)', color: '#818cf8', dashDigits: 1, unit: '' },
           { key: 'sp500', label: 'S&P500', full: 'S&P 500 지수 (pt)', color: '#60a5fa', dashDigits: 1, unit: '' },
+          { key: 'us10y', label: '미10년금리', full: '미국 10년물 국채금리 (%)', color: '#94a3b8', dashDigits: 2, unit: '%' },
         ]
       },
       {
@@ -274,7 +275,7 @@
       },
     ];
 
-    const DASH_METRIC_KEYS = ['usdkrw', 'kospi', 'nasdaq', 'sp500', 'wti', 'btc', 'gold_kr', 'gasoline'];
+    const DASH_METRIC_KEYS = ['usdkrw', 'kospi', 'nasdaq', 'sp500', 'us10y', 'wti', 'btc', 'gold_kr', 'gasoline'];
     const VIEW_TITLES = {
       dashboard: '대시보드',
       briefing: '브리핑',

@@ -752,6 +752,7 @@ def build_prefixed_reasons(reasons_dict, numeric_data, pct_data, portfolio_map, 
         ("kospi", "코스피 지수는", "kospi", "", "포인트", 1),
         ("nasdaq", "나스닥 지수는", "nasdaq", "", "포인트", 1),
         ("sp500", "S&P 500 지수는", "sp500", "", "포인트", 1),
+        ("us10y", "미국 10년물 국채금리는", "us10y", "", "%", 2),
         ("wti", "WTI유가는", "wti", "$", "", 2),
         ("gold_intl", "국제 금 가격은", "gold_intl", "$", "", 1),
         ("btc", "비트코인은", "btc", "", "원", 0),
@@ -1125,6 +1126,7 @@ JSON 출력 포맷 (각 필드는 "원인 + 파급 영향"만, 숫자/방향 단
   "kospi": "코스피 분석: 지수 움직임의 원인과 국내 증시 파급 영향",
   "nasdaq": "나스닥 분석: 움직임의 원인과 미국 성장주 밸류에이션 파급 효과",
   "sp500": "S&P 500 분석: 움직임의 원인과 미국 증시 전반의 리스크 심리 파급 효과",
+  "us10y": "미국 10년물 국채금리 분석: 원인(물가·고용·연준 경로 기대 등)과 성장주 밸류에이션·달러/원·금 등 자산 전반 파급 영향",
   "wti": "국제유가(WTI) 분석: 원인과 정유/석유화학 및 수입물가 압력 영향",
   "gasoline": "일반휘발유 분석: 주유소 판매가 동향 및 국제유가 변동의 시차 반영",
   "premium_gasoline": "고급휘발유 분석: 가격 변동 배경 및 정제마진 영향",
@@ -1534,6 +1536,7 @@ def save_to_s3(numeric_data, pct_data, portfolio_map, oil_data, fear_score, news
             "sp500": numeric_data.get("sp500"),
             "sp500_pct": pct_data.get("sp500"),
             "us10y": numeric_data.get("us10y"),
+            "us10y_pct": pct_data.get("us10y"),
             "wti": numeric_data.get("wti"),
             "wti_pct": pct_data.get("wti"),
             "gold_intl": numeric_data.get("gold_intl"),
@@ -2529,8 +2532,6 @@ def _texts_from_briefing_record(record):
         pct_key = f"{key}_pct"
         if pct_key in metrics:
             pct_data[key] = metrics.get(pct_key)
-        elif key in ("us10y",):
-            pass
 
     oil_data = {
         "gasoline": metrics.get("gasoline"),
@@ -2773,6 +2774,8 @@ def lambda_handler(event, context):
         nasdaq_p = pct_data.get('nasdaq', 0)
         sp500 = numeric_data.get('sp500', 0)
         sp500_p = pct_data.get('sp500', 0)
+        us10y = numeric_data.get('us10y') or 0
+        us10y_p = pct_data.get('us10y') or 0
         btc = numeric_data.get('btc', 0)
         btc_p = pct_data.get('btc', 0)
         gold_intl = numeric_data.get('gold_intl', 0)
@@ -2808,6 +2811,7 @@ def lambda_handler(event, context):
 📊 *주요 지표 요약*
 • 달러/원: {usdkrw:,.1f}원 ({usdkrw_p:+.2f}%) | 코스피: {kospi:,.1f} ({kospi_p:+.2f}%)
 • 나스닥: {nasdaq:,.1f} ({nasdaq_p:+.2f}%) | S&P500: {sp500:,.1f} ({sp500_p:+.2f}%)
+• 미 국채금리(10Y): {us10y:.2f}% ({us10y_p:+.2f}%)
 • 비트코인: {btc/100000000:,.2f}억 ({btc_p:+.2f}%)
 • 🪙 국내 금(1g): {gold_kr:,.1f}원 ({gold_kr_p:+.2f}%) | 국제 금: ${gold_intl:,.1f} ({gold_intl_p:+.2f}%)
 • ⛽ 고급유: {prem_price:,.1f}원 ({prem_sign}{prem_diff:,.2f}원) | 일반유: {gas_price:,.1f}원 ({gas_sign}{gas_diff:,.2f}원)

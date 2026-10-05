@@ -106,7 +106,8 @@
       "gasoline": 1860.26,
       "premium_gasoline": 2317.73,
       "diesel": 1844.52,
-      "fear_score": 50
+      "fear_score": 50,
+      "us10y_pct": 0.8050932203389936
     },
     "portfolio": {
       "005930.KS": {
@@ -221,7 +222,8 @@
       "gasoline": 1859.88,
       "premium_gasoline": 2316.28,
       "diesel": 1844.33,
-      "fear_score": 50
+      "fear_score": 50,
+      "us10y_pct": 0.7986464229805449
     },
     "portfolio": {
       "NVDA": {
@@ -336,7 +338,8 @@
       "gasoline": 1859.66,
       "premium_gasoline": 2315.09,
       "diesel": 1844.08,
-      "fear_score": 50
+      "fear_score": 50,
+      "us10y_pct": 0.0
     },
     "portfolio": {
       "NVDA": {
