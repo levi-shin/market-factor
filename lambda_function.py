@@ -292,6 +292,7 @@ def get_gasoline_prices():
 MARKET_ITEMS = [
     ("KRW=X", "달러/원 환율", "usdkrw"),
     ("^TNX", "미국 10년물 국채금리", "us10y"),
+    ("KR10YT=RR", "한국 10년물 국채금리", "kr10y"),
     ("^GSPC", "S&P 500", "sp500"),
     ("^IXIC", "나스닥", "nasdaq"),
     ("^KS11", "코스피 (마감)", "kospi"),
@@ -345,6 +346,18 @@ def get_naver_kr_index(index_code="KOSPI"):
     return curr, (pct if pct is not None else 0.0), status
 
 
+def get_naver_bond_yield(reuters_code):
+    """국채 금리(네이버 마켓인덱스). 예: KR10YT=RR(한국 10년), US10YT=RR(미국 10년)."""
+    url = f"https://api.stock.naver.com/marketindex/bond/{reuters_code}"
+    headers = {"Referer": "https://m.stock.naver.com/marketindex"}
+    res = json.loads(http_get(url, headers=headers, timeout=5))
+    curr = _parse_naver_number(res.get("closePrice"))
+    pct = _parse_naver_number(res.get("fluctuationsRatio"))
+    if curr is None:
+        return None, None
+    return curr, (pct if pct is not None else 0.0)
+
+
 def get_stock_price_any(symbol, name):
     # 국내 지수/종목은 네이버를 먼저 본다.
     # 2026-09-08: Yahoo ^KS11·005930.KS가 전일 종가(6995.39 / 270000)에 멈춰
@@ -367,6 +380,16 @@ def get_stock_price_any(symbol, name):
                 return f"• {name}: {curr:,.2f} ({pct:+.2f}%)", curr, pct
         except Exception as e:
             logger.warning(f"{name} 네이버 조회 실패, Yahoo 폴백: {e}")
+
+    # 국채 금리(한국/미국 등) — Yahoo 폴백 전에 네이버 마켓인덱스 우선
+    if symbol.endswith("=RR"):
+        try:
+            curr, pct = get_naver_bond_yield(symbol)
+            if curr is not None:
+                logger.info(f"{name} 네이버 국채금리: {curr} ({pct:+.2f}%)")
+                return f"• {name}: {curr:,.2f}% ({pct:+.2f}%)", curr, pct
+        except Exception as e:
+            logger.warning(f"{name} 네이버 국채금리 조회 실패: {e}")
 
     try:
         url = f"https://query1.finance.yahoo.com/v8/finance/chart/{symbol}?interval=1d&range=2d"
@@ -753,6 +776,7 @@ def build_prefixed_reasons(reasons_dict, numeric_data, pct_data, portfolio_map, 
         ("nasdaq", "나스닥 지수는", "nasdaq", "", "포인트", 1),
         ("sp500", "S&P 500 지수는", "sp500", "", "포인트", 1),
         ("us10y", "미국 10년물 국채금리는", "us10y", "", "%", 2),
+        ("kr10y", "한국 10년물 국채금리는", "kr10y", "", "%", 2),
         ("wti", "WTI유가는", "wti", "$", "", 2),
         ("gold_intl", "국제 금 가격은", "gold_intl", "$", "", 1),
         ("btc", "비트코인은", "btc", "", "원", 0),
@@ -1127,6 +1151,7 @@ JSON 출력 포맷 (각 필드는 "원인 + 파급 영향"만, 숫자/방향 단
   "nasdaq": "나스닥 분석: 움직임의 원인과 미국 성장주 밸류에이션 파급 효과",
   "sp500": "S&P 500 분석: 움직임의 원인과 미국 증시 전반의 리스크 심리 파급 효과",
   "us10y": "미국 10년물 국채금리 분석: 원인(물가·고용·연준 경로 기대 등)과 성장주 밸류에이션·달러/원·금 등 자산 전반 파급 영향",
+  "kr10y": "한국 10년물 국채금리 분석: 원인(한은 경로·수급·미 금리 스필오버 등)과 국내 채권·환율·증시 할인율 파급 영향",
   "wti": "국제유가(WTI) 분석: 원인과 정유/석유화학 및 수입물가 압력 영향",
   "gasoline": "일반휘발유 분석: 주유소 판매가 동향 및 국제유가 변동의 시차 반영",
   "premium_gasoline": "고급휘발유 분석: 가격 변동 배경 및 정제마진 영향",
@@ -1537,6 +1562,8 @@ def save_to_s3(numeric_data, pct_data, portfolio_map, oil_data, fear_score, news
             "sp500_pct": pct_data.get("sp500"),
             "us10y": numeric_data.get("us10y"),
             "us10y_pct": pct_data.get("us10y"),
+            "kr10y": numeric_data.get("kr10y"),
+            "kr10y_pct": pct_data.get("kr10y"),
             "wti": numeric_data.get("wti"),
             "wti_pct": pct_data.get("wti"),
             "gold_intl": numeric_data.get("gold_intl"),
@@ -1589,6 +1616,7 @@ WEEKLY_MACRO_SPECS = [
     ("kospi", "코스피", "", "", 1),
     ("nasdaq", "나스닥", "", "", 1),
     ("us10y", "미 국채금리(10Y)", "", "%", 2),
+    ("kr10y", "한국 국채금리(10Y)", "", "%", 2),
 ]
 
 
@@ -2526,7 +2554,7 @@ def _texts_from_briefing_record(record):
 
     numeric_data = {}
     pct_data = {}
-    for key in ("usdkrw", "kospi", "nasdaq", "sp500", "us10y", "wti", "gold_intl", "gold_kr", "btc", "copper"):
+    for key in ("usdkrw", "kospi", "nasdaq", "sp500", "us10y", "kr10y", "wti", "gold_intl", "gold_kr", "btc", "copper"):
         if key in metrics:
             numeric_data[key] = metrics.get(key)
         pct_key = f"{key}_pct"
@@ -2776,6 +2804,8 @@ def lambda_handler(event, context):
         sp500_p = pct_data.get('sp500', 0)
         us10y = numeric_data.get('us10y') or 0
         us10y_p = pct_data.get('us10y') or 0
+        kr10y = numeric_data.get('kr10y') or 0
+        kr10y_p = pct_data.get('kr10y') or 0
         btc = numeric_data.get('btc', 0)
         btc_p = pct_data.get('btc', 0)
         gold_intl = numeric_data.get('gold_intl', 0)
@@ -2811,7 +2841,7 @@ def lambda_handler(event, context):
 📊 *주요 지표 요약*
 • 달러/원: {usdkrw:,.1f}원 ({usdkrw_p:+.2f}%) | 코스피: {kospi:,.1f} ({kospi_p:+.2f}%)
 • 나스닥: {nasdaq:,.1f} ({nasdaq_p:+.2f}%) | S&P500: {sp500:,.1f} ({sp500_p:+.2f}%)
-• 미 국채금리(10Y): {us10y:.2f}% ({us10y_p:+.2f}%)
+• 미 국채금리(10Y): {us10y:.2f}% ({us10y_p:+.2f}%) | 한국 국채금리(10Y): {kr10y:.2f}% ({kr10y_p:+.2f}%)
 • 비트코인: {btc/100000000:,.2f}억 ({btc_p:+.2f}%)
 • 🪙 국내 금(1g): {gold_kr:,.1f}원 ({gold_kr_p:+.2f}%) | 국제 금: ${gold_intl:,.1f} ({gold_intl_p:+.2f}%)
 • ⛽ 고급유: {prem_price:,.1f}원 ({prem_sign}{prem_diff:,.2f}원) | 일반유: {gas_price:,.1f}원 ({gas_sign}{gas_diff:,.2f}원)
