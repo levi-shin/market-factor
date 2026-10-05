@@ -1,0 +1,48 @@
+{
+  "date": "2026-10-05",
+  "domain": "market",
+  "sources": [
+    {
+      "id": "evidence-001",
+      "title": "\"'약속의 8일', 증시 충격 주의\"…23兆 ETF 확 바뀐다, 무슨 일?",
+      "url": "https://www.hankyung.com/article/202610020399i",
+      "publishedAt": "Mon, 05 Oct 2026 08:00:10 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-002",
+      "title": "“최태원 회장 2.3% 지분 매각”…SK(주) 투자 접근법은?",
+      "url": "https://www.hankyung.com/article/202610020686i",
+      "publishedAt": "Mon, 05 Oct 2026 08:00:07 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-003",
+      "title": "\"일주일새 12% 올랐다\"…전고체 ETF 뛰는데 뭉칫돈 향한 곳은",
+      "url": "https://www.hankyung.com/article/202610042690i",
+      "publishedAt": "Mon, 05 Oct 2026 08:00:02 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-004",
+      "title": "쉬는 것도 투자…시장 떠나진 말자 [한경 프리미엄9 TODAY]",
+      "url": "https://www.hankyung.com/article/2026100427131",
+      "publishedAt": "Sun, 04 Oct 2026 18:21:07 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-005",
+      "title": "제동 걸린 코스닥 '기업 솎아내기'…퇴출 피했지만 탈출도 막혔다",
+      "url": "https://www.hankyung.com/article/2026100427121",
+      "publishedAt": "Sun, 04 Oct 2026 18:19:16 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-006",
+      "title": "\"산업 전환기, M&A가 재계순위 흔들 것\"",
+      "url": "https://www.hankyung.com/article/2026100426311",
+      "publishedAt": "Sun, 04 Oct 2026 18:15:51 +0900",
+      "source": "한국경제"
+    }
+  ]
+}
