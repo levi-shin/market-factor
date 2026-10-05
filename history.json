@@ -22,7 +22,13 @@
       "gasoline": 1860.55,
       "premium_gasoline": 2318.11,
       "diesel": 1844.73,
-      "fear_score": 50
+      "fear_score": 50,
+      "kr10y": 4.313,
+      "kr10y_pct": 0.91,
+      "kr_base": 3.0,
+      "kr_base_pct": 0.0,
+      "us_base": 4.25,
+      "us_base_pct": 0.0
     },
     "portfolio": {
       "NVDA": {
@@ -106,7 +112,14 @@
       "gasoline": 1860.26,
       "premium_gasoline": 2317.73,
       "diesel": 1844.52,
-      "fear_score": 50
+      "fear_score": 50,
+      "us10y_pct": 0.8050932203389936,
+      "kr10y": 4.371,
+      "kr10y_pct": 1.34,
+      "kr_base": 3.0,
+      "kr_base_pct": 0.0,
+      "us_base": 4.25,
+      "us_base_pct": 0.0
     },
     "portfolio": {
       "005930.KS": {
@@ -221,7 +234,14 @@
       "gasoline": 1859.88,
       "premium_gasoline": 2316.28,
       "diesel": 1844.33,
-      "fear_score": 50
+      "fear_score": 50,
+      "us10y_pct": 0.7986464229805449,
+      "kr10y": 4.404,
+      "kr10y_pct": 0.76,
+      "kr_base": 3.0,
+      "kr_base_pct": 0.0,
+      "us_base": 4.25,
+      "us_base_pct": 0.0
     },
     "portfolio": {
       "NVDA": {
@@ -336,7 +356,14 @@
       "gasoline": 1859.66,
       "premium_gasoline": 2315.09,
       "diesel": 1844.08,
-      "fear_score": 50
+      "fear_score": 50,
+      "us10y_pct": 0.0,
+      "kr10y": 4.363,
+      "kr10y_pct": -0.93,
+      "kr_base": 3.0,
+      "kr_base_pct": 0.0,
+      "us_base": 4.25,
+      "us_base_pct": 0.0
     },
     "portfolio": {
       "NVDA": {
