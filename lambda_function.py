@@ -291,8 +291,9 @@ def get_gasoline_prices():
 # build_market_text()가 같은 순서/이름을 써야 하므로 모듈 상수로 분리.
 MARKET_ITEMS = [
     ("KRW=X", "달러/원 환율", "usdkrw"),
-    ("^TNX", "미국 10년물 국채금리", "us10y"),
+    ("USFOMC=ECIX", "미국 기준금리", "us_base"),
     ("KROCRT=ECIX", "한국 기준금리", "kr_base"),
+    ("^TNX", "미국 10년물 국채금리", "us10y"),
     ("KR10YT=RR", "한국 10년물 국채금리", "kr10y"),
     ("^GSPC", "S&P 500", "sp500"),
     ("^IXIC", "나스닥", "nasdaq"),
@@ -360,7 +361,9 @@ def get_naver_bond_yield(reuters_code):
 
 
 def get_naver_standard_interest(reuters_code="KROCRT=ECIX"):
-    """각국 기준금리(네이버 standardInterest). 한국은행=KROCRT=ECIX."""
+    """각국 기준금리(네이버 standardInterest).
+    한국은행=KROCRT=ECIX, 연준(미국)=USFOMC=ECIX.
+    """
     url = "https://m.stock.naver.com/front-api/marketIndex/majors"
     headers = {"Referer": "https://m.stock.naver.com/marketindex"}
     res = json.loads(http_get(url, headers=headers, timeout=5))
@@ -374,6 +377,55 @@ def get_naver_standard_interest(reuters_code="KROCRT=ECIX"):
                 return None, None
             return curr, pct
     return None, None
+
+
+POLICY_RATE_KEYS = ("us_base", "kr_base")
+POLICY_RATE_LABELS = {
+    "us_base": "미국 기준금리",
+    "kr_base": "한국 기준금리",
+}
+
+
+def detect_policy_rate_changes(numeric_data, prev_record=None):
+    """직전 브리핑 대비 기준금리 변동 목록.
+    반환: [{"key","label","prev","curr","delta_bp"}, ...]
+    """
+    prev_record = prev_record if prev_record is not None else get_previous_snapshot()
+    prev_metrics = (prev_record or {}).get("metrics") or {}
+    changes = []
+    for key in POLICY_RATE_KEYS:
+        curr = numeric_data.get(key)
+        prev = prev_metrics.get(key)
+        if curr is None or prev is None:
+            continue
+        if abs(float(curr) - float(prev)) < 1e-9:
+            continue
+        delta_bp = round((float(curr) - float(prev)) * 100)
+        changes.append({
+            "key": key,
+            "label": POLICY_RATE_LABELS.get(key, key),
+            "prev": float(prev),
+            "curr": float(curr),
+            "delta_bp": delta_bp,
+        })
+    return changes
+
+
+def _policy_rate_prefix(subject, curr, prev):
+    """기준금리는 매일 거래되지 않으므로 '마감/등락%' 문구 대신 동결·인상·인하로 표기."""
+    if curr is None:
+        return ""
+    curr_s = f"{curr:.2f}%"
+    if prev is None:
+        return f"{subject} 현재 {curr_s}입니다. "
+    if abs(float(curr) - float(prev)) < 1e-9:
+        return f"{subject} {curr_s}로 유지(동결) 중입니다. "
+    direction = "인상" if float(curr) > float(prev) else "인하"
+    bp = abs(round((float(curr) - float(prev)) * 100))
+    return (
+        f"{subject} {float(prev):.2f}%에서 {curr_s}로 "
+        f"{bp}bp {direction}되었습니다. "
+    )
 
 
 def get_stock_price_any(symbol, name):
@@ -785,7 +837,7 @@ def _price_prefix(subject, pct, value_str, *, stale_us_session=None, end_particl
 
 
 def build_prefixed_reasons(reasons_dict, numeric_data, pct_data, portfolio_map, oil_data, oil_diff,
-                           asof_now=None):
+                           asof_now=None, prev_record=None):
     # reasons_dict: Gemini가 생성한 {symbol: "원인+영향 서술문"} 딕셔너리
     # 반환: 각 문장 앞에 "OOO는 전 거래일 대비 X% 상승/하락한 Y를 기록했습니다."
     #        형태의, 우리 코드가 직접 계산한 정확한 문장이 붙은 딕셔너리
@@ -797,6 +849,7 @@ def build_prefixed_reasons(reasons_dict, numeric_data, pct_data, portfolio_map, 
     result = dict(reasons_dict)
     us_session = describe_us_equity_session(asof_now)
     stale_us = None if us_session.get("live") else us_session
+    prev_metrics = ((prev_record if prev_record is not None else get_previous_snapshot()) or {}).get("metrics") or {}
 
     # (필드key, 주어, numeric_data/pct_data 키, 통화기호, 단위, 소수자리)
     macro_specs = [
@@ -804,8 +857,9 @@ def build_prefixed_reasons(reasons_dict, numeric_data, pct_data, portfolio_map, 
         ("kospi", "코스피 지수는", "kospi", "", "포인트", 1),
         ("nasdaq", "나스닥 지수는", "nasdaq", "", "포인트", 1),
         ("sp500", "S&P 500 지수는", "sp500", "", "포인트", 1),
-        ("us10y", "미국 10년물 국채금리는", "us10y", "", "%", 2),
+        ("us_base", "미국 기준금리는", "us_base", "", "%", 2),
         ("kr_base", "한국 기준금리는", "kr_base", "", "%", 2),
+        ("us10y", "미국 10년물 국채금리는", "us10y", "", "%", 2),
         ("kr10y", "한국 10년물 국채금리는", "kr10y", "", "%", 2),
         ("wti", "WTI유가는", "wti", "$", "", 2),
         ("gold_intl", "국제 금 가격은", "gold_intl", "$", "", 1),
@@ -818,13 +872,16 @@ def build_prefixed_reasons(reasons_dict, numeric_data, pct_data, portfolio_map, 
         pct = pct_data.get(data_key)
         if value is None:
             continue
-        value_str = f"{currency}{_fmt_num(value, decimals)}{unit}"
-        us_stale = stale_us if field_key in US_EQUITY_MACRO_KEYS else None
-        prefix = _price_prefix(
-            subject, pct, value_str,
-            stale_us_session=us_stale,
-            end_particle="(으)로",
-        )
+        if field_key in POLICY_RATE_KEYS:
+            prefix = _policy_rate_prefix(subject, value, prev_metrics.get(data_key))
+        else:
+            value_str = f"{currency}{_fmt_num(value, decimals)}{unit}"
+            us_stale = stale_us if field_key in US_EQUITY_MACRO_KEYS else None
+            prefix = _price_prefix(
+                subject, pct, value_str,
+                stale_us_session=us_stale,
+                end_particle="(으)로",
+            )
         result[field_key] = prefix + (result[field_key] or "")
 
     # 보유 종목 (환율/포인트 표기가 종목마다 다름 - 국내(005930.KS)는 원화, 나머지는 달러)
@@ -1118,7 +1175,7 @@ def call_gemini_json(payload, headers, timeout=None, context_label="Gemini"):
 
 
 def get_itemized_ai_analysis(market_data_text, portfolio_text, oil_prices_text, news_list,
-                              analysis_type="morning"):
+                              analysis_type="morning", rate_changes=None):
     # 반환값: (reasons_dict, model_used) 튜플. 실패 시 (None, None).
     # model_used는 metadata에 "실제로 어떤 모델이 이 분석을 생성했는지" 남기기 위함.
     api_key = clean_str(os.environ.get("GEMINI_API_KEY", ""))
@@ -1145,6 +1202,29 @@ def get_itemized_ai_analysis(market_data_text, portfolio_text, oil_prices_text, 
 - 코스피/삼성전자 등 국내 자산: 아직 오늘 장이 열리기 전이므로 "전 거래일 종가"입니다.
   간밤 미국장 결과가 오늘 국내장에 어떤 영향을 줄지의 관점으로 서술하세요."""
 
+    rate_change_context = ""
+    if rate_changes:
+        lines = []
+        for ch in rate_changes:
+            direction = "인상" if ch["delta_bp"] > 0 else "인하"
+            lines.append(
+                f"- {ch['label']}: {ch['prev']:.2f}% → {ch['curr']:.2f}% "
+                f"({abs(ch['delta_bp'])}bp {direction})"
+            )
+        rate_change_context = (
+            "\n[기준금리 변동 감지 — 이 항목은 반드시 심층 분석]\n"
+            + "\n".join(lines)
+            + "\n위 기준금리 변동의 배경(발표/회의·물가·고용·통화정책 경로)과 "
+              "환율·채권·증시·대출 금리로의 대한 파급을 us_base/kr_base 필드에 "
+              "특히 자세히 서술하세요. (숫자·상승/하락 단어는 본문에 쓰지 말 것)\n"
+        )
+    else:
+        rate_change_context = (
+            "\n[기준금리 맥락]\n"
+            "- us_base/kr_base가 동결이면 유지 배경과 시장이 다음 회의에서 "
+            "무엇을 보는지 짧게 서술하세요.\n"
+        )
+
     prompt = f"""
 당신은 대한민국 최고 수준의 월가 매크로 헤지펀드 및 여의도 수석 스트래티지스트입니다.
 아래 각 항목마다 [왜 상승/하락했는지 구체적 원인]과 [이로 인해 시장/투자자에게 미치는 파급 영향]을 명확한 인과관계로 3~4문장씩 서술하세요.
@@ -1170,7 +1250,7 @@ def get_itemized_ai_analysis(market_data_text, portfolio_text, oil_prices_text, 
 - 당신의 역할은 이미 일어난 움직임의 원인과 파급 영향을 설명하는 것까지입니다.
 
 {session_context}
-
+{rate_change_context}
 반드시 마크다운(```json) 없이 순수 JSON 포맷으로만 출력하세요.
 
 JSON 출력 포맷 (각 필드는 "원인 + 파급 영향"만, 숫자/방향 단어 없이):
@@ -1180,8 +1260,9 @@ JSON 출력 포맷 (각 필드는 "원인 + 파급 영향"만, 숫자/방향 단
   "kospi": "코스피 분석: 지수 움직임의 원인과 국내 증시 파급 영향",
   "nasdaq": "나스닥 분석: 움직임의 원인과 미국 성장주 밸류에이션 파급 효과",
   "sp500": "S&P 500 분석: 움직임의 원인과 미국 증시 전반의 리스크 심리 파급 효과",
+  "us_base": "미국 기준금리(연준) 분석: 통화정책 결정/동결 배경과 달러·국채·위험자산 파급 영향",
+  "kr_base": "한국 기준금리(한은) 분석: 통화정책 결정/동결 배경과 국내 대출·환율·증시 파급 영향",
   "us10y": "미국 10년물 국채금리 분석: 원인(물가·고용·연준 경로 기대 등)과 성장주 밸류에이션·달러/원·금 등 자산 전반 파급 영향",
-  "kr_base": "한국 기준금리 분석: 원인(한은 통화정책·물가·성장 경로)과 국내 대출·예금·환율·증시 파급 영향",
   "kr10y": "한국 10년물 국채금리 분석: 원인(한은 경로·수급·미 금리 스필오버 등)과 국내 채권·환율·증시 할인율 파급 영향",
   "wti": "국제유가(WTI) 분석: 원인과 정유/석유화학 및 수입물가 압력 영향",
   "gasoline": "일반휘발유 분석: 주유소 판매가 동향 및 국제유가 변동의 시차 반영",
@@ -1591,10 +1672,12 @@ def save_to_s3(numeric_data, pct_data, portfolio_map, oil_data, fear_score, news
             "nasdaq_pct": pct_data.get("nasdaq"),
             "sp500": numeric_data.get("sp500"),
             "sp500_pct": pct_data.get("sp500"),
-            "us10y": numeric_data.get("us10y"),
-            "us10y_pct": pct_data.get("us10y"),
+            "us_base": numeric_data.get("us_base"),
+            "us_base_pct": pct_data.get("us_base"),
             "kr_base": numeric_data.get("kr_base"),
             "kr_base_pct": pct_data.get("kr_base"),
+            "us10y": numeric_data.get("us10y"),
+            "us10y_pct": pct_data.get("us10y"),
             "kr10y": numeric_data.get("kr10y"),
             "kr10y_pct": pct_data.get("kr10y"),
             "wti": numeric_data.get("wti"),
@@ -1648,8 +1731,9 @@ WEEKLY_MACRO_SPECS = [
     ("gold_intl", "국제 금", "$", "", 1),
     ("kospi", "코스피", "", "", 1),
     ("nasdaq", "나스닥", "", "", 1),
-    ("us10y", "미 국채금리(10Y)", "", "%", 2),
+    ("us_base", "미국 기준금리", "", "%", 2),
     ("kr_base", "한국 기준금리", "", "%", 2),
+    ("us10y", "미 국채금리(10Y)", "", "%", 2),
     ("kr10y", "한국 국채금리(10Y)", "", "%", 2),
 ]
 
@@ -2588,7 +2672,7 @@ def _texts_from_briefing_record(record):
 
     numeric_data = {}
     pct_data = {}
-    for key in ("usdkrw", "kospi", "nasdaq", "sp500", "us10y", "kr_base", "kr10y", "wti", "gold_intl", "gold_kr", "btc", "copper"):
+    for key in ("usdkrw", "kospi", "nasdaq", "sp500", "us_base", "kr_base", "us10y", "kr10y", "wti", "gold_intl", "gold_kr", "btc", "copper"):
         if key in metrics:
             numeric_data[key] = metrics.get(key)
         pct_key = f"{key}_pct"
@@ -2649,11 +2733,15 @@ def run_reanalyze_today():
     (market_text, portfolio_text, oil_text, news_list,
      numeric_data, pct_data, portfolio_map, oil_data, oil_diff, fear_score) = _texts_from_briefing_record(record)
 
+    prev_record = briefings[idx - 1] if idx > 0 else None
+    rate_changes = detect_policy_rate_changes(numeric_data, prev_record=prev_record)
     reasons_dict, model_used = get_itemized_ai_analysis(
-        market_text, portfolio_text, oil_text, news_list, analysis_type="close"
+        market_text, portfolio_text, oil_text, news_list,
+        analysis_type="close", rate_changes=rate_changes,
     )
     reasons_dict = build_prefixed_reasons(
-        reasons_dict, numeric_data, pct_data, portfolio_map, oil_data, oil_diff
+        reasons_dict, numeric_data, pct_data, portfolio_map, oil_data, oil_diff,
+        prev_record=prev_record,
     )
     if not reasons_dict:
         raise RuntimeError(f"재분석 실패: Gemini reasons 비어 있음 (model={model_used})")
@@ -2766,17 +2854,24 @@ def lambda_handler(event, context):
         portfolio_text = build_portfolio_text(portfolio_map)
         oil_text = build_oil_text(oil_data, oil_diff)
 
+        prev_record = get_previous_snapshot()
+        rate_changes = detect_policy_rate_changes(numeric_data, prev_record=prev_record)
+        if rate_changes:
+            logger.info(f"기준금리 변동 감지: {rate_changes}")
+
         # Gemini AI 분석 호출 (알림을 안 보내는 실행이라도 대시보드용 데이터는
         # 최신으로 갱신되어야 하므로 동일하게 수행)
         analysis_type = "morning" if send_notification else "close"
         reasons_dict, model_used = get_itemized_ai_analysis(
-            market_text, portfolio_text, oil_text, news_list, analysis_type=analysis_type
+            market_text, portfolio_text, oil_text, news_list,
+            analysis_type=analysis_type, rate_changes=rate_changes,
         )
 
         # Gemini는 "원인/영향"만 서술했고, 등락 방향·%·가격은 우리 코드가
         # 직접 계산해서 각 항목 문장 앞에 붙임 (숫자 할루시네이션 원천 차단).
         reasons_dict = build_prefixed_reasons(
-            reasons_dict, numeric_data, pct_data, portfolio_map, oil_data, oil_diff
+            reasons_dict, numeric_data, pct_data, portfolio_map, oil_data, oil_diff,
+            prev_record=prev_record,
         )
 
         # briefings.json 저장 - 두 실행 모두 동일하게 수행. 같은 날짜(date) 레코드는
@@ -2836,10 +2931,12 @@ def lambda_handler(event, context):
         nasdaq_p = pct_data.get('nasdaq', 0)
         sp500 = numeric_data.get('sp500', 0)
         sp500_p = pct_data.get('sp500', 0)
-        us10y = numeric_data.get('us10y') or 0
-        us10y_p = pct_data.get('us10y') or 0
+        us_base = numeric_data.get('us_base') or 0
+        us_base_p = pct_data.get('us_base')
         kr_base = numeric_data.get('kr_base') or 0
         kr_base_p = pct_data.get('kr_base')
+        us10y = numeric_data.get('us10y') or 0
+        us10y_p = pct_data.get('us10y') or 0
         kr10y = numeric_data.get('kr10y') or 0
         kr10y_p = pct_data.get('kr10y') or 0
         btc = numeric_data.get('btc', 0)
@@ -2869,16 +2966,33 @@ def lambda_handler(event, context):
             "🔗 대시보드 주소를 확인하지 못했습니다 (CNAME 또는 SITE_BASE_URL 확인 필요)"
         )
 
+        def _base_pct_s(p):
+            return f" ({p:+.2f}%)" if p is not None else ""
+
+        rate_alert_block = ""
+        if rate_changes:
+            alert_lines = ["📢 *기준금리 변동*"]
+            for ch in rate_changes:
+                direction = "인상" if ch["delta_bp"] > 0 else "인하"
+                alert_lines.append(
+                    f"• {ch['label']}: {ch['prev']:.2f}% → {ch['curr']:.2f}% "
+                    f"({abs(ch['delta_bp'])}bp {direction})"
+                )
+                reason = (reasons_dict or {}).get(ch["key"])
+                if reason:
+                    alert_lines.append(reason)
+            rate_alert_block = "\n" + "\n".join(alert_lines) + "\n"
+
         compact_briefing = f"""☀️ *모닝 퀵 브리핑* ({weather_text})
 {us_line}
 💡 *AI 핵심 시장 요약*
 {overall_summary}
-
+{rate_alert_block}
 📊 *주요 지표 요약*
 • 달러/원: {usdkrw:,.1f}원 ({usdkrw_p:+.2f}%) | 코스피: {kospi:,.1f} ({kospi_p:+.2f}%)
 • 나스닥: {nasdaq:,.1f} ({nasdaq_p:+.2f}%) | S&P500: {sp500:,.1f} ({sp500_p:+.2f}%)
-• 한국 기준금리: {kr_base:.2f}%{f" ({kr_base_p:+.2f}%)" if kr_base_p is not None else ""} | 한국 국채(10Y): {kr10y:.2f}% ({kr10y_p:+.2f}%)
-• 미 국채금리(10Y): {us10y:.2f}% ({us10y_p:+.2f}%)
+• 미국 기준금리: {us_base:.2f}%{_base_pct_s(us_base_p)} | 한국 기준금리: {kr_base:.2f}%{_base_pct_s(kr_base_p)}
+• 미 국채(10Y): {us10y:.2f}% ({us10y_p:+.2f}%) | 한국 국채(10Y): {kr10y:.2f}% ({kr10y_p:+.2f}%)
 • 비트코인: {btc/100000000:,.2f}억 ({btc_p:+.2f}%)
 • 🪙 국내 금(1g): {gold_kr:,.1f}원 ({gold_kr_p:+.2f}%) | 국제 금: ${gold_intl:,.1f} ({gold_intl_p:+.2f}%)
 • ⛽ 고급유: {prem_price:,.1f}원 ({prem_sign}{prem_diff:,.2f}원) | 일반유: {gas_price:,.1f}원 ({gas_sign}{gas_diff:,.2f}원)

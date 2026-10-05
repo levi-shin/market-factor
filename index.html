@@ -248,8 +248,9 @@
           { key: 'kospi', label: '코스피', full: '코스피 지수 (pt)', color: '#f43f5e', dashDigits: 1, unit: '' },
           { key: 'nasdaq', label: '나스닥', full: '나스닥 지수 (pt)', color: '#818cf8', dashDigits: 1, unit: '' },
           { key: 'sp500', label: 'S&P500', full: 'S&P 500 지수 (pt)', color: '#60a5fa', dashDigits: 1, unit: '' },
+          { key: 'us_base', label: '미기준금리', full: '미국 기준금리 (%)', color: '#cbd5e1', dashDigits: 2, unit: '%' },
+          { key: 'kr_base', label: '韓기준금리', full: '한국 기준금리 (%)', color: '#e2e8f0', dashDigits: 2, unit: '%' },
           { key: 'us10y', label: '미10년금리', full: '미국 10년물 국채금리 (%)', color: '#94a3b8', dashDigits: 2, unit: '%' },
-          { key: 'kr_base', label: '기준금리', full: '한국 기준금리 (%)', color: '#e2e8f0', dashDigits: 2, unit: '%' },
           { key: 'kr10y', label: '韓10년금리', full: '한국 10년물 국채금리 (%)', color: '#64748b', dashDigits: 2, unit: '%' },
         ]
       },
@@ -277,7 +278,7 @@
       },
     ];
 
-    const DASH_METRIC_KEYS = ['usdkrw', 'kospi', 'nasdaq', 'sp500', 'kr_base', 'us10y', 'kr10y', 'wti', 'btc', 'gold_kr'];
+    const DASH_METRIC_KEYS = ['usdkrw', 'kospi', 'nasdaq', 'sp500', 'us_base', 'kr_base', 'us10y', 'kr10y', 'wti', 'btc'];
     const VIEW_TITLES = {
       dashboard: '대시보드',
       briefing: '브리핑',
