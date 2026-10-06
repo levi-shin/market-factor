@@ -3385,6 +3385,8 @@ def lambda_handler(event, context):
 
         analysis_type = "morning" if send_notification else "close"
         metrics_asof = estimate_metrics_asof(analysis_type)
+        # pre_ai가 metadata를 collecting으로 덮기 전에, 이미 실패 알림을 보냈는지 기억
+        ai_fail_slack_already = already_notified_ai_failure(analysis_type)
 
         # AI 호출 전 raw·evidence·메타(collecting) 저장 — Gemini 실패해도 시세 유지
         try:
@@ -3469,7 +3471,7 @@ def lambda_handler(event, context):
                 pass
         elif ai_failed:
             # 같은 세션 AI 실패 Slack은 하루 1번만 (슬롯마다 도배 방지)
-            if already_notified_ai_failure(analysis_type):
+            if ai_fail_slack_already:
                 logger.warning(
                     f"AI 재실패({analysis_type}) — Slack 생략(이미 failed 알림 발송됨), soft-fail"
                 )
