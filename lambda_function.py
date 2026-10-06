@@ -673,12 +673,14 @@ _env_model = clean_str(os.environ.get("GEMINI_MODEL", ""))
 # 다음 후보로 빨리 넘기기 위해 다양하게 둠.
 # 2026-09 기준 generateContent에서 살아있는 모델만 둔다.
 # gemini-2.5-flash / 2.0-flash는 404(no longer available)라 제거함.
+# lite를 앞에: 3.8/3.7/3.6 flash가 동시에 503일 때가 많음 (2026-10-06 장마감).
+# gemini-2.5-flash-lite는 404(→ 3.5-flash-lite로 이전)라 쓰지 않음.
 _DEFAULT_GEMINI_MODELS = [
+    "gemini-3.5-flash-lite",
     "gemini-3.8-flash",
     "gemini-3.7-flash",
     "gemini-3.6-flash",
-    # 3.x flash 전체가 503일 때 한 줄 더 시도 (없으면 404로 건너뜀)
-    "gemini-2.5-flash-lite",
+    "gemini-flash-latest",
 ]
 GEMINI_MODEL_FALLBACKS = []
 for m in ([_env_model] if _env_model else []) + _DEFAULT_GEMINI_MODELS:
@@ -1136,12 +1138,13 @@ GEMINI_HTTP_TIMEOUT = 90  # 장문 한국어 JSON — Actions에서도 여유 �
 #
 # 라운드 사이에 점점 길게 쉬면서 스파이크가 지나가길 기다린다.
 # 최악의 경우 대기 30+90+240초 + 호출 4바퀴 ≈ 9분으로, 워크플로 timeout(25분) 안에 든다.
-GEMINI_MAX_ROUNDS = int(os.environ.get("GEMINI_MAX_ROUNDS", "4"))
-GEMINI_ROUND_DELAYS_SEC = (30, 90, 240)
-GEMINI_TOTAL_BUDGET_SEC = int(os.environ.get("GEMINI_TOTAL_BUDGET_SEC", "720"))
+GEMINI_MAX_ROUNDS = int(os.environ.get("GEMINI_MAX_ROUNDS", "3"))
+# 라운드 사이는 더 길게 — 같은 후보를 짧은 간격으로 두들기면 503만 쌓임
+GEMINI_ROUND_DELAYS_SEC = (90, 180, 300)
+GEMINI_TOTAL_BUDGET_SEC = int(os.environ.get("GEMINI_TOTAL_BUDGET_SEC", "900"))
 # 같은 라운드 안에서 수요 폭주로 다음 후보로 넘어갈 때의 최소 간격.
 # 세 모델이 같은 백엔드 혼잡을 공유하는 경우가 있어 곧바로 때리면 같이 막힌다.
-GEMINI_CAPACITY_GAP_SEC = 8
+GEMINI_CAPACITY_GAP_SEC = 12
 
 # 일간 AI JSON에 기대하는 필드 (실패 시 가격 prefix만이라도 채울 골격)
 DAILY_REASON_KEYS = [
@@ -1154,6 +1157,20 @@ DAILY_REASON_KEYS = [
 
 def empty_reasons_skeleton():
     return {k: "" for k in DAILY_REASON_KEYS}
+
+
+def already_notified_ai_failure(analysis_type):
+    """같은 날 같은 세션에서 AI 실패 Slack을 이미 보냈는지(metadata=failed)."""
+    try:
+        date_str, _ = kst_date_str()
+        y, m, d = date_str.split("-")
+        path = data_root() / "metadata" / "market" / y / m / d / f"{analysis_type}.json"
+        if not path.exists():
+            return False
+        meta = json.loads(path.read_text(encoding="utf-8"))
+        return meta.get("status") == "failed"
+    except Exception:
+        return False
 
 
 def _is_transient_network_error(exc):
@@ -1242,11 +1259,14 @@ def _is_usable_analysis(parsed, context_label="Gemini"):
         if not ok:
             logger.warning(f"{context_label} 주간/월간 필수 필드 부족: keys={list(parsed.keys())}")
         return ok
-    if not overall or len(overall) < 40:
-        logger.warning(f"{context_label} overall 부족(len={len(overall)}). keys={list(parsed.keys())}")
-        return False
-    if nonempty < 5:
+    is_compact = "compact" in context_label.lower()
+    min_fields = 3 if is_compact else 5
+    min_overall = 20 if is_compact else 40
+    if nonempty < min_fields:
         logger.warning(f"{context_label} 유효 필드 부족({nonempty}개). keys={list(parsed.keys())}")
+        return False
+    if not is_compact and (not overall or len(overall) < min_overall):
+        logger.warning(f"{context_label} overall 부족(len={len(overall)}). keys={list(parsed.keys())}")
         return False
     return True
 
@@ -1435,87 +1455,67 @@ def get_itemized_ai_analysis(market_data_text, portfolio_text, oil_prices_text, 
             "무엇을 보는지 짧게 서술하세요.\n"
         )
 
-    prompt = f"""
-당신은 대한민국 최고 수준의 월가 매크로 헤지펀드 및 여의도 수석 스트래티지스트입니다.
-아래 각 항목마다 [왜 상승/하락했는지 구체적 원인]과 [이로 인해 시장/투자자에게 미치는 파급 영향]을 명확한 인과관계로 3~4문장씩 서술하세요.
-
-[매우 중요 - 숫자/방향 서술 금지]
-- 절대로 구체적인 등락 %, 가격, "상승"/"하락"이라는 단어를 본문에 직접 쓰지 마세요.
-  (예: "3.76% 상승한 $217.55" 같은 표현 금지) 이유: 수치는 시스템이 별도로
-  정확하게 계산해서 자동으로 앞에 붙이며, 당신이 숫자를 다시 쓰면 원본 데이터와
-  불일치할 위험이 있어 절대 금지합니다.
-- 대신 "이런 움직임의 원인"과 "그로 인한 파급 영향"만 서술하세요. 방향을 굳이
-  언급해야 한다면 "이러한 흐름은", "이 같은 움직임은"처럼 숫자·단정적 방향
-  단어 없이 에둘러 표현하세요.
-- 데이터에 없는 사실을 추측하거나 지어내지 말고, 아래 [원시 데이터]와 뉴스
-  헤드라인에 근거해서만 서술하세요.
-- 스페이스X(SPCX)는 2026년 6월 12일 나스닥에 상장(IPO)을 완료한 상장 기업입니다.
-  "비상장 기업이라 데이터가 없다" 등 사실과 다른 발언을 절대 하지 마세요.
-- 보유 종목 분석 시 아래 [보유 종목별 뉴스]에 해당 종목 뉴스가 없으면, 원인 문장에
-  "뚜렷한 개별 뉴스 없음"을 반드시 포함하세요.
-- 근거(뉴스/데이터)가 부족하면 원인을 단정하지 말고 "~로 보입니다", "~가능성이 있습니다"처럼
-  불확실성을 남겨서 서술하세요.
-
-[매우 중요 - 투자 조언 금지]
-- 매수/매도/비중확대/저가매수/목표주가 등 어떤 형태의 투자 추천도 하지 마세요.
-- "지금 사야 한다", "차익 실현 시점" 같은 행동 지시도 금지입니다.
-- 당신의 역할은 이미 일어난 움직임의 원인과 파급 영향을 설명하는 것까지입니다.
+    # 출력 길이↓ → 503/타임아웃/잘린 JSON 확률↓ (2026-10-06: 장문 요청이 flash 전부 막힘)
+    prompt = f"""시장 브리핑 분석가. 각 JSON 필드를 원인+파급 영향 1~2문장으로만 쓰세요.
+금지: 등락%%·가격·"상승"/"하락" 단어, 매수/매도 조언, 데이터에 없는 추측.
+보유 종목 뉴스 없으면 그 필드에 "뚜렷한 개별 뉴스 없음" 포함.
+SPCX는 2026-06-12 나스닥 상장 완료(비상장이라 하지 말 것).
 
 {session_context}
 {rate_change_context}
 [보유 종목별 뉴스]
 {portfolio_news_text}
 
-반드시 마크다운(```json) 없이 순수 JSON 포맷으로만 출력하세요.
+키: overall,usdkrw,kospi,nasdaq,sp500,us_base,kr_base,us10y,kr10y,wti,gasoline,premium_gasoline,NVDA,AAPL,TSLA,005930.KS,MSFT,SPCX,BOTZ,gold_intl,btc
 
-JSON 출력 포맷 (각 필드는 "원인 + 파급 영향"만, 숫자/방향 단어 없이):
-{{
-  "overall": "시장 종합 인과관계 총평 - 환율/금리/기술주/유가 간 연결고리와 시장 참여자가 주목할 맥락을 3줄로 (매매 권유 없이, 숫자 나열보다 관계/맥락 위주로)",
-  "usdkrw": "달러/원 환율 분석: 이런 흐름의 배경과 수출기업 실적 및 외인 수급에 미치는 영향",
-  "kospi": "코스피 분석: 지수 움직임의 원인과 국내 증시 파급 영향",
-  "nasdaq": "나스닥 분석: 움직임의 원인과 미국 성장주 밸류에이션 파급 효과",
-  "sp500": "S&P 500 분석: 움직임의 원인과 미국 증시 전반의 리스크 심리 파급 효과",
-  "us_base": "미국 기준금리(연준) 분석: 통화정책 결정/동결 배경과 달러·국채·위험자산 파급 영향",
-  "kr_base": "한국 기준금리(한은) 분석: 통화정책 결정/동결 배경과 국내 대출·환율·증시 파급 영향",
-  "us10y": "미국 10년물 국채금리 분석: 공개된 뉴스·데이터 근거 원인과 성장주·달러/원·금 등 파급 영향",
-  "kr10y": "한국 10년물 국채금리 분석: 공개된 뉴스·데이터 근거 원인과 국내 채권·환율·증시 파급 영향",
-  "wti": "국제유가(WTI) 분석: 근거 있는 원인과 정유/석유화학 및 수입물가 압력 영향",
-  "gasoline": "일반휘발유 분석: 주유소 판매가 동향 및 국제유가 변동의 시차 반영",
-  "premium_gasoline": "고급휘발유 분석: 가격 변동 배경 및 정제마진 영향",
-  "NVDA": "엔비디아 분석: 보유 종목 뉴스·헤드라인에 근거한 원인과 AI 하드웨어 생태계 파급 영향",
-  "AAPL": "애플 분석: 보유 종목 뉴스·헤드라인에 근거한 원인과 공급망 생태계 영향",
-  "TSLA": "테슬라 분석: 보유 종목 뉴스·헤드라인에 근거한 원인과 관련 테마 파급 영향",
-  "005930.KS": "삼성전자 분석: 보유 종목 뉴스·헤드라인에 근거한 원인과 국내 반도체 섹터 영향",
-  "MSFT": "마이크로소프트 분석: 보유 종목 뉴스·헤드라인에 근거한 원인과 기업용 소프트웨어 시장 영향",
-  "SPCX": "스페이스X(SPCX) 분석: 보유 종목 뉴스·헤드라인에 근거한 원인과 민간 우주산업 투자 심리 파급 영향",
-  "BOTZ": "로보틱스&AI ETF(BOTZ) 분석: 보유 종목 뉴스·헤드라인에 근거한 원인과 로보틱스/자동화 테마 파급 영향",
-  "gold_intl": "국제/국내 금 분석: 공개 데이터·뉴스에 근거한 원인과 헷지 자산 영향",
-  "btc": "비트코인 분석: 공개 데이터·뉴스에 근거한 원인과 가상자산 시장 전반 영향"
-}}
-
-[원시 데이터] (이 수치는 여기서만 참고하고, 본문에 그대로 다시 쓰지 마세요)
-거시 지표:
+[원시 데이터]
+거시:
 {market_data_text}
-보유 포트폴리오:
+포트:
 {portfolio_text}
-국내 유가:
+유가:
 {oil_prices_text}
-증시 및 금융 헤드라인:
+뉴스:
 {news_text}
 """
+    gen_cfg = {
+        "thinkingConfig": {"thinkingLevel": "low"},
+        # fence/잘림 파싱 실패를 줄이기 위해 JSON MIME 강제
+        "responseMimeType": "application/json",
+        "maxOutputTokens": 8192,
+    }
     payload = {
         "contents": [{"parts": [{"text": prompt}]}],
-        # gemini-3.x 계열은 기본적으로 내부 추론(thinking)을 거치는데, 이 작업은
-        # 단순 요약/서술이라 굳이 깊은 추론이 필요 없음. thinking을 낮춰서
-        # 응답 속도를 확보 (안 그러면 타임아웃 위험이 커짐).
-        "generationConfig": {
-            "thinkingConfig": {"thinkingLevel": "low"}
-        }
+        "generationConfig": gen_cfg,
     }
     headers = {"x-goog-api-key": api_key}
 
-    # 14개 항목 x 3~4문장의 긴 한국어 출력 — 타임아웃/재시도는 GEMINI_HTTP_TIMEOUT·call_gemini_json에서 처리
-    return call_gemini_json(payload, headers, GEMINI_HTTP_TIMEOUT, context_label="Gemini")
+    parsed, model = call_gemini_json(
+        payload, headers, GEMINI_HTTP_TIMEOUT, context_label="Gemini"
+    )
+    if parsed:
+        return parsed, model
+
+    # 전체 실패 시 초단축 프롬프트 1회 더 (필드·문장 수 축소)
+    logger.warning("Gemini 본분석 실패 — compact 프롬프트로 1회 재시도")
+    compact = f"""JSON only. Each value 1 short Korean sentence (cause+impact). No %%/prices/up-down words, no advice.
+Keys: overall,usdkrw,kospi,nasdaq,sp500,wti,NVDA,AAPL,TSLA,005930.KS,MSFT,SPCX,BOTZ,btc
+Data:
+{market_data_text}
+{portfolio_text}
+News: {news_text}
+"""
+    compact_payload = {
+        "contents": [{"parts": [{"text": compact}]}],
+        "generationConfig": {
+            "thinkingConfig": {"thinkingLevel": "low"},
+            "responseMimeType": "application/json",
+            "maxOutputTokens": 4096,
+        },
+    }
+    return call_gemini_json(
+        compact_payload, headers, GEMINI_HTTP_TIMEOUT, context_label="Gemini-compact"
+    )
 
 # ==========================================
 # 3.5. 데이터 구조 뼈대 (raw/analysis/evidence/metadata)
@@ -3468,15 +3468,21 @@ def lambda_handler(event, context):
             except Exception:
                 pass
         elif ai_failed:
-            try:
-                send_slack(
-                    f"⚠️ {'아침' if send_notification else '장마감'} 실행: 시세·등락 문구는 저장됐지만 "
-                    f"AI 본문 분석이 비어 있습니다 (Gemini 503/파싱 실패 가능). "
-                    f"metadata=failed — 이후 슬롯·장마감·reanalyze로 재시도하세요. "
-                    f"(모델: {model_used or '알 수 없음'})"
+            # 같은 세션 AI 실패 Slack은 하루 1번만 (슬롯마다 도배 방지)
+            if already_notified_ai_failure(analysis_type):
+                logger.warning(
+                    f"AI 재실패({analysis_type}) — Slack 생략(이미 failed 알림 발송됨), soft-fail"
                 )
-            except Exception:
-                pass
+            else:
+                try:
+                    send_slack(
+                        f"⚠️ {'아침' if send_notification else '장마감'} 실행: 시세·등락 문구는 저장됐지만 "
+                        f"AI 본문 분석이 비어 있습니다 (Gemini 503/파싱 실패 가능). "
+                        f"이후 슬롯이 조용히 재시도합니다. 계속 비면 Reanalyze Today를 실행하세요. "
+                        f"(모델: {model_used or '알 수 없음'})"
+                    )
+                except Exception:
+                    pass
             logger.error(
                 f"AI 분석 결과 비어 있음 (model={model_used or 'none'}) — "
                 f"시세는 저장, status=failed로 soft-fail 종료"
