@@ -15,6 +15,7 @@ Claude 리뷰에서 지적된 **가짜 0%·장기 차트·AI/휴장·raw 선저�
 ### 변경
 
 - 항목별 **시세 기준일(`metrics_asof`)** 저장, 휴장일 등락은 소스 **전 거래일 대비** pct 유지(브리핑 간 가격 동일 시 0% 덮어쓰기 방지)
+- **과거 데이터 백필** (`--mode backfill-pct`): 가격 동일·0%였던 주말/휴장 등락을 직전 유효 등락으로 복구 (briefings/raw/series)
 - **`series.json`**: `raw/market` 전체 스캔·일별 dedupe(장마감 우선), 차트는 날짜/asof 기준 필터
 - **`briefings.json` 180건 상한 제거** (장기 차트는 series 담당)
 - 대시보드: 기간 탭 1년~10년/전체, 데이터 부족 탭 비활성+tooltip, 차트 클릭 시 `analysis/` 분석 로드

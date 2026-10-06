@@ -1714,6 +1714,195 @@ def rebuild_series_json():
     return out
 
 
+def backfill_fake_flat_pct(briefings=None):
+    """가격이 직전 브리핑과 같은데 등락만 0%인 가짜 평탄을 직전 유효 등락으로 복구.
+
+    주말·휴장에 recompute_pct_vs_previous가 만든 0%를 고친다.
+    가격이 실제로 움직였는데 pct만 0인 케이스는 건드리지 않는다.
+    """
+    if briefings is None:
+        briefings = load_briefings()
+    if not briefings:
+        return briefings, 0
+
+    macro_keys = [
+        "usdkrw", "kospi", "nasdaq", "sp500", "us_base", "kr_base",
+        "us10y", "kr10y", "wti", "gold_intl", "gold_kr", "btc",
+    ]
+    fixed = 0
+
+    for i in range(1, len(briefings)):
+        rec = briefings[i]
+        prev = briefings[i - 1]
+        metrics = rec.setdefault("metrics", {})
+        prev_metrics = prev.get("metrics") or {}
+
+        # 분석 타입 추정: 메타가 있으면 close 우선
+        date_str = rec.get("date") or ""
+        analysis_type = "close"
+        try:
+            y, m, d = date_str.split("-")
+            close_meta = data_root() / "metadata" / "market" / y / m / d / "close.json"
+            morning_meta = data_root() / "metadata" / "market" / y / m / d / "morning.json"
+            if close_meta.exists():
+                analysis_type = "close"
+            elif morning_meta.exists():
+                analysis_type = "morning"
+        except Exception:
+            pass
+
+        if not rec.get("metrics_asof"):
+            try:
+                y, m, d = date_str.split("-")
+                hour = 16 if analysis_type == "close" else 8
+                fake_now = datetime.datetime(
+                    int(y), int(m), int(d), hour, 0,
+                    tzinfo=datetime.timezone(datetime.timedelta(hours=9)),
+                )
+                rec["metrics_asof"] = estimate_metrics_asof(analysis_type, fake_now)
+            except Exception:
+                rec["metrics_asof"] = {}
+
+        for key in macro_keys:
+            pct_key = f"{key}_pct"
+            curr = metrics.get(key)
+            prev_val = prev_metrics.get(key)
+            pct = metrics.get(pct_key)
+            if curr is None or prev_val is None:
+                continue
+            if abs(float(curr) - float(prev_val)) >= 1e-9:
+                continue
+            if pct is not None and abs(float(pct)) >= 0.005:
+                continue
+            donor = prev_metrics.get(pct_key)
+            if donor is None:
+                continue
+            if abs(float(donor)) < 0.005 and i >= 2:
+                # 직전도 0이면 같은 가격 체인에서 비영 등락을 더 거슬러 찾음
+                for j in range(i - 1, -1, -1):
+                    jm = briefings[j].get("metrics") or {}
+                    jv = jm.get(key)
+                    jp = jm.get(pct_key)
+                    if jv is None or abs(float(jv) - float(curr)) >= 1e-9:
+                        break
+                    if jp is not None and abs(float(jp)) >= 0.005:
+                        donor = jp
+                        break
+            if donor is not None and (pct is None or abs(float(pct) - float(donor)) >= 1e-12):
+                if pct is None or abs(float(pct)) < 0.005:
+                    metrics[pct_key] = float(donor)
+                    fixed += 1
+
+        portfolio = rec.setdefault("portfolio", {})
+        prev_portfolio = prev.get("portfolio") or {}
+        for sym, info in list(portfolio.items()):
+            if not isinstance(info, dict):
+                continue
+            curr = info.get("price")
+            prev_info = prev_portfolio.get(sym) or {}
+            prev_val = prev_info.get("price")
+            pct = info.get("change_rate")
+            if curr is None or prev_val is None:
+                continue
+            if abs(float(curr) - float(prev_val)) >= 1e-9:
+                continue
+            if pct is not None and abs(float(pct)) >= 0.005:
+                continue
+            donor = prev_info.get("change_rate")
+            if donor is None:
+                continue
+            if abs(float(donor)) < 0.005:
+                for j in range(i - 1, -1, -1):
+                    jinfo = ((briefings[j].get("portfolio") or {}).get(sym) or {})
+                    jv = jinfo.get("price")
+                    jp = jinfo.get("change_rate")
+                    if jv is None or abs(float(jv) - float(curr)) >= 1e-9:
+                        break
+                    if jp is not None and abs(float(jp)) >= 0.005:
+                        donor = jp
+                        break
+            if donor is not None and (pct is None or abs(float(pct)) < 0.005):
+                info["change_rate"] = float(donor)
+                fixed += 1
+
+    return briefings, fixed
+
+
+def sync_raw_pct_from_briefings(briefings):
+    """백필된 briefings 등락을 같은 날짜 raw/market 파일에 반영."""
+    by_date = {r.get("date"): r for r in briefings if r.get("date")}
+    root = data_root() / "raw" / "market"
+    if not root.is_dir():
+        return 0
+    updated = 0
+    for path in sorted(root.rglob("*.json")):
+        try:
+            parts = path.parts
+            mi = parts.index("market")
+            date_str = f"{parts[mi+1]}-{parts[mi+2]}-{parts[mi+3]}"
+        except (ValueError, IndexError):
+            continue
+        src = by_date.get(date_str)
+        if not src:
+            continue
+        try:
+            payload = json.loads(path.read_text(encoding="utf-8"))
+        except Exception:
+            continue
+        market = payload.setdefault("market", {})
+        pct = market.setdefault("pct", {})
+        metrics = src.get("metrics") or {}
+        changed = False
+        for key, val in metrics.items():
+            if key.endswith("_pct"):
+                base = key[:-4]
+                if pct.get(base) != val:
+                    pct[base] = val
+                    changed = True
+            elif key in ("gasoline", "premium_gasoline", "diesel", "fear_score"):
+                continue
+            else:
+                numeric = market.setdefault("numeric", {})
+                if numeric.get(key) != val and val is not None:
+                    # 가격은 건드리지 않음 — 등락만 동기화
+                    pass
+        portfolio = payload.setdefault("portfolio", {})
+        for sym, info in (src.get("portfolio") or {}).items():
+            if not isinstance(info, dict):
+                continue
+            dest = portfolio.setdefault(sym, {})
+            if "change_rate" in info and dest.get("change_rate") != info.get("change_rate"):
+                dest["change_rate"] = info.get("change_rate")
+                if "name" in info:
+                    dest.setdefault("name", info["name"])
+                if "price" in info and dest.get("price") is None:
+                    dest["price"] = info["price"]
+                changed = True
+        if src.get("metrics_asof") and payload.get("metrics_asof") != src.get("metrics_asof"):
+            payload["metrics_asof"] = src["metrics_asof"]
+            changed = True
+        if changed:
+            save_json_file(str(path.relative_to(data_root())), payload)
+            updated += 1
+    return updated
+
+
+def run_backfill_fake_flat_pct():
+    briefings, fixed = backfill_fake_flat_pct()
+    save_briefings(briefings)
+    # history.json이 있으면 동일 내용 동기화 (구 URL 폴백)
+    hist = legacy_briefings_path()
+    if hist.exists():
+        save_json_file("history.json", briefings)
+    raw_n = sync_raw_pct_from_briefings(briefings)
+    series = rebuild_series_json()
+    logger.info(
+        f"가짜 0% 백필 완료: briefings 필드 {fixed}건, raw {raw_n}파일, "
+        f"series {(series or {}).get('points') and len(series['points'])}일"
+    )
+    return {"fixed_fields": fixed, "raw_files": raw_n, "series_days": len((series or {}).get("points") or [])}
+
+
 def save_pre_ai_market_data(numeric_data, pct_data, portfolio_map, oil_data, fear_score,
                             news_list, analysis_type, model_used, metrics_asof):
     """Gemini 호출 전 시세·근거·메타를 먼저 저장 (AI 실패해도 당일 raw 유지)."""
@@ -3099,6 +3288,9 @@ def lambda_handler(event, context):
     if event.get("mode") == "reanalyze":
         return run_reanalyze_today()
 
+    if event.get("mode") == "backfill-pct":
+        return {"statusCode": 200, "body": run_backfill_fake_flat_pct()}
+
     # ▼ 주간 리포트 모드: 토요일 07:30 KST GitHub Actions workflow가
     #   {"mode": "weekly"}로 호출. 일간 브리핑(데이터 수집/알림)과 완전히
     #   분리된 별도 실행 경로 - 새 시세 수집 없이 briefings.json만 집계함.
@@ -3356,10 +3548,11 @@ def main():
     parser = argparse.ArgumentParser(description="Market briefing runner (GitHub Actions)")
     parser.add_argument(
         "--mode",
-        choices=["auto", "daily", "weekly", "monthly", "reanalyze"],
+        choices=["auto", "daily", "weekly", "monthly", "reanalyze", "backfill-pct"],
         default="daily",
         help="auto=KST 시각으로 세션 자동 판별, daily=아침/장마감, "
-             "weekly=주간, monthly=월간, reanalyze=오늘 AI만 재생성",
+             "weekly=주간, monthly=월간, reanalyze=오늘 AI만 재생성, "
+             "backfill-pct=과거 가짜 0% 등락 복구",
     )
     parser.add_argument(
         "--send-notification",
@@ -3390,6 +3583,11 @@ def main():
         if is_analysis_already_published(analysis_type):
             logger.info(f"오늘 {analysis_type} 실행이 이미 완료됨 - 건너뜁니다.")
             return {"statusCode": 200, "body": "Skipped (already done today)"}
+
+    if args.mode == "backfill-pct":
+        result = run_backfill_fake_flat_pct()
+        logger.info(f"실행 완료: {result}")
+        return result
 
     if args.mode == "weekly":
         event = {"mode": "weekly", "skip_if_done": args.skip_if_done}
