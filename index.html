@@ -260,7 +260,7 @@
           { key: 'wti', label: 'WTI유가', full: 'WTI 유가 ($/배럴)', color: '#f59e0b', dashDigits: 2, unit: '$' },
           { key: 'premium_gasoline', label: '고급유', full: '고급 휘발유 (원/L)', color: '#fb7185', dashDigits: 1, unit: '원' },
           { key: 'gasoline', label: '일반유', full: '일반 휘발유 (원/L)', color: '#10b981', dashDigits: 1, unit: '원' },
-          { key: 'gold_kr', label: '국내금', full: '국내 금 (원/1g)', color: '#eab308', dashDigits: 1, unit: '원' },
+          { key: 'gold_kr', label: '금(원화)', full: '국제 금 원화환산 (원/1g)', color: '#eab308', dashDigits: 1, unit: '원' },
           { key: 'btc', label: '비트코인', full: '비트코인 (원)', color: '#f97316', dashDigits: 0, unit: '원' },
         ]
       },
@@ -290,14 +290,20 @@
       { key: '1m', label: '1개월', days: 30 },
       { key: '3m', label: '3개월', days: 90 },
       { key: '6m', label: '6개월', days: 180 },
+      { key: '1y', label: '1년', days: 365 },
+      { key: '3y', label: '3년', days: 365 * 3 },
+      { key: '5y', label: '5년', days: 365 * 5 },
+      { key: '10y', label: '10년', days: 365 * 10 },
       { key: 'all', label: '전체', days: null },
     ];
 
     const BRIEFINGS_URL = './briefings.json';
+    const SERIES_URL = './series.json';
     const LEGACY_BRIEFINGS_URL = './history.json';
     const REPORTS_URL = './reports.json';
 
     let rawData = [];
+    let seriesPoints = [];
     let reportsData = [];
     let chartInstance = null;
     let currentKey = 'usdkrw';
@@ -339,20 +345,49 @@
       return { sym: '▼', label: '하락' };
     }
 
-    function formatPct(pct) {
+    const BOND_KEYS = new Set(['us10y', 'kr10y']);
+
+    function formatPct(pct, key) {
       if (pct == null || Number.isNaN(Number(pct))) return '—';
       const v = Number(pct);
+      if (BOND_KEYS.has(key)) {
+        const bp = Math.round(v * 100);
+        if (bp === 0) return '0bp';
+        return `${bp > 0 ? '+' : ''}${bp}bp`;
+      }
       if (Math.abs(v) < 0.005) return '0.00%';
       return `${v > 0 ? '+' : ''}${v.toFixed(2)}%`;
     }
 
+    function bondDeltaBp(latest, key) {
+      if (!latest || !rawData.length) return null;
+      const idx = rawData.findIndex(r => r.date === latest.date);
+      if (idx <= 0) return null;
+      const curr = latest.metrics?.[key];
+      const prev = rawData[idx - 1]?.metrics?.[key];
+      if (curr == null || prev == null) return null;
+      return Math.round((Number(curr) - Number(prev)) * 100);
+    }
+
+    function formatChangeForMetric(key, pct, latest) {
+      if (BOND_KEYS.has(key)) {
+        const bp = bondDeltaBp(latest, key);
+        if (bp == null) return formatPct(pct, key);
+        if (bp === 0) return '0bp';
+        return `${bp > 0 ? '+' : ''}${bp}bp`;
+      }
+      return formatPct(pct, key);
+    }
+
     /** 대시보드용: 화살표 + 등락률 HTML */
-    function formatPctWithArrowHtml(pct) {
-      const arrow = pctArrow(pct);
-      const cls = pctClass(pct);
+    function formatPctWithArrowHtml(pct, key, latest) {
+      const displayPct = BOND_KEYS.has(key) && latest ? bondDeltaBp(latest, key) : pct;
+      const arrow = pctArrow(displayPct);
+      const cls = pctClass(displayPct);
+      const text = formatChangeForMetric(key, pct, latest);
       return `<span class="inline-flex items-center gap-1 ${cls}" title="${escapeHtml(arrow.label)}">
         <span class="text-[11px] leading-none" aria-hidden="true">${arrow.sym}</span>
-        <span class="num">${escapeHtml(formatPct(pct))}</span>
+        <span class="num">${escapeHtml(text)}</span>
         <span class="sr-only">${escapeHtml(arrow.label)}</span>
       </span>`;
     }
@@ -388,7 +423,9 @@
         history.replaceState(null, '', '#' + view);
       }
       if (view === 'briefing' && !briefingChartReady && rawData.length) {
-        displayDetail(rawData[selectedItemIndex] || rawData[rawData.length - 1]);
+        const latest = rawData[selectedItemIndex] || rawData[rawData.length - 1];
+        const pts = buildChartSeries(currentKey);
+        displayDetail(pts[pts.length - 1] || briefingToChartPoint(latest));
         renderRangeSelector();
         renderChart();
         briefingChartReady = true;
@@ -664,7 +701,7 @@
               <div class="text-sm font-semibold leading-none ${pctClass(pct)}" aria-label="${escapeHtml(arrow.label)}" title="${escapeHtml(arrow.label)}">${arrow.sym}</div>
             </div>
             <div class="text-base font-semibold text-slate-100 num">${escapeHtml(formatValue(val, meta))}</div>
-            <div class="text-xs mt-1">${formatPctWithArrowHtml(pct)}</div>
+            <div class="text-xs mt-1">${formatPctWithArrowHtml(pct, key, latest)}</div>
           </button>`;
       }).join('');
 
@@ -690,7 +727,7 @@
               <div class="text-sm font-semibold leading-none ${pctClass(pct)}" aria-label="${escapeHtml(arrow.label)}" title="${escapeHtml(arrow.label)}">${arrow.sym}</div>
             </div>
             <div class="text-sm font-semibold text-slate-100 num">${escapeHtml(valueStr)}</div>
-            <div class="text-xs mt-1">${formatPctWithArrowHtml(pct)}</div>
+            <div class="text-xs mt-1">${formatPctWithArrowHtml(pct, meta.key, latest)}</div>
           </button>`;
       }).join('');
     }
@@ -707,19 +744,52 @@
       changeMetric(meta.key, meta.full, meta.color, btn);
     }
 
+    function chartDataSpanDays() {
+      const pts = buildChartSeries(currentKey);
+      if (pts.length < 2) return 0;
+      const first = new Date(pts[0].chartDate);
+      const last = new Date(pts[pts.length - 1].chartDate);
+      return Math.max(0, Math.round((last - first) / 86400000));
+    }
+
+    function rangeAvailableFromLabel(opt) {
+      if (!opt || opt.days == null) return null;
+      const span = chartDataSpanDays();
+      if (span >= opt.days) return null;
+      const pts = buildChartSeries(currentKey);
+      if (!pts.length) return null;
+      const last = new Date(pts[pts.length - 1].chartDate);
+      const need = new Date(last);
+      need.setDate(need.getDate() - opt.days);
+      const y = need.getFullYear();
+      const m = String(need.getMonth() + 1).padStart(2, '0');
+      const d = String(need.getDate()).padStart(2, '0');
+      return `${y}-${m}-${d}부터`;
+    }
+
     function renderRangeSelector() {
       const el = document.getElementById('rangeSelector');
-      el.innerHTML = RANGE_OPTIONS.map(r => `
+      el.innerHTML = RANGE_OPTIONS.map(r => {
+        const avail = rangeAvailableFromLabel(r);
+        const disabled = !!avail;
+        const cls = r.key === currentRangeKey
+          ? 'bg-slate-700 text-white'
+          : (disabled ? 'bg-slate-900/40 text-slate-600 cursor-not-allowed' : 'bg-slate-800/60 text-slate-400 hover:bg-slate-700/60');
+        return `
         <button
+          type="button"
           data-range="${r.key}"
+          ${disabled ? 'disabled' : ''}
+          title="${disabled ? escapeHtml(avail) : ''}"
           onclick="changeRange('${r.key}', this)"
-          class="range-btn px-2.5 py-1 rounded-md text-xs font-medium transition
-            ${r.key === currentRangeKey ? 'bg-slate-700 text-white' : 'bg-slate-800/60 text-slate-400 hover:bg-slate-700/60'}"
-        >${r.label}</button>
-      `).join('');
+          class="range-btn px-2.5 py-1 rounded-md text-xs font-medium transition ${cls}"
+        >${r.label}</button>`;
+      }).join('');
     }
 
     function changeRange(key, btnEl) {
+      const opt = RANGE_OPTIONS.find(r => r.key === key);
+      if (opt && rangeAvailableFromLabel(opt)) return;
       currentRangeKey = key;
       document.querySelectorAll('.range-btn').forEach(b => {
         b.classList.remove('bg-slate-700', 'text-white');
@@ -732,10 +802,76 @@
       renderChart();
     }
 
-    function getFilteredData() {
+    function briefingToChartPoint(row) {
+      const metrics = row.metrics || {};
+      const pct = {};
+      Object.keys(metrics).forEach(k => {
+        if (k.endsWith('_pct')) pct[k.replace(/_pct$/, '')] = metrics[k];
+      });
+      return {
+        runDate: row.date,
+        chartDate: row.date,
+        metrics,
+        pct,
+        asof: row.metrics_asof || {},
+        portfolio: row.portfolio || {},
+        reasons: row.reasons || {},
+        reason: row.reason,
+        analysisType: 'close',
+      };
+    }
+
+    function buildChartSeries(key) {
+      const src = seriesPoints.length ? seriesPoints : rawData.map(briefingToChartPoint);
+      const out = [];
+      const seen = new Set();
+      for (const raw of src) {
+        const p = raw.runDate ? raw : {
+          runDate: raw.date,
+          chartDate: raw.date,
+          metrics: raw.metrics || {},
+          pct: raw.pct || {},
+          asof: raw.asof || {},
+          portfolio: raw.portfolio || {},
+          analysisType: raw.analysisType || 'close',
+        };
+        const chartDate = (p.asof && p.asof[key]) || p.chartDate || p.date || p.runDate;
+        const val = extractValueFromPoint(p, key);
+        if (val == null) continue;
+        const dedupe = `${chartDate}|${val}`;
+        if (seen.has(dedupe)) continue;
+        seen.add(dedupe);
+        out.push({
+          runDate: p.runDate || p.date,
+          chartDate,
+          metrics: p.metrics,
+          pct: p.pct,
+          portfolio: p.portfolio,
+          reasons: p.reasons,
+          reason: p.reason,
+          analysisType: p.analysisType || 'close',
+        });
+      }
+      out.sort((a, b) => String(a.chartDate).localeCompare(String(b.chartDate)));
+      return out;
+    }
+
+    function extractValueFromPoint(p, key) {
+      if (!p) return null;
+      if (p.metrics && p.metrics[key] != null) return p.metrics[key];
+      if (p.portfolio && p.portfolio[key]?.price != null) return p.portfolio[key].price;
+      return extractValue({ metrics: p.metrics, portfolio: p.portfolio, ...p }, key);
+    }
+
+    function getFilteredChartSeries() {
+      const all = buildChartSeries(currentKey);
       const opt = RANGE_OPTIONS.find(r => r.key === currentRangeKey);
-      if (!opt || opt.days === null) return rawData;
-      return rawData.slice(-opt.days);
+      if (!opt || opt.days == null) return all;
+      if (!all.length) return all;
+      const last = new Date(all[all.length - 1].chartDate);
+      const cutoff = new Date(last);
+      cutoff.setDate(cutoff.getDate() - opt.days);
+      return all.filter(p => new Date(p.chartDate) >= cutoff);
     }
 
     function renderNav() {
@@ -838,9 +974,25 @@
       if (badge && isoOrDate) badge.title = `마지막 업데이트: ${label}`;
     }
 
+    async function loadSeries() {
+      try {
+        const res = await fetch(SERIES_URL + '?nocache=' + Date.now());
+        if (!res.ok) {
+          seriesPoints = [];
+          return;
+        }
+        const data = await res.json();
+        seriesPoints = Array.isArray(data.points) ? data.points : [];
+      } catch (e) {
+        console.warn('series.json 로드 실패, briefings만 사용:', e);
+        seriesPoints = [];
+      }
+    }
+
     async function loadData() {
       try {
         rawData = await fetchBriefings();
+        await loadSeries();
 
         if (Array.isArray(rawData) && rawData.length > 0) {
           selectedItemIndex = rawData.length - 1;
@@ -849,7 +1001,8 @@
           renderDashboard(latest);
           // 브리핑 뷰는 들어갈 때 차트 초기화 (첫 페인트 부담 감소)
           if (currentView === 'briefing') {
-            displayDetail(latest);
+            const pts = buildChartSeries(currentKey);
+            displayDetail(pts[pts.length - 1] || briefingToChartPoint(latest));
             renderRangeSelector();
             renderChart();
             briefingChartReady = true;
@@ -867,23 +1020,45 @@
       }
     }
 
-    function displayDetail(item) {
+    async function fetchAnalysisReasons(runDate, analysisType) {
+      if (!runDate || !/^\d{4}-\d{2}-\d{2}$/.test(runDate)) return null;
+      const [y, m, d] = runDate.split('-');
+      for (const kind of [analysisType || 'close', 'morning']) {
+        try {
+          const url = `./analysis/market/${y}/${m}/${d}/${kind}-v0.1.json?t=${Date.now()}`;
+          const res = await fetch(url);
+          if (!res.ok) continue;
+          const data = await res.json();
+          if (data && data.reasons) return data.reasons;
+        } catch (_) { /* ignore */ }
+      }
+      return null;
+    }
+
+    async function displayDetail(item) {
       if (!item) return;
       document.getElementById('chartTitle').innerText = currentLabel;
       document.getElementById('selectedTitle').innerText = `${currentLabel.split(' ')[0]} 심층 분석`;
-      document.getElementById('selectedDate').innerText = item.date || '-';
+      const runDate = item.runDate || item.date;
+      document.getElementById('selectedDate').innerText = item.chartDate || runDate || '-';
       document.getElementById('selectedBadge').innerText = `${currentLabel} 전용 사유`;
 
+      let reasons = item.reasons;
+      if (!reasons && runDate) {
+        document.getElementById('selectedReason').innerText = '분석 불러오는 중…';
+        reasons = await fetchAnalysisReasons(runDate, item.analysisType);
+      }
+
       let reasonText = '';
-      if (item.reasons) {
-        if (item.reasons[currentKey]) {
-          reasonText = item.reasons[currentKey];
-        } else if (currentKey === 'gold_kr' && item.reasons['gold_intl']) {
-          reasonText = item.reasons['gold_intl'];
-        } else if (currentKey === 'SPCX.O' && item.reasons['SPCX']) {
-          reasonText = item.reasons['SPCX'];
-        } else if (currentKey === 'SPCX' && item.reasons['SPCX.O']) {
-          reasonText = item.reasons['SPCX.O'];
+      if (reasons) {
+        if (reasons[currentKey]) {
+          reasonText = reasons[currentKey];
+        } else if (currentKey === 'gold_kr' && reasons['gold_intl']) {
+          reasonText = reasons['gold_intl'];
+        } else if (currentKey === 'SPCX.O' && reasons['SPCX']) {
+          reasonText = reasons['SPCX'];
+        } else if (currentKey === 'SPCX' && reasons['SPCX.O']) {
+          reasonText = reasons['SPCX.O'];
         }
       }
       if (!reasonText && item.reason) reasonText = item.reason;
@@ -895,16 +1070,18 @@
       const canvas = document.getElementById('macroChart');
       if (!canvas) return;
       const ctx = canvas.getContext('2d');
-      const filtered = getFilteredData();
-      const labels = filtered.map(d => d.date);
-      const values = filtered.map(d => extractValue(d, currentKey));
+      const filtered = getFilteredChartSeries();
+      const labels = filtered.map(d => d.chartDate);
+      const values = filtered.map(d => extractValueFromPoint(d, currentKey));
 
+      const total = buildChartSeries(currentKey).length;
       const infoEl = document.getElementById('rangeInfo');
       if (infoEl) {
-        infoEl.innerText = filtered.length < rawData.length
-          ? `최근 ${filtered.length}개 데이터 표시 중 (전체 ${rawData.length}개 중)`
-          : `전체 ${rawData.length}개 데이터 표시 중`;
+        infoEl.innerText = filtered.length < total
+          ? `선택 기간 ${filtered.length}점 (전체 ${total}점 · 날짜 기준)`
+          : `전체 ${total}점 표시 (날짜 기준)`;
       }
+      renderRangeSelector();
 
       if (chartInstance) chartInstance.destroy();
 
@@ -933,9 +1110,8 @@
           onClick: (e, elements) => {
             if (elements.length > 0) {
               const idx = elements[0].index;
-              const rawIndex = rawData.indexOf(filtered[idx]);
-              selectedItemIndex = rawIndex >= 0 ? rawIndex : idx;
-              displayDetail(rawData[selectedItemIndex]);
+              const point = filtered[idx];
+              if (point) displayDetail(point);
             }
           },
           plugins: {
@@ -972,7 +1148,8 @@
       }
 
       if (selectedItemIndex >= 0 && rawData[selectedItemIndex]) {
-        displayDetail(rawData[selectedItemIndex]);
+        const pts = buildChartSeries(currentKey);
+        displayDetail(pts[pts.length - 1] || briefingToChartPoint(rawData[selectedItemIndex]));
       }
       renderChart();
     }

@@ -485,7 +485,7 @@ def get_stock_price_any(symbol, name):
             currency_symbol = "$" if is_usd else ""
             return f"• {name}: {currency_symbol}{curr:,.2f}{unit} ({pct:+.2f}%)", curr, pct
         elif curr is not None:
-            return f"• {name}: {curr:,.2f}", curr, 0.0
+            return f"• {name}: {curr:,.2f}", curr, None
     except Exception:
         pass
 
@@ -499,12 +499,13 @@ def get_stock_price_any(symbol, name):
         rate = deal_trend.get("fluctuationsRatio") or res.get("totalInfos", [{}])[0].get("fluctuationsRatio")
         if close_price:
             curr = float(str(close_price).replace(",", ""))
-            pct = float(str(rate).replace(",", "").replace("%", "")) if rate else 0.0
-            return f"• {name}: ${curr:,.2f} ({pct:+.2f}%)", curr, pct
+            pct = float(str(rate).replace(",", "").replace("%", "")) if rate else None
+            pct_s = f" ({pct:+.2f}%)" if pct is not None else ""
+            return f"• {name}: ${curr:,.2f}{pct_s}", curr, pct
     except Exception:
         pass
 
-    return f"• {name}: 데이터 수집 지연", None, 0.0
+    return f"• {name}: 데이터 수집 지연", None, None
 
 def get_portfolio_data():
     # 기존: 6개 티커를 하나씩 순차 호출 (최악의 경우 티커당 최대 8초 x 6 = 48초).
@@ -522,7 +523,7 @@ def get_portfolio_data():
                 text, val, pct = future.result()
             except Exception as e:
                 logger.error(f"포트폴리오 조회 실패 ({sym}): {e}")
-                text, val, pct = f"• {name}: 데이터 수집 지연", None, 0.0
+                text, val, pct = f"• {name}: 데이터 수집 지연", None, None
             lines_map[sym] = text
             data_map[sym] = {"name": name, "price": val, "change_rate": pct}
 
@@ -552,7 +553,7 @@ def get_market_data():
                 text, val, pct = future.result()
             except Exception as e:
                 logger.error(f"시장 지표 조회 실패 ({key}): {e}")
-                text, val, pct = f"• {name}: 데이터 수집 지연", None, 0.0
+                text, val, pct = f"• {name}: 데이터 수집 지연", None, None
             fetched[key] = (text, val, pct)
 
     # 비트코인/국내 금은 위 티커 값(kospi 다음, 국제 금 다음)에 의존하므로
@@ -580,7 +581,7 @@ def get_market_data():
                 if val:
                     curr_g = (val * fx_rate) / 31.1035
                     pct_g = pct if pct is not None else 0.0
-                    results.append(f"• 국내 금 (1g): {curr_g:,.2f} ({pct_g:+.2f}%)")
+                    results.append(f"• 국제 금 원화환산 (1g): {curr_g:,.2f} ({pct_g:+.2f}%)")
                     numeric_data["gold_kr"] = round(curr_g, 2)
                     pct_data["gold_kr"] = pct_g
             except Exception:
@@ -740,13 +741,36 @@ US_EQUITY_HOLIDAYS_2026 = {
     "2026-12-25": "크리스마스",
 }
 
+US_EQUITY_HOLIDAYS_2027 = {
+    "2027-01-01": "신정",
+    "2027-01-18": "마틴 루터 킹 데이",
+    "2027-02-15": "프레지던츠 데이",
+    "2027-04-02": "성금요일",
+    "2027-05-31": "메모리얼 데이",
+    "2027-06-18": "준틴스(관측)",
+    "2027-07-05": "독립기념일(관측)",
+    "2027-09-06": "노동절",
+    "2027-11-25": "추수감사절",
+    "2027-12-24": "크리스마스(관측)",
+}
+
 US_EQUITY_MACRO_KEYS = {"nasdaq", "sp500"}
 US_EQUITY_STOCK_SYMS = {"NVDA", "AAPL", "TSLA", "MSFT", "SPCX", "BOTZ"}
+KRX_MACRO_KEYS = {"kospi"}
+KRX_STOCK_SYMS = {"005930.KS"}
+
+KRX_HOLIDAYS_2026 = {
+    "2026-01-01", "2026-02-16", "2026-02-17", "2026-02-18",
+    "2026-03-02", "2026-03-03", "2026-05-05", "2026-05-24",
+    "2026-06-06", "2026-08-15", "2026-09-24", "2026-09-25",
+    "2026-09-26", "2026-10-03", "2026-10-05", "2026-10-09", "2026-12-25", "2026-12-31",
+}
+# ⚠️ 매년 갱신 필요 (한국거래소 공식 휴장일 공지 기준)
 
 
 def _us_holiday_name(day):
     key = day.isoformat()
-    for year_map in (US_EQUITY_HOLIDAYS_2026,):
+    for year_map in (US_EQUITY_HOLIDAYS_2026, US_EQUITY_HOLIDAYS_2027):
         if key in year_map:
             return year_map[key]
     return None
@@ -818,6 +842,106 @@ def describe_us_equity_session(now=None):
     return {"live": True, "asof": asof, "note": note, "short": short, "why": "정규장"}
 
 
+def is_krx_trading_day(day):
+    if day.weekday() >= 5:
+        return False
+    return day.strftime("%Y-%m-%d") not in KRX_HOLIDAYS_2026
+
+
+def previous_krx_trading_day(day):
+    d = day - datetime.timedelta(days=1)
+    while not is_krx_trading_day(d):
+        d -= datetime.timedelta(days=1)
+    return d
+
+
+def describe_kr_equity_session(now=None, analysis_type="morning"):
+    """국내 증시 현금장 상태 (코스피·국내 종목)."""
+    now = now or now_kst()
+    if now.tzinfo is None:
+        now = now.replace(tzinfo=datetime.timezone(datetime.timedelta(hours=9)))
+    kst_date = now.date()
+    minutes = now.hour * 60 + now.minute
+    open_m, close_m = 9 * 60, 15 * 60 + 30
+
+    if not is_krx_trading_day(kst_date):
+        asof = previous_krx_trading_day(kst_date)
+        why = "주말 휴장" if kst_date.weekday() >= 5 else "휴장(대체공휴일·공휴일)"
+        note = (
+            f"오늘(KST {kst_date.strftime('%m/%d')}) 국내 증시 {why} — "
+            f"아래 수치는 직전 거래일 {asof.strftime('%m/%d')} 종가"
+        )
+        short = f"국내장 {why} · {asof.strftime('%m/%d')} 종가"
+        return {
+            "live": False,
+            "asof": asof,
+            "note": note,
+            "short": short,
+            "why": why,
+            "holiday_closed": True,
+        }
+
+    if analysis_type == "morning" or minutes < open_m:
+        asof = previous_krx_trading_day(kst_date)
+        note = f"국내 증시 개장 전 — 직전 거래일 {asof.strftime('%m/%d')} 종가"
+        short = f"국내장 개장 전 · {asof.strftime('%m/%d')} 종가"
+        return {
+            "live": False,
+            "asof": asof,
+            "note": note,
+            "short": short,
+            "why": "개장 전",
+            "holiday_closed": False,
+        }
+
+    asof = kst_date
+    if analysis_type == "close" and minutes >= close_m:
+        note = f"국내 증시 정규장 종료 — {asof.strftime('%m/%d')} 종가"
+        short = f"국내장 {asof.strftime('%m/%d')} 종가"
+        return {
+            "live": False,
+            "asof": asof,
+            "note": note,
+            "short": short,
+            "why": "정규장 종료",
+            "holiday_closed": False,
+        }
+
+    note = f"국내 증시 정규장 중 — {asof.strftime('%m/%d')} 시세"
+    short = f"국내장 {asof.strftime('%m/%d')} 장중"
+    return {"live": True, "asof": asof, "note": note, "short": short, "why": "정규장", "holiday_closed": False}
+
+
+def estimate_metrics_asof(analysis_type, kst_now=None):
+    """항목별 시세 기준일(asof). 휴장·개장 전에는 직전 거래일을 기록."""
+    kst_now = kst_now or now_kst()
+    us = describe_us_equity_session(kst_now)
+    kr = describe_kr_equity_session(kst_now, analysis_type=analysis_type)
+    run_date = kst_now.strftime("%Y-%m-%d")
+    asof = {}
+    for key in US_EQUITY_MACRO_KEYS | US_EQUITY_STOCK_SYMS:
+        asof[key] = us["asof"].isoformat()
+    for key in KRX_MACRO_KEYS | KRX_STOCK_SYMS:
+        asof[key] = kr["asof"].isoformat()
+    for key in (
+        "usdkrw", "btc", "wti", "gold_intl", "gold_kr", "copper",
+        "us_base", "kr_base", "us10y", "kr10y",
+        "gasoline", "premium_gasoline", "diesel",
+    ):
+        asof[key] = run_date
+    return asof
+
+
+def _kr_holiday_prefix(subject, pct, value_str, stale_kr_session):
+    asof = stale_kr_session["asof"].strftime("%m/%d")
+    dir_word = _direction_word(pct)
+    pct_s = _pct_str(pct)
+    return (
+        f"[국내 증시 휴장] {subject} 직전 거래일({asof}) 기준 전일 대비 {pct_s} {dir_word}한 "
+        f"{value_str}입니다. "
+    )
+
+
 def _price_prefix(subject, pct, value_str, *, stale_us_session=None, end_particle="(으)로"):
     """등락 앞머리 문장. 미국장이 안 열린 날엔 '마감' 대신 직전 거래일 종가임을 명시."""
     dir_word = _direction_word(pct)
@@ -836,8 +960,44 @@ def _price_prefix(subject, pct, value_str, *, stale_us_session=None, end_particl
     )
 
 
+def strip_ai_for_closed_markets(reasons_dict, analysis_type="morning"):
+    """휴장·개장 전 항목은 AI 본문을 비워 정적 앞머리만 쓰도록."""
+    if not reasons_dict:
+        return reasons_dict
+    out = dict(reasons_dict)
+    us = describe_us_equity_session()
+    if not us.get("live"):
+        for key in US_EQUITY_MACRO_KEYS | US_EQUITY_STOCK_SYMS:
+            if key in out:
+                out[key] = ""
+    kr = describe_kr_equity_session(analysis_type=analysis_type)
+    if kr.get("holiday_closed"):
+        for key in KRX_MACRO_KEYS | KRX_STOCK_SYMS:
+            if key in out:
+                out[key] = ""
+    return out
+
+
+def fetch_portfolio_news(max_items=4):
+    """일간 Gemini용 보유 종목별 뉴스 (Google News RSS)."""
+    out = {}
+    with ThreadPoolExecutor(max_workers=len(MY_PORTFOLIO_TICKERS)) as executor:
+        futures = {}
+        for sym, name in MY_PORTFOLIO_TICKERS:
+            search_name = _TICKER_SEARCH_NAME.get(sym, name)
+            futures[executor.submit(search_stock_news, search_name, max_items=max_items)] = sym
+        for future in as_completed(futures):
+            sym = futures[future]
+            try:
+                out[sym] = future.result()
+            except Exception as e:
+                logger.warning(f"종목 뉴스 수집 실패 ({sym}): {e}")
+                out[sym] = []
+    return out
+
+
 def build_prefixed_reasons(reasons_dict, numeric_data, pct_data, portfolio_map, oil_data, oil_diff,
-                           asof_now=None, prev_record=None):
+                           asof_now=None, prev_record=None, analysis_type="morning"):
     # reasons_dict: Gemini가 생성한 {symbol: "원인+영향 서술문"} 딕셔너리
     # 반환: 각 문장 앞에 "OOO는 전 거래일 대비 X% 상승/하락한 Y를 기록했습니다."
     #        형태의, 우리 코드가 직접 계산한 정확한 문장이 붙은 딕셔너리
@@ -849,6 +1009,13 @@ def build_prefixed_reasons(reasons_dict, numeric_data, pct_data, portfolio_map, 
     result = dict(reasons_dict)
     us_session = describe_us_equity_session(asof_now)
     stale_us = None if us_session.get("live") else us_session
+    kr_session = describe_kr_equity_session(asof_now, analysis_type=analysis_type)
+    stale_kr_holiday = kr_session if kr_session.get("holiday_closed") else None
+    stale_kr_pre = (
+        kr_session
+        if (not kr_session.get("live") and not kr_session.get("holiday_closed"))
+        else None
+    )
     prev_metrics = ((prev_record if prev_record is not None else get_previous_snapshot()) or {}).get("metrics") or {}
 
     # (필드key, 주어, numeric_data/pct_data 키, 통화기호, 단위, 소수자리)
@@ -874,6 +1041,11 @@ def build_prefixed_reasons(reasons_dict, numeric_data, pct_data, portfolio_map, 
             continue
         if field_key in POLICY_RATE_KEYS:
             prefix = _policy_rate_prefix(subject, value, prev_metrics.get(data_key))
+        elif stale_kr_holiday and field_key in KRX_MACRO_KEYS:
+            value_str = f"{currency}{_fmt_num(value, decimals)}{unit}"
+            prefix = _kr_holiday_prefix(subject, pct, value_str, stale_kr_holiday)
+            result[field_key] = prefix
+            continue
         else:
             value_str = f"{currency}{_fmt_num(value, decimals)}{unit}"
             us_stale = stale_us if field_key in US_EQUITY_MACRO_KEYS else None
@@ -903,13 +1075,21 @@ def build_prefixed_reasons(reasons_dict, numeric_data, pct_data, portfolio_map, 
         currency = "" if is_domestic else "$"
         unit = "원" if is_domestic else ""
         value_str = f"{currency}{_fmt_num(price, 2)}{unit}"
+        if stale_kr_holiday and sym in KRX_STOCK_SYMS:
+            prefix = _kr_holiday_prefix(subject, pct, value_str, stale_kr_holiday)
+            result[sym] = prefix
+            continue
         us_stale = stale_us if (not is_domestic and sym in US_EQUITY_STOCK_SYMS) else None
         prefix = _price_prefix(
             subject, pct, value_str,
             stale_us_session=us_stale,
             end_particle="에",
         )
-        result[sym] = prefix + (result[sym] or "")
+        body = result[sym] or ""
+        if stale_kr_pre and sym in KRX_STOCK_SYMS and not body.strip():
+            result[sym] = prefix
+        else:
+            result[sym] = prefix + body
 
     # 국내 유가는 %가 아니라 원 단위 등락폭(diff)으로 표기하는 게 관례
     oil_specs = [
@@ -1175,7 +1355,7 @@ def call_gemini_json(payload, headers, timeout=None, context_label="Gemini"):
 
 
 def get_itemized_ai_analysis(market_data_text, portfolio_text, oil_prices_text, news_list,
-                              analysis_type="morning", rate_changes=None):
+                              analysis_type="morning", rate_changes=None, portfolio_news=None):
     # 반환값: (reasons_dict, model_used) 튜플. 실패 시 (None, None).
     # model_used는 metadata에 "실제로 어떤 모델이 이 분석을 생성했는지" 남기기 위함.
     api_key = clean_str(os.environ.get("GEMINI_API_KEY", ""))
@@ -1186,7 +1366,17 @@ def get_itemized_ai_analysis(market_data_text, portfolio_text, oil_prices_text, 
     # news_list는 이제 [{"title":..., "url":..., "publishedAt":...}, ...] 형태.
     # Gemini 프롬프트엔 지금까지처럼 제목만 넣음 (evidence 저장용 url/시각은
     # save_evidence_market()에서 별도로 사용).
-    news_text = "\n".join([f"• {n['title']}" for n in news_list])
+    news_text = "\n".join([f"• {n['title']}" for n in news_list if n.get("title")])
+    portfolio_news = portfolio_news or {}
+    portfolio_news_lines = []
+    for sym, name in MY_PORTFOLIO_TICKERS:
+        items = portfolio_news.get(sym) or []
+        if items:
+            titles = "\n".join(f"  - {it.get('title')}" for it in items if it.get("title"))
+            portfolio_news_lines.append(f"• {name} ({sym}):\n{titles}")
+        else:
+            portfolio_news_lines.append(f"• {name} ({sym}): (검색된 개별 뉴스 없음)")
+    portfolio_news_text = "\n".join(portfolio_news_lines)
     logger.info(f"Gemini 모델 후보 순서: {GEMINI_MODEL_FALLBACKS}")
 
     # 실행 시각에 따라 "지금 어느 장이 끝난 상태인지"가 달라진다.
@@ -1241,6 +1431,8 @@ def get_itemized_ai_analysis(market_data_text, portfolio_text, oil_prices_text, 
   헤드라인에 근거해서만 서술하세요.
 - 스페이스X(SPCX)는 2026년 6월 12일 나스닥에 상장(IPO)을 완료한 상장 기업입니다.
   "비상장 기업이라 데이터가 없다" 등 사실과 다른 발언을 절대 하지 마세요.
+- 보유 종목 분석 시 아래 [보유 종목별 뉴스]에 해당 종목 뉴스가 없으면, 원인 문장에
+  "뚜렷한 개별 뉴스 없음"을 반드시 포함하세요.
 - 근거(뉴스/데이터)가 부족하면 원인을 단정하지 말고 "~로 보입니다", "~가능성이 있습니다"처럼
   불확실성을 남겨서 서술하세요.
 
@@ -1251,6 +1443,9 @@ def get_itemized_ai_analysis(market_data_text, portfolio_text, oil_prices_text, 
 
 {session_context}
 {rate_change_context}
+[보유 종목별 뉴스]
+{portfolio_news_text}
+
 반드시 마크다운(```json) 없이 순수 JSON 포맷으로만 출력하세요.
 
 JSON 출력 포맷 (각 필드는 "원인 + 파급 영향"만, 숫자/방향 단어 없이):
@@ -1272,7 +1467,7 @@ JSON 출력 포맷 (각 필드는 "원인 + 파급 영향"만, 숫자/방향 단
   "TSLA": "테슬라 분석: 원인(FSD/로보택시 기대감, 판매량 등)과 2차전지/자율주행 테마 영향",
   "005930.KS": "삼성전자 분석: 원인(외국인 수급, HBM 공급망 이슈 등)과 국내 반도체 섹터 영향",
   "MSFT": "마이크로소프트 분석: 원인(Azure 클라우드 AI 매출 등)과 기업용 소프트웨어 시장 영향",
-  "SPCX": "스페이스X(SPCX) 분석: 원인(스타링크 가입자, 발사 일정, 락업 해제 등)과 민간 우주산업 투자 심리 파급 영향",
+  "SPCX": "스페이스X(SPCX) 분석: 원인(실적·발사·락업·수급 등 공개 정보)과 민간 우주산업 투자 심리 파급 영향",
   "BOTZ": "로보틱스&AI ETF(BOTZ) 분석: 원인(로봇/자동화·AI 관련 편입 종목 실적 및 테마 자금 흐름 등)과 로보틱스/자동화 테마 투자 심리 파급 영향",
   "gold_intl": "국제/국내 금 분석: 원인(실질금리, 달러인덱스, 안전자산 선호 등)과 헷지 자산 영향",
   "btc": "비트코인 분석: 원인(현물 ETF 자금 흐름, 글로벌 유동성 등)과 가상자산 시장 전반 영향"
@@ -1367,12 +1562,14 @@ def save_json_to_repo(key, payload):
     return path
 
 
-def save_raw_market(date_str, analysis_type, numeric_data, pct_data, portfolio_map, oil_data, fear_score):
+def save_raw_market(date_str, analysis_type, numeric_data, pct_data, portfolio_map, oil_data, fear_score,
+                    metrics_asof=None):
     # 원본 수치만 담음. AI 분석 결과는 절대 포함하지 않음.
     payload = {
         "date": date_str,
         "domain": DOMAIN,
         "analysisType": analysis_type,  # "morning" | "close"
+        "metrics_asof": metrics_asof or {},
         # 공용 시장 데이터와 개인 포트폴리오 데이터를 저장 구조에서도 계속
         # 분리 (로드맵 4번 원칙 - 나중에 사용자가 늘어나도 자연 확장 가능).
         "market": {
@@ -1449,17 +1646,108 @@ def save_metadata_market(date_str, analysis_type, generated_at_iso, model_used, 
     logger.info(f"metadata 저장 완료: {key}")
 
 
-def save_new_data_structure(numeric_data, pct_data, portfolio_map, oil_data, fear_score,
-                             news_list, reasons_dict, analysis_type, model_used):
-    # 위 4개 저장 함수를 순서대로 호출하는 진입점. 이 함수 전체가
-    # lambda_handler에서 별도 try/except로 감싸져서, 여기서 뭔가 실패해도
-    # 기존 briefings.json 저장/Slack 알림에는 영향이 없음.
+def rebuild_series_json():
+    """raw/market 전체를 스캔해 시장일(asof) 기준 중복을 줄인 장기 시계열 series.json 생성."""
+    root = data_root() / "raw" / "market"
+    if not root.is_dir():
+        logger.info("series.json: raw/market 없음 — 건너뜀")
+        return None
+
+    snapshots = {}
+    for path in sorted(root.rglob("*.json")):
+        try:
+            parts = path.parts
+            mi = parts.index("market")
+            y, m, d = parts[mi + 1], parts[mi + 2], parts[mi + 3]
+            date_str = f"{y}-{m}-{d}"
+            kind = path.stem
+        except (ValueError, IndexError):
+            continue
+        if kind not in ("morning", "close"):
+            continue
+        priority = 2 if kind == "close" else 1
+        try:
+            payload = json.loads(path.read_text(encoding="utf-8"))
+        except Exception as e:
+            logger.warning(f"series.json: {path} 읽기 실패: {e}")
+            continue
+        prev = snapshots.get(date_str)
+        if not prev or priority >= prev["priority"]:
+            snapshots[date_str] = {"priority": priority, "payload": payload, "analysisType": kind}
+
+    points = []
+    for date_str in sorted(snapshots.keys()):
+        rec = snapshots[date_str]["payload"]
+        analysis_type = snapshots[date_str]["analysisType"]
+        market = rec.get("market") or {}
+        numeric = dict(market.get("numeric") or {})
+        pct = dict(market.get("pct") or {})
+        oil = market.get("oil") or {}
+        for ok, ov in oil.items():
+            if ov is not None:
+                numeric[ok] = ov
+        metrics_asof = rec.get("metrics_asof") or {}
+        if not metrics_asof:
+            try:
+                y, m, d = date_str.split("-")
+                fake_now = datetime.datetime(
+                    int(y), int(m), int(d),
+                    16 if analysis_type == "close" else 8,
+                    0,
+                    tzinfo=datetime.timezone(datetime.timedelta(hours=9)),
+                )
+                metrics_asof = estimate_metrics_asof(analysis_type, fake_now)
+            except Exception:
+                metrics_asof = {}
+        points.append({
+            "date": date_str,
+            "analysisType": analysis_type,
+            "metrics": numeric,
+            "pct": pct,
+            "asof": metrics_asof,
+            "portfolio": rec.get("portfolio") or {},
+        })
+
+    out = {"updatedAt": now_kst().isoformat(), "points": points}
+    save_json_file("series.json", out)
+    logger.info(f"series.json 갱신: {len(points)}일")
+    return out
+
+
+def save_pre_ai_market_data(numeric_data, pct_data, portfolio_map, oil_data, fear_score,
+                            news_list, analysis_type, model_used, metrics_asof):
+    """Gemini 호출 전 시세·근거·메타를 먼저 저장 (AI 실패해도 당일 raw 유지)."""
     date_str, kst_now = kst_date_str()
-    save_raw_market(date_str, analysis_type, numeric_data, pct_data, portfolio_map, oil_data, fear_score)
+    save_raw_market(
+        date_str, analysis_type, numeric_data, pct_data, portfolio_map, oil_data, fear_score,
+        metrics_asof=metrics_asof,
+    )
     save_evidence_market(date_str, news_list)
+    save_metadata_market(
+        date_str, analysis_type, kst_now.isoformat(), model_used, "collecting"
+    )
+
+
+def save_post_ai_market_data(reasons_dict, analysis_type, model_used):
+    date_str, kst_now = kst_date_str()
     status = "published" if reasons_dict else "failed"
     save_analysis_market(date_str, analysis_type, reasons_dict)
     save_metadata_market(date_str, analysis_type, kst_now.isoformat(), model_used, status)
+    try:
+        rebuild_series_json()
+    except Exception as e:
+        logger.error(f"series.json 갱신 실패: {e}")
+
+
+def save_new_data_structure(numeric_data, pct_data, portfolio_map, oil_data, fear_score,
+                             news_list, reasons_dict, analysis_type, model_used, metrics_asof=None):
+    # 하위 호환: 한 번에 저장 (재분석 등). 일반 일간 실행은 pre/post 분리 호출.
+    metrics_asof = metrics_asof or estimate_metrics_asof(analysis_type)
+    save_pre_ai_market_data(
+        numeric_data, pct_data, portfolio_map, oil_data, fear_score,
+        news_list, analysis_type, model_used, metrics_asof,
+    )
+    save_post_ai_market_data(reasons_dict, analysis_type, model_used)
 
 
 # ==========================================
@@ -1530,6 +1818,23 @@ def get_previous_snapshot():
     return None
 
 
+def _preserve_source_pct_if_fake_flat(curr_val, prev_val, source_pct, recomputed_pct):
+    """브리핑 간 가격이 같아 0%가 되지만, 소스는 전 거래일 등락을 준 경우 소스 pct 유지."""
+    if source_pct is None:
+        return recomputed_pct
+    try:
+        src = float(source_pct)
+    except (TypeError, ValueError):
+        return recomputed_pct
+    if curr_val is None or prev_val is None:
+        return recomputed_pct
+    if abs(float(curr_val) - float(prev_val)) >= 1e-9:
+        return recomputed_pct
+    if abs(src) < 0.005:
+        return recomputed_pct
+    return src
+
+
 def recompute_pct_vs_previous(numeric_data, pct_data, portfolio_map, oil_data=None, oil_diff=None):
     """등락을 직전 브리핑(오늘 제외) 기준으로 다시 계산.
 
@@ -1553,8 +1858,12 @@ def recompute_pct_vs_previous(numeric_data, pct_data, portfolio_map, oil_data=No
     for key in list(pct_data.keys()):
         curr_val = numeric_data.get(key)
         prev_val = prev_metrics.get(key)
+        source_pct = pct_data.get(key)
         if curr_val is not None and prev_val is not None and prev_val != 0:
-            new_pct_data[key] = (curr_val - prev_val) / prev_val * 100
+            recomputed = (curr_val - prev_val) / prev_val * 100
+            new_pct_data[key] = _preserve_source_pct_if_fake_flat(
+                curr_val, prev_val, source_pct, recomputed
+            )
         # else: 이전 기록에 없는 키(신규 지표 등)는 Yahoo 자체 pct를 그대로 둠
 
     prev_portfolio = prev.get("portfolio", {})
@@ -1564,8 +1873,12 @@ def recompute_pct_vs_previous(numeric_data, pct_data, portfolio_map, oil_data=No
         curr_val = info.get("price")
         prev_info = prev_portfolio.get(sym)
         prev_val = prev_info.get("price") if prev_info else None
+        source_pct = info.get("change_rate")
         if curr_val is not None and prev_val is not None and prev_val != 0:
-            new_info["change_rate"] = (curr_val - prev_val) / prev_val * 100
+            recomputed = (curr_val - prev_val) / prev_val * 100
+            new_info["change_rate"] = _preserve_source_pct_if_fake_flat(
+                curr_val, prev_val, source_pct, recomputed
+            )
         # else: 이전 기록에 없는 종목(예: 방금 추가한 BOTZ 최초 실행)은
         # get_stock_price_any가 계산한 값을 그대로 둠
         new_portfolio_map[sym] = new_info
@@ -1617,7 +1930,9 @@ def build_market_text(numeric_data, pct_data):
         if key == "kospi" and numeric_data.get("btc") is not None:
             lines.append(f"• 비트코인 (원화): {numeric_data['btc']:,.2f} ({pct_data.get('btc', 0):+.2f}%)")
         elif key == "gold_intl" and numeric_data.get("gold_kr") is not None:
-            lines.append(f"• 국내 금 (1g): {numeric_data['gold_kr']:,.2f} ({pct_data.get('gold_kr', 0):+.2f}%)")
+            gkp = pct_data.get("gold_kr")
+            gkp_s = f" ({gkp:+.2f}%)" if gkp is not None else ""
+            lines.append(f"• 국제 금 원화환산 (1g): {numeric_data['gold_kr']:,.2f}{gkp_s}")
     return "\n".join(lines)
 
 
@@ -1640,7 +1955,8 @@ def build_portfolio_text(portfolio_map):
 # 4. 로컬 누적 저장 (briefings.json — 구 history.json에서 개명)
 # ==========================================
 
-def save_to_s3(numeric_data, pct_data, portfolio_map, oil_data, fear_score, news_list, reasons_dict):
+def save_to_s3(numeric_data, pct_data, portfolio_map, oil_data, fear_score, news_list, reasons_dict,
+               metrics_asof=None):
     # 하위 호환 함수명 — 실제로는 저장소의 briefings.json에 기록
     briefings = load_briefings()
 
@@ -1663,6 +1979,7 @@ def save_to_s3(numeric_data, pct_data, portfolio_map, oil_data, fear_score, news
         "date": today_str,
         # 대시보드 Live 뱃지/마지막 업데이트 표시용 (KST ISO)
         "updatedAt": kst_now.isoformat(),
+        "metrics_asof": metrics_asof or {},
         "metrics": {
             "usdkrw": numeric_data.get("usdkrw"),
             "usdkrw_pct": pct_data.get("usdkrw"),
@@ -2163,15 +2480,6 @@ def get_weekly_ai_analysis(macro_metrics, portfolio_metrics, weekly_news_titles,
     if result and "next_period_events" in result:
         result["next_week_events"] = result.pop("next_period_events")
     return result, model
-
-
-KRX_HOLIDAYS_2026 = {
-    "2026-01-01", "2026-02-16", "2026-02-17", "2026-02-18",
-    "2026-03-02", "2026-03-03", "2026-05-05", "2026-05-24",
-    "2026-06-06", "2026-08-15", "2026-09-24", "2026-09-25",
-    "2026-09-26", "2026-10-03", "2026-10-09", "2026-12-25", "2026-12-31",
-}
-# ⚠️ 매년 갱신 필요 (한국거래소 공식 휴장일 공지 기준)
 
 
 def get_korean_holidays_next_week():
@@ -2735,13 +3043,17 @@ def run_reanalyze_today():
 
     prev_record = briefings[idx - 1] if idx > 0 else None
     rate_changes = detect_policy_rate_changes(numeric_data, prev_record=prev_record)
+    portfolio_news = fetch_portfolio_news(max_items=4)
     reasons_dict, model_used = get_itemized_ai_analysis(
         market_text, portfolio_text, oil_text, news_list,
         analysis_type="close", rate_changes=rate_changes,
+        portfolio_news=portfolio_news,
     )
+    if reasons_dict:
+        reasons_dict = strip_ai_for_closed_markets(reasons_dict, analysis_type="close")
     reasons_dict = build_prefixed_reasons(
         reasons_dict, numeric_data, pct_data, portfolio_map, oil_data, oil_diff,
-        prev_record=prev_record,
+        prev_record=prev_record, analysis_type="close",
     )
     if not reasons_dict:
         raise RuntimeError(f"재분석 실패: Gemini reasons 비어 있음 (model={model_used})")
@@ -2859,19 +3171,36 @@ def lambda_handler(event, context):
         if rate_changes:
             logger.info(f"기준금리 변동 감지: {rate_changes}")
 
+        analysis_type = "morning" if send_notification else "close"
+        metrics_asof = estimate_metrics_asof(analysis_type)
+
+        # AI 호출 전 raw·evidence·메타(collecting) 저장 — Gemini 실패해도 시세 유지
+        try:
+            save_pre_ai_market_data(
+                numeric_data, pct_data, portfolio_map, oil_data, fear_score,
+                news_list, analysis_type, None, metrics_asof,
+            )
+        except Exception as pre_save_err:
+            logger.error(f"AI 전 raw 저장 실패: {pre_save_err}")
+
+        portfolio_news = fetch_portfolio_news(max_items=4)
+
         # Gemini AI 분석 호출 (알림을 안 보내는 실행이라도 대시보드용 데이터는
         # 최신으로 갱신되어야 하므로 동일하게 수행)
-        analysis_type = "morning" if send_notification else "close"
         reasons_dict, model_used = get_itemized_ai_analysis(
             market_text, portfolio_text, oil_text, news_list,
             analysis_type=analysis_type, rate_changes=rate_changes,
+            portfolio_news=portfolio_news,
         )
+
+        if reasons_dict:
+            reasons_dict = strip_ai_for_closed_markets(reasons_dict, analysis_type=analysis_type)
 
         # Gemini는 "원인/영향"만 서술했고, 등락 방향·%·가격은 우리 코드가
         # 직접 계산해서 각 항목 문장 앞에 붙임 (숫자 할루시네이션 원천 차단).
         reasons_dict = build_prefixed_reasons(
             reasons_dict, numeric_data, pct_data, portfolio_map, oil_data, oil_diff,
-            prev_record=prev_record,
+            prev_record=prev_record, analysis_type=analysis_type,
         )
 
         # briefings.json 저장 - 두 실행 모두 동일하게 수행. 같은 날짜(date) 레코드는
@@ -2879,7 +3208,10 @@ def lambda_handler(event, context):
         # 최종 데이터를 한 번 더 정확하게 갱신해주는 효과가 있음.
         used_fallback_reasons = False
         try:
-            used_fallback_reasons = save_to_s3(numeric_data, pct_data, portfolio_map, oil_data, fear_score, news_list, reasons_dict)
+            used_fallback_reasons = save_to_s3(
+                numeric_data, pct_data, portfolio_map, oil_data, fear_score, news_list, reasons_dict,
+                metrics_asof=metrics_asof,
+            )
         except Exception as save_err:
             logger.error(f"briefings.json 저장 실패: {save_err}")
 
@@ -2911,12 +3243,9 @@ def lambda_handler(event, context):
         # try/except로 감싸서, 여기서 실패해도 기존 briefings.json/Slack 흐름에는
         # 절대 영향이 없도록 함. 아직 실험적인 뼈대 단계이기 때문.
         try:
-            save_new_data_structure(
-                numeric_data, pct_data, portfolio_map, oil_data, fear_score,
-                news_list, reasons_dict, analysis_type, model_used
-            )
+            save_post_ai_market_data(reasons_dict, analysis_type, model_used)
         except Exception as new_struct_err:
-            logger.error(f"신규 데이터 구조 저장 실패 (기존 흐름엔 영향 없음): {new_struct_err}")
+            logger.error(f"analysis/series 저장 실패 (기존 흐름엔 영향 없음): {new_struct_err}")
 
         if not send_notification:
             logger.info("send_notification=false: 데이터 갱신만 수행하고 Slack 알림은 생략합니다.")
@@ -2994,7 +3323,7 @@ def lambda_handler(event, context):
 • 미국 기준금리: {us_base:.2f}%{_base_pct_s(us_base_p)} | 한국 기준금리: {kr_base:.2f}%{_base_pct_s(kr_base_p)}
 • 미 국채(10Y): {us10y:.2f}% ({us10y_p:+.2f}%) | 한국 국채(10Y): {kr10y:.2f}% ({kr10y_p:+.2f}%)
 • 비트코인: {btc/100000000:,.2f}억 ({btc_p:+.2f}%)
-• 🪙 국내 금(1g): {gold_kr:,.1f}원 ({gold_kr_p:+.2f}%) | 국제 금: ${gold_intl:,.1f} ({gold_intl_p:+.2f}%)
+• 🪙 국제 금 원화환산(1g): {gold_kr:,.1f}원 ({gold_kr_p:+.2f}%) | 국제 금: ${gold_intl:,.1f} ({gold_intl_p:+.2f}%)
 • ⛽ 고급유: {prem_price:,.1f}원 ({prem_sign}{prem_diff:,.2f}원) | 일반유: {gas_price:,.1f}원 ({gas_sign}{gas_diff:,.2f}원)
 • 심리지수: {fear_text}
 

@@ -97,7 +97,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          for p in briefings.json history.json reports.json raw analysis evidence metadata reports; do
+          for p in briefings.json history.json series.json reports.json raw analysis evidence metadata reports; do
             if [ -e "$p" ]; then
               git add -A "$p"
             fi
@@ -114,7 +114,7 @@ jobs:
           git fetch origin "${{ github.ref_name }}"
           if ! git pull --rebase --autostash origin "${{ github.ref_name }}"; then
             echo "rebase conflict — preferring this run's briefing artifacts"
-            for p in briefings.json history.json reports.json; do
+            for p in briefings.json history.json series.json reports.json; do
               if [ -f "$p" ]; then
                 git checkout --theirs -- "$p" || true
                 git add -- "$p" || true
