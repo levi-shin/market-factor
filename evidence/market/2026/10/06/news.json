@@ -1,0 +1,48 @@
+{
+  "date": "2026-10-06",
+  "domain": "market",
+  "sources": [
+    {
+      "id": "evidence-001",
+      "title": "12개국 IP로 금융권 해킹…금감원 '공격 주소' 19개 특정",
+      "url": "https://www.hankyung.com/article/2026100651396",
+      "publishedAt": "Tue, 06 Oct 2026 11:08:14 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-002",
+      "title": "[하워드 막스 메모] “경제법칙을 폐기시킬까요”",
+      "url": "https://www.hankyung.com/article/202610064781i",
+      "publishedAt": "Tue, 06 Oct 2026 11:03:39 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-003",
+      "title": "한국증권금융, 창립 이래 첫 외화사채 발행…3억달러 규모",
+      "url": "https://www.hankyung.com/article/202610064967i",
+      "publishedAt": "Tue, 06 Oct 2026 11:02:53 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-004",
+      "title": "LS증권, 개인투자자 대상 세미나…\"주식·채권 대응전략 제시\"",
+      "url": "https://www.hankyung.com/article/2026100648646",
+      "publishedAt": "Tue, 06 Oct 2026 10:11:18 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-005",
+      "title": "iM증권, '국내 주식 소수점 거래 서비스' 오픈",
+      "url": "https://www.hankyung.com/article/2026100647476",
+      "publishedAt": "Tue, 06 Oct 2026 09:47:44 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-006",
+      "title": "\"반도체 소부장株 훨훨\"…나스닥 최고치에 삼성전기 등 급등",
+      "url": "https://www.hankyung.com/article/2026100647566",
+      "publishedAt": "Tue, 06 Oct 2026 09:46:45 +0900",
+      "source": "한국경제"
+    }
+  ]
+}

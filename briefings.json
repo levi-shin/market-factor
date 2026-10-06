@@ -4526,5 +4526,135 @@
       "premium_gasoline": "2026-10-05",
       "diesel": "2026-10-05"
     }
+  },
+  {
+    "date": "2026-10-06",
+    "updatedAt": "2026-10-06T11:35:34.354871+09:00",
+    "metrics_asof": {
+      "TSLA": "2026-10-05",
+      "SPCX": "2026-10-05",
+      "AAPL": "2026-10-05",
+      "nasdaq": "2026-10-05",
+      "MSFT": "2026-10-05",
+      "sp500": "2026-10-05",
+      "NVDA": "2026-10-05",
+      "BOTZ": "2026-10-05",
+      "005930.KS": "2026-10-02",
+      "kospi": "2026-10-02",
+      "usdkrw": "2026-10-06",
+      "btc": "2026-10-06",
+      "wti": "2026-10-06",
+      "gold_intl": "2026-10-06",
+      "gold_kr": "2026-10-06",
+      "copper": "2026-10-06",
+      "us_base": "2026-10-06",
+      "kr_base": "2026-10-06",
+      "us10y": "2026-10-06",
+      "kr10y": "2026-10-06",
+      "gasoline": "2026-10-06",
+      "premium_gasoline": "2026-10-06",
+      "diesel": "2026-10-06"
+    },
+    "metrics": {
+      "usdkrw": 1343.48,
+      "usdkrw_pct": 0.0007443411464335567,
+      "kospi": 6965.02,
+      "kospi_pct": -0.5528474786328355,
+      "nasdaq": 27477.31,
+      "nasdaq_pct": 1.0534678505790718,
+      "sp500": 7773.95,
+      "sp500_pct": 0.6633673109992277,
+      "us_base": 4.0,
+      "us_base_pct": 0.0,
+      "kr_base": 3.0,
+      "kr_base_pct": 0.0,
+      "us10y": 5.311,
+      "us10y_pct": 0.6443054765965475,
+      "kr10y": 4.387,
+      "kr10y_pct": 0.022799817601446552,
+      "wti": 89.7,
+      "wti_pct": -1.0589013898080673,
+      "gold_intl": 4156.8,
+      "gold_intl_pct": -0.8869814020028569,
+      "gold_kr": 179548.21,
+      "gold_kr_pct": -0.8862420507406894,
+      "btc": 116004000.0,
+      "btc_pct": -0.37273055188168813,
+      "gasoline": 1857.5,
+      "premium_gasoline": 2351.86,
+      "diesel": 1843.05,
+      "fear_score": 43
+    },
+    "portfolio": {
+      "TSLA": {
+        "name": "테슬라",
+        "price": 378.73,
+        "change_rate": 2.196497476996153
+      },
+      "BOTZ": {
+        "name": "로보틱스&AI ETF(BOTZ)",
+        "price": 36.2,
+        "change_rate": 0.47182903136275794
+      },
+      "SPCX": {
+        "name": "스페이스X(SPCX)",
+        "price": 171.09,
+        "change_rate": 7.630850528434824
+      },
+      "MSFT": {
+        "name": "마이크로소프트",
+        "price": 525.18,
+        "change_rate": 1.478175178250532
+      },
+      "NVDA": {
+        "name": "엔비디아",
+        "price": 238.9,
+        "change_rate": 2.1158367172472827
+      },
+      "AAPL": {
+        "name": "애플",
+        "price": 332.89,
+        "change_rate": -0.23974347448230734
+      },
+      "005930.KS": {
+        "name": "삼성전자",
+        "price": 273500.0,
+        "change_rate": -0.9057971014492754
+      }
+    },
+    "news": [
+      {
+        "title": "12개국 IP로 금융권 해킹…금감원 '공격 주소' 19개 특정",
+        "url": "https://www.hankyung.com/article/2026100651396",
+        "publishedAt": "Tue, 06 Oct 2026 11:08:14 +0900"
+      },
+      {
+        "title": "[하워드 막스 메모] “경제법칙을 폐기시킬까요”",
+        "url": "https://www.hankyung.com/article/202610064781i",
+        "publishedAt": "Tue, 06 Oct 2026 11:03:39 +0900"
+      },
+      {
+        "title": "한국증권금융, 창립 이래 첫 외화사채 발행…3억달러 규모",
+        "url": "https://www.hankyung.com/article/202610064967i",
+        "publishedAt": "Tue, 06 Oct 2026 11:02:53 +0900"
+      },
+      {
+        "title": "LS증권, 개인투자자 대상 세미나…\"주식·채권 대응전략 제시\"",
+        "url": "https://www.hankyung.com/article/2026100648646",
+        "publishedAt": "Tue, 06 Oct 2026 10:11:18 +0900"
+      },
+      {
+        "title": "iM증권, '국내 주식 소수점 거래 서비스' 오픈",
+        "url": "https://www.hankyung.com/article/2026100647476",
+        "publishedAt": "Tue, 06 Oct 2026 09:47:44 +0900"
+      },
+      {
+        "title": "\"반도체 소부장株 훨훨\"…나스닥 최고치에 삼성전기 등 급등",
+        "url": "https://www.hankyung.com/article/2026100647566",
+        "publishedAt": "Tue, 06 Oct 2026 09:46:45 +0900"
+      }
+    ],
+    "reasons": {},
+    "reason": "시장 동향 분석 중"
   }
 ]
