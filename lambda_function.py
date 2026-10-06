@@ -677,6 +677,8 @@ _DEFAULT_GEMINI_MODELS = [
     "gemini-3.8-flash",
     "gemini-3.7-flash",
     "gemini-3.6-flash",
+    # 3.x flash 전체가 503일 때 한 줄 더 시도 (없으면 404로 건너뜀)
+    "gemini-2.5-flash-lite",
 ]
 GEMINI_MODEL_FALLBACKS = []
 for m in ([_env_model] if _env_model else []) + _DEFAULT_GEMINI_MODELS:
@@ -1139,7 +1141,19 @@ GEMINI_ROUND_DELAYS_SEC = (30, 90, 240)
 GEMINI_TOTAL_BUDGET_SEC = int(os.environ.get("GEMINI_TOTAL_BUDGET_SEC", "720"))
 # 같은 라운드 안에서 수요 폭주로 다음 후보로 넘어갈 때의 최소 간격.
 # 세 모델이 같은 백엔드 혼잡을 공유하는 경우가 있어 곧바로 때리면 같이 막힌다.
-GEMINI_CAPACITY_GAP_SEC = 3
+GEMINI_CAPACITY_GAP_SEC = 8
+
+# 일간 AI JSON에 기대하는 필드 (실패 시 가격 prefix만이라도 채울 골격)
+DAILY_REASON_KEYS = [
+    "overall", "usdkrw", "kospi", "nasdaq", "sp500", "us_base", "kr_base",
+    "us10y", "kr10y", "wti", "gasoline", "premium_gasoline",
+    "NVDA", "AAPL", "TSLA", "005930.KS", "MSFT", "SPCX", "BOTZ",
+    "gold_intl", "btc",
+]
+
+
+def empty_reasons_skeleton():
+    return {k: "" for k in DAILY_REASON_KEYS}
 
 
 def _is_transient_network_error(exc):
@@ -1254,11 +1268,17 @@ def _try_model_chain(payload, headers, timeout, context_label):
                 text_out = _extract_gemini_text(res)
                 parsed = _parse_json_object(text_out)
                 if parsed is None:
-                    logger.error(f"{context_label} 응답에서 JSON을 찾지 못함 (모델: {model}): {text_out[:500]}")
+                    logger.error(f"{context_label} 응답에서 JSON을 찾지 못함 (모델: {model}, 시도: {attempt}): {text_out[:500]}")
+                    if attempt < GEMINI_MAX_RETRIES_PER_MODEL:
+                        time.sleep(GEMINI_RETRY_DELAY_SEC)
+                        continue  # 잘린/마크다운 응답 — 같은 모델 재시도
                     break  # 이 모델 포기, 다음 모델
                 if not _is_usable_analysis(parsed, context_label):
                     logger.error(f"{context_label} JSON은 왔지만 내용이 비어 있음 (모델: {model}, 시도: {attempt}). "
                                  f"미리보기: {str(parsed)[:300]}")
+                    if attempt < GEMINI_MAX_RETRIES_PER_MODEL:
+                        time.sleep(GEMINI_RETRY_DELAY_SEC)
+                        continue
                     break  # 빈 성공 금지 — 다음 모델 시도
                 nonempty = sum(1 for v in parsed.values() if isinstance(v, str) and len(v.strip()) >= 40)
                 logger.info(f"✅ {context_label} 성공 (모델: {model}, 시도: {attempt}, "
@@ -1917,9 +1937,10 @@ def save_pre_ai_market_data(numeric_data, pct_data, portfolio_map, oil_data, fea
     )
 
 
-def save_post_ai_market_data(reasons_dict, analysis_type, model_used):
+def save_post_ai_market_data(reasons_dict, analysis_type, model_used, status=None):
     date_str, kst_now = kst_date_str()
-    status = "published" if reasons_dict else "failed"
+    if status is None:
+        status = "published" if reasons_dict else "failed"
     save_analysis_market(date_str, analysis_type, reasons_dict)
     save_metadata_market(date_str, analysis_type, kst_now.isoformat(), model_used, status)
     try:
@@ -3374,7 +3395,12 @@ def lambda_handler(event, context):
         except Exception as pre_save_err:
             logger.error(f"AI 전 raw 저장 실패: {pre_save_err}")
 
-        portfolio_news = fetch_portfolio_news(max_items=4)
+        # 종목 뉴스는 프롬프트를 키우므로 2건만 (503 혼잡 시 불리)
+        try:
+            portfolio_news = fetch_portfolio_news(max_items=2)
+        except Exception as news_err:
+            logger.warning(f"종목 뉴스 수집 실패(분석은 계속): {news_err}")
+            portfolio_news = {}
 
         # Gemini AI 분석 호출 (알림을 안 보내는 실행이라도 대시보드용 데이터는
         # 최신으로 갱신되어야 하므로 동일하게 수행)
@@ -3383,9 +3409,13 @@ def lambda_handler(event, context):
             analysis_type=analysis_type, rate_changes=rate_changes,
             portfolio_news=portfolio_news,
         )
+        ai_failed = not reasons_dict
 
         if reasons_dict:
             reasons_dict = strip_ai_for_closed_markets(reasons_dict, analysis_type=analysis_type)
+        else:
+            # AI 본문 없이도 가격·등락 prefix는 대시보드에 남긴다
+            reasons_dict = empty_reasons_skeleton()
 
         # Gemini는 "원인/영향"만 서술했고, 등락 방향·%·가격은 우리 코드가
         # 직접 계산해서 각 항목 문장 앞에 붙임 (숫자 할루시네이션 원천 차단).
@@ -3393,6 +3423,13 @@ def lambda_handler(event, context):
             reasons_dict, numeric_data, pct_data, portfolio_map, oil_data, oil_diff,
             prev_record=prev_record, analysis_type=analysis_type,
         )
+        if ai_failed and reasons_dict:
+            # overall이 비면 한 줄이라도
+            if not (reasons_dict.get("overall") or "").strip():
+                reasons_dict["overall"] = (
+                    "시세는 저장됐으나 Gemini 분석이 일시 실패했습니다. "
+                    "장마감 재시도 또는 reanalyze로 본문을 채울 수 있습니다."
+                )
 
         # briefings.json 저장 - 두 실행 모두 동일하게 수행. 같은 날짜(date) 레코드는
         # save_to_s3 내부에서 덮어쓰기 처리되므로, 장마감 후 실행이 그날의
@@ -3406,8 +3443,22 @@ def lambda_handler(event, context):
         except Exception as save_err:
             logger.error(f"briefings.json 저장 실패: {save_err}")
 
-        # ⚠️ Gemini 실패는 silent(16:00)에서도 무조건 Slack 알림.
-        # (시세는 저장됐지만 분석이 비면 대시보드가 빈칸으로 남음)
+        # 메타/analysis/series는 AI 성공·실패 모두 기록 (collecting에 방치 금지)
+        post_status = "failed" if (ai_failed and not used_fallback_reasons) else (
+            "published" if reasons_dict else "failed"
+        )
+        if used_fallback_reasons:
+            post_status = "published"
+        try:
+            save_post_ai_market_data(
+                reasons_dict, analysis_type, model_used, status=post_status,
+            )
+        except Exception as new_struct_err:
+            logger.error(f"analysis/series 저장 실패 (기존 흐름엔 영향 없음): {new_struct_err}")
+
+        # ⚠️ Gemini 실패는 Slack 알림. 시세·prefix는 이미 저장됐으므로
+        # RuntimeError로 워크플로를 빨갛게 만들지 않는다.
+        # (빨개지면 같은 창의 다음 슬롯이 concurrency에 막히거나 재시도 타이밍을 놓침)
         if used_fallback_reasons:
             try:
                 send_slack(
@@ -3416,27 +3467,24 @@ def lambda_handler(event, context):
                 )
             except Exception:
                 pass
-        elif not reasons_dict:
+        elif ai_failed:
             try:
                 send_slack(
-                    f"⚠️ {'아침' if send_notification else '장마감'} 실행: 시세는 저장됐지만 "
-                    f"AI 분석이 비어 있습니다. (타임아웃/모델 오류 가능, 모델: {model_used or '알 수 없음'})"
+                    f"⚠️ {'아침' if send_notification else '장마감'} 실행: 시세·등락 문구는 저장됐지만 "
+                    f"AI 본문 분석이 비어 있습니다 (Gemini 503/파싱 실패 가능). "
+                    f"metadata=failed — 이후 슬롯·장마감·reanalyze로 재시도하세요. "
+                    f"(모델: {model_used or '알 수 없음'})"
                 )
             except Exception:
                 pass
-            # Actions에서 초록 성공으로 위장하지 않음 (시세는 이미 저장됨)
-            raise RuntimeError(
-                f"AI 분석 결과가 비어 있습니다 (model={model_used or 'none'}). "
-                f"Gemini 응답 검증 실패 또는 모든 모델 폴백 실패."
+            logger.error(
+                f"AI 분석 결과 비어 있음 (model={model_used or 'none'}) — "
+                f"시세는 저장, status=failed로 soft-fail 종료"
             )
-
-        # 신규 계층 구조(raw/analysis/evidence/metadata) 저장 - 완전히 별도의
-        # try/except로 감싸서, 여기서 실패해도 기존 briefings.json/Slack 흐름에는
-        # 절대 영향이 없도록 함. 아직 실험적인 뼈대 단계이기 때문.
-        try:
-            save_post_ai_market_data(reasons_dict, analysis_type, model_used)
-        except Exception as new_struct_err:
-            logger.error(f"analysis/series 저장 실패 (기존 흐름엔 영향 없음): {new_struct_err}")
+            return {
+                "statusCode": 200,
+                "body": "Partial success (quotes saved, AI failed)",
+            }
 
         if not send_notification:
             logger.info("send_notification=false: 데이터 갱신만 수행하고 Slack 알림은 생략합니다.")
