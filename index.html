@@ -822,9 +822,11 @@
     }
 
     function buildChartSeries(key) {
+      // X축은 브리핑 실행일(KST). 미국 빅테크 asof는 직전 미국 거래일이라
+      // asof로 그리면 "오늘(10/07) 점이 안 보이고 10/06만 있는" 것처럼 보임.
+      // 휴장일 가짜 중복만 asof+가격으로 걸러낸다.
       const src = seriesPoints.length ? seriesPoints : rawData.map(briefingToChartPoint);
-      const out = [];
-      const seen = new Set();
+      const byDedupe = new Map(); // asof|val → point (나중 실행일로 덮어씀)
       for (const raw of src) {
         const p = raw.runDate ? raw : {
           runDate: raw.date,
@@ -835,15 +837,15 @@
           portfolio: raw.portfolio || {},
           analysisType: raw.analysisType || 'close',
         };
-        const chartDate = (p.asof && p.asof[key]) || p.chartDate || p.date || p.runDate;
+        const runDate = p.runDate || p.date;
+        const marketAsof = (p.asof && p.asof[key]) || runDate;
         const val = extractValueFromPoint(p, key);
-        if (val == null) continue;
-        const dedupe = `${chartDate}|${val}`;
-        if (seen.has(dedupe)) continue;
-        seen.add(dedupe);
-        out.push({
-          runDate: p.runDate || p.date,
-          chartDate,
+        if (val == null || !runDate) continue;
+        const dedupe = `${marketAsof}|${val}`;
+        byDedupe.set(dedupe, {
+          runDate,
+          chartDate: runDate,
+          marketAsof,
           metrics: p.metrics,
           pct: p.pct,
           portfolio: p.portfolio,
@@ -852,8 +854,8 @@
           analysisType: p.analysisType || 'close',
         });
       }
-      out.sort((a, b) => String(a.chartDate).localeCompare(String(b.chartDate)));
-      return out;
+      return Array.from(byDedupe.values())
+        .sort((a, b) => String(a.chartDate).localeCompare(String(b.chartDate)));
     }
 
     function extractValueFromPoint(p, key) {
@@ -1040,7 +1042,12 @@
       document.getElementById('chartTitle').innerText = currentLabel;
       document.getElementById('selectedTitle').innerText = `${currentLabel.split(' ')[0]} 심층 분석`;
       const runDate = item.runDate || item.date;
-      document.getElementById('selectedDate').innerText = item.chartDate || runDate || '-';
+      const asof = item.marketAsof || (item.asof && item.asof[currentKey]);
+      let dateLabel = runDate || item.chartDate || '-';
+      if (asof && runDate && asof !== runDate) {
+        dateLabel = `${runDate} (시세기준 ${asof})`;
+      }
+      document.getElementById('selectedDate').innerText = dateLabel;
       document.getElementById('selectedBadge').innerText = `${currentLabel} 전용 사유`;
 
       let reasons = item.reasons;
