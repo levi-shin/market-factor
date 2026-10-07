@@ -965,12 +965,24 @@ def _price_prefix(subject, pct, value_str, *, stale_us_session=None, end_particl
 
 
 def strip_ai_for_closed_markets(reasons_dict, analysis_type="morning"):
-    """휴장·개장 전 항목은 AI 본문을 비워 정적 앞머리만 쓰도록."""
+    """진짜 휴장일(주말·공휴일)에만 AI 본문을 비운다.
+
+    ⚠️ 예전엔 미국장이 live가 아니면(개장 전·정규장 종료) 전부 지웠다.
+    KST 아침/장마감은 미국장이 거의 항상 non-live라, 애플·나스닥 등
+    AI 본문이 매일 접두어만 남고 사라졌다 (2026-10-07 관측).
+
+    - 미국: 주말·공휴일 휴장일만 본문 생략 (개장 전/정규장 종료는 간밤 종가 분석 유지)
+    - 국내: 대체공휴일 등 holiday_closed 만 본문 생략
+    """
     if not reasons_dict:
         return reasons_dict
     out = dict(reasons_dict)
     us = describe_us_equity_session()
-    if not us.get("live"):
+    why = us.get("why") or ""
+    us_calendar_closed = (not us.get("live")) and (
+        "주말" in why or why.startswith("휴장")
+    )
+    if us_calendar_closed:
         for key in US_EQUITY_MACRO_KEYS | US_EQUITY_STOCK_SYMS:
             if key in out:
                 out[key] = ""
