@@ -1,0 +1,48 @@
+{
+  "date": "2026-10-10",
+  "domain": "market",
+  "sources": [
+    {
+      "id": "evidence-001",
+      "title": "\"내 S&P500 팔긴 싫은데 불안해\"…서학개미 겨냥 ETF 나왔다",
+      "url": "https://www.hankyung.com/article/202610092663i",
+      "publishedAt": "Sat, 10 Oct 2026 09:00:03 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-002",
+      "title": "랩 수익률, 코스피의 6배…\"수수료 더 내도 전문가 찾는다\"",
+      "url": "https://www.hankyung.com/article/2026100928971",
+      "publishedAt": "Sat, 10 Oct 2026 08:29:26 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-003",
+      "title": "자문형 랩, 두 달 만에 28% 수익",
+      "url": "https://www.hankyung.com/article/2026100928991",
+      "publishedAt": "Sat, 10 Oct 2026 08:29:17 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-004",
+      "title": "50만원도 가입…적립식 랩 인기",
+      "url": "https://www.hankyung.com/article/2026100928981",
+      "publishedAt": "Sat, 10 Oct 2026 08:28:59 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-005",
+      "title": "AI 수요 오해 풀렸지만, S&P 신기록 다가섰지만, 또 떨어진 반도체 [김현석의 월스트리트나우]",
+      "url": "https://www.hankyung.com/article/202610103221i",
+      "publishedAt": "Sat, 10 Oct 2026 08:06:40 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-006",
+      "title": "삼성이 연 '분기 이익 100조 시대'…소부장주 투자법은?",
+      "url": "https://www.hankyung.com/article/202610081365i",
+      "publishedAt": "Sat, 10 Oct 2026 08:00:09 +0900",
+      "source": "한국경제"
+    }
+  ]
+}
