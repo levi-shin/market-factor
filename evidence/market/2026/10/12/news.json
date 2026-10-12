@@ -1,0 +1,48 @@
+{
+  "date": "2026-10-12",
+  "domain": "market",
+  "sources": [
+    {
+      "id": "evidence-001",
+      "title": "'깜짝 실적' LG에너지솔루션, 2거래일 연속 강세",
+      "url": "https://www.hankyung.com/article/2026101253786",
+      "publishedAt": "Mon, 12 Oct 2026 09:46:32 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-002",
+      "title": "호르무즈 해협 막히자 해운주 강세…STX그린로지스 6%↑",
+      "url": "https://www.hankyung.com/article/2026101254526",
+      "publishedAt": "Mon, 12 Oct 2026 09:44:44 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-003",
+      "title": "최태원 '호남 팹 철회설' 직접 진화에…금호건설·남화토건 '불기둥'",
+      "url": "https://www.hankyung.com/article/2026101253186",
+      "publishedAt": "Mon, 12 Oct 2026 09:37:37 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-004",
+      "title": "\"스타벅스 살아났네\" 1위 탈환하자마자…주가 껑충 뛴 종목",
+      "url": "https://www.hankyung.com/article/2026101253426",
+      "publishedAt": "Mon, 12 Oct 2026 09:31:07 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-005",
+      "title": "[공모주 분석] 엠에스바이오·디티에스, '에스테틱·AI 냉각' 신사업 품고 코스닥 출사표",
+      "url": "https://www.hankyung.com/article/202610080595i",
+      "publishedAt": "Mon, 12 Oct 2026 09:30:04 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-006",
+      "title": "한화M&S, 김동선 1285억 공개매수에 22% 급등",
+      "url": "https://www.hankyung.com/article/2026101252686",
+      "publishedAt": "Mon, 12 Oct 2026 09:14:46 +0900",
+      "source": "한국경제"
+    }
+  ]
+}
