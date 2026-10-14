@@ -260,6 +260,7 @@
           { key: 'wti', label: 'WTI유가', full: 'WTI 유가 ($/배럴)', color: '#f59e0b', dashDigits: 2, unit: '$' },
           { key: 'premium_gasoline', label: '고급유', full: '고급 휘발유 (원/L)', color: '#fb7185', dashDigits: 1, unit: '원' },
           { key: 'gasoline', label: '일반유', full: '일반 휘발유 (원/L)', color: '#10b981', dashDigits: 1, unit: '원' },
+          { key: 'gold_intl', label: '국제금', full: '국제 금 ($/온스)', color: '#facc15', dashDigits: 1, unit: '$' },
           { key: 'gold_kr', label: '금(원화)', full: '국제 금 원화환산 (원/1g)', color: '#eab308', dashDigits: 1, unit: '원' },
           { key: 'btc', label: '비트코인', full: '비트코인 (원)', color: '#f97316', dashDigits: 0, unit: '원' },
         ]
@@ -278,7 +279,10 @@
       },
     ];
 
-    const DASH_METRIC_KEYS = ['usdkrw', 'kospi', 'nasdaq', 'sp500', 'us_base', 'kr_base', 'us10y', 'kr10y', 'wti', 'btc'];
+    const DASH_METRIC_KEYS = [
+      'usdkrw', 'kospi', 'nasdaq', 'sp500', 'us_base', 'kr_base', 'us10y', 'kr10y',
+      'wti', 'gold_intl', 'gold_kr', 'btc',
+    ];
     const VIEW_TITLES = {
       dashboard: '대시보드',
       briefing: '브리핑',
