@@ -261,7 +261,8 @@
           { key: 'premium_gasoline', label: '고급유', full: '고급 휘발유 (원/L)', color: '#fb7185', dashDigits: 1, unit: '원' },
           { key: 'gasoline', label: '일반유', full: '일반 휘발유 (원/L)', color: '#10b981', dashDigits: 1, unit: '원' },
           { key: 'gold_intl', label: '국제금', full: '국제 금 ($/온스)', color: '#facc15', dashDigits: 1, unit: '$' },
-          { key: 'gold_kr', label: '금(원화)', full: '국제 금 원화환산 (원/1g)', color: '#eab308', dashDigits: 1, unit: '원' },
+          // 국내 시세가 아니라 국제금×환율 환산값 (예전 "국내금" 표기 혼동 방지)
+          { key: 'gold_kr', label: '금환산', full: '국제 금 원화환산 (원/1g)', color: '#eab308', dashDigits: 1, unit: '원' },
           { key: 'btc', label: '비트코인', full: '비트코인 (원)', color: '#f97316', dashDigits: 0, unit: '원' },
         ]
       },
@@ -1044,7 +1045,9 @@
     async function displayDetail(item) {
       if (!item) return;
       document.getElementById('chartTitle').innerText = currentLabel;
-      document.getElementById('selectedTitle').innerText = `${currentLabel.split(' ')[0]} 심층 분석`;
+      const metaForTitle = findMetricMeta(currentKey);
+      const titleName = metaForTitle?.label || currentLabel.split(' ')[0];
+      document.getElementById('selectedTitle').innerText = `${titleName} 심층 분석`;
       const runDate = item.runDate || item.date;
       const asof = item.marketAsof || (item.asof && item.asof[currentKey]);
       let dateLabel = runDate || item.chartDate || '-';
@@ -1065,7 +1068,17 @@
         if (reasons[currentKey]) {
           reasonText = reasons[currentKey];
         } else if (currentKey === 'gold_kr' && reasons['gold_intl']) {
-          reasonText = reasons['gold_intl'];
+          // gold_kr 전용 사유가 없으면 국제금 본문만 쓰되, 달러 접두어는 빼고
+          // 원화환산임을 앞에 밝힌다 (국내 시세로 오해 방지).
+          const intl = String(reasons['gold_intl']);
+          const body = intl.replace(/^[^.]*(?:마감했습니다|입니다)\.\s*/, '') || intl;
+          const g = item.metrics?.gold_kr;
+          const gp = item.metrics?.gold_kr_pct;
+          const gStr = g != null ? `${Number(g).toLocaleString('ko-KR', { maximumFractionDigits: 1 })}원/g` : '';
+          const pStr = gp == null || Number.isNaN(Number(gp)) ? '' : ` (${Number(gp) >= 0 ? '+' : ''}${Number(gp).toFixed(2)}%)`;
+          reasonText = gStr
+            ? `국제 금 원화환산은 전 거래일 대비${pStr} ${gStr}입니다. (국제 금·환율로 환산한 값이며 국내 금거래소 시세가 아닙니다.) ${body}`
+            : `국제 금 원화환산 값입니다. (국내 금거래소 시세가 아닙니다.) ${body}`;
         } else if (currentKey === 'SPCX.O' && reasons['SPCX']) {
           reasonText = reasons['SPCX'];
         } else if (currentKey === 'SPCX' && reasons['SPCX.O']) {

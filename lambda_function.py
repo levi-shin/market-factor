@@ -1046,6 +1046,7 @@ def build_prefixed_reasons(reasons_dict, numeric_data, pct_data, portfolio_map, 
         ("kr10y", "한국 10년물 국채금리는", "kr10y", "", "%", 2),
         ("wti", "WTI유가는", "wti", "$", "", 2),
         ("gold_intl", "국제 금 가격은", "gold_intl", "$", "", 1),
+        ("gold_kr", "국제 금 원화환산은", "gold_kr", "", "원/g", 1),
         ("btc", "비트코인은", "btc", "", "원", 0),
     ]
     for field_key, subject, data_key, currency, unit, decimals in macro_specs:
@@ -1071,6 +1072,20 @@ def build_prefixed_reasons(reasons_dict, numeric_data, pct_data, portfolio_map, 
                 end_particle="(으)로",
             )
         result[field_key] = prefix + (result[field_key] or "")
+
+    # gold_kr는 AI 필드가 따로 없을 수 있음 → 국제금 본문을 쓰되 원화 접두어로 덮어쓴다.
+    if numeric_data.get("gold_kr") is not None:
+        intl_body = (reasons_dict or {}).get("gold_intl") or result.get("gold_intl") or ""
+        # 이미 붙인 달러 접두어를 떼고 본문만 남김
+        if result.get("gold_intl") and intl_body.startswith(result.get("gold_intl", "")[:20]):
+            # result["gold_intl"] is already prefixed; recover body from original reasons
+            intl_body = (reasons_dict or {}).get("gold_intl") or ""
+        value = numeric_data.get("gold_kr")
+        pct = pct_data.get("gold_kr")
+        value_str = f"{_fmt_num(value, 1)}원/g"
+        prefix = _price_prefix("국제 금 원화환산은", pct, value_str, end_particle="(으)로")
+        note = " (국제 금·환율 환산값이며 국내 금거래소 시세가 아닙니다.) "
+        result["gold_kr"] = prefix + note + (intl_body or "")
 
     # 보유 종목 (환율/포인트 표기가 종목마다 다름 - 국내(005930.KS)는 원화, 나머지는 달러)
     stock_specs = [
@@ -1163,7 +1178,7 @@ DAILY_REASON_KEYS = [
     "overall", "usdkrw", "kospi", "nasdaq", "sp500", "us_base", "kr_base",
     "us10y", "kr10y", "wti", "gasoline", "premium_gasoline",
     "NVDA", "AAPL", "TSLA", "005930.KS", "MSFT", "SPCX", "BOTZ",
-    "gold_intl", "btc",
+    "gold_intl", "gold_kr", "btc",
 ]
 
 
