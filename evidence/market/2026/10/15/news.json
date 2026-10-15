@@ -1,0 +1,48 @@
+{
+  "date": "2026-10-15",
+  "domain": "market",
+  "sources": [
+    {
+      "id": "evidence-001",
+      "title": "[속보] 코스피, 장중 4%대 급락…매도 사이드카 발동",
+      "url": "https://www.hankyung.com/article/2026101531096",
+      "publishedAt": "Thu, 15 Oct 2026 09:10:34 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-002",
+      "title": "진코스텍, 코스닥 이전상장 첫날 약세",
+      "url": "https://www.hankyung.com/article/2026101531066",
+      "publishedAt": "Thu, 15 Oct 2026 09:10:08 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-003",
+      "title": "[속보] 코스피, 美 물가 충격에 5%대 폭락 출발…5600선으로 밀려",
+      "url": "https://www.hankyung.com/article/2026101530646",
+      "publishedAt": "Thu, 15 Oct 2026 09:01:52 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-004",
+      "title": "초고수의 선택은 SK하이닉스…삼성전자·LG엔솔은 순매도",
+      "url": "https://www.hankyung.com/article/202610152923i",
+      "publishedAt": "Thu, 15 Oct 2026 08:51:21 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-005",
+      "title": "중동전쟁 이후 급락…한국전력 목표주가 일제히 내렸다",
+      "url": "https://www.hankyung.com/article/202610152927i",
+      "publishedAt": "Thu, 15 Oct 2026 08:31:27 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-006",
+      "title": "\"LG엔솔, ESS 호조에 내년 영업익 전망 56%↑…목표가↑\"-메리츠",
+      "url": "https://www.hankyung.com/article/2026101528976",
+      "publishedAt": "Thu, 15 Oct 2026 08:14:21 +0900",
+      "source": "한국경제"
+    }
+  ]
+}
