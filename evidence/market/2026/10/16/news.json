@@ -1,0 +1,48 @@
+{
+  "date": "2026-10-16",
+  "domain": "market",
+  "sources": [
+    {
+      "id": "evidence-001",
+      "title": "'급락 후 무조건 올랐다'…월가 \"코스피·메모리 저가매수 기회\"",
+      "url": "https://www.hankyung.com/article/202610165257i",
+      "publishedAt": "Fri, 16 Oct 2026 08:30:39 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-002",
+      "title": "62% 급등에도 '역대급 매도 폭탄'…발칵 뒤집어진 대만 증시",
+      "url": "https://www.hankyung.com/article/2026101654166",
+      "publishedAt": "Fri, 16 Oct 2026 08:20:18 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-003",
+      "title": "반도체 빼고 랠리…조정 끝? 데드캣 바운스? [김현석의 월스트리트나우]",
+      "url": "https://www.hankyung.com/article/202610165211i",
+      "publishedAt": "Fri, 16 Oct 2026 08:11:01 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-004",
+      "title": "\"휴젤, 美 판매체제 전환에 3분기 실적 부진…목표가↓\"-현대차",
+      "url": "https://www.hankyung.com/article/2026101653636",
+      "publishedAt": "Fri, 16 Oct 2026 08:05:06 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-005",
+      "title": "\"AI 슈퍼사이클 벌써 끝났나\"…나흘 만에 시총 1조달러 증발",
+      "url": "https://www.hankyung.com/article/2026101653047",
+      "publishedAt": "Fri, 16 Oct 2026 08:00:31 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-006",
+      "title": "시장금리 상승에…보험주 눈높이 낮추는 증권사들",
+      "url": "https://www.hankyung.com/article/202610154310i",
+      "publishedAt": "Fri, 16 Oct 2026 08:00:04 +0900",
+      "source": "한국경제"
+    }
+  ]
+}
