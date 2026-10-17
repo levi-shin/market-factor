@@ -1,0 +1,48 @@
+{
+  "date": "2026-10-17",
+  "domain": "market",
+  "sources": [
+    {
+      "id": "evidence-001",
+      "title": "위기에 처한 산타 랠리…중간선거 끝나면 상승장 어떻게 [월가 백브리핑]",
+      "url": "https://www.hankyung.com/article/202610177547i",
+      "publishedAt": "Sat, 17 Oct 2026 08:20:06 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-002",
+      "title": "\"상장해도 문제, 안 해도 문제\"…SK하닉 개미들 속타는 이유 [분석+]",
+      "url": "https://www.hankyung.com/article/2026101775157",
+      "publishedAt": "Sat, 17 Oct 2026 08:06:22 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-003",
+      "title": "하루만에 끝난 데드캣 바운스, 'AI 피로 증후군' 증폭…전쟁·청산설까지 [김현석의 월스트리트나우]",
+      "url": "https://www.hankyung.com/article/202610177445i",
+      "publishedAt": "Sat, 17 Oct 2026 08:03:18 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-004",
+      "title": "확 꺾인 삼전닉스 수익률…현 시점 대응 전략은?",
+      "url": "https://www.hankyung.com/article/202610166888i",
+      "publishedAt": "Sat, 17 Oct 2026 08:00:12 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-005",
+      "title": "최악의 일주일 나스닥 2.2%…AI 경고등에 유가 급등까지 [뉴욕증시 브리핑]",
+      "url": "https://www.hankyung.com/article/2026101775037",
+      "publishedAt": "Sat, 17 Oct 2026 07:55:04 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-006",
+      "title": "삼성전기는 '반토막' 났는데…한 달만에 58% 급등한 '이곳' [대기업 협력사 전수분석]",
+      "url": "https://www.hankyung.com/article/202610166853i",
+      "publishedAt": "Sat, 17 Oct 2026 07:30:06 +0900",
+      "source": "한국경제"
+    }
+  ]
+}
