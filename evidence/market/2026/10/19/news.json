@@ -1,0 +1,48 @@
+{
+  "date": "2026-10-19",
+  "domain": "market",
+  "sources": [
+    {
+      "id": "evidence-001",
+      "title": "\"아이폰 듀오 사전예약 흥행에 부품 추가 발주 기대\"-메리츠",
+      "url": "https://www.hankyung.com/article/2026101994076",
+      "publishedAt": "Mon, 19 Oct 2026 08:15:49 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-002",
+      "title": "\"LIG D&A, 3분기 실적 예상 밑돌고 4분기도 비용 부담 우려…목표가↓\"-대신",
+      "url": "https://www.hankyung.com/article/2026101994386",
+      "publishedAt": "Mon, 19 Oct 2026 08:12:01 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-003",
+      "title": "\"동아에스티, 시장이 원하는 성장 모멘텀 필요…목표가↓\"-키움",
+      "url": "https://www.hankyung.com/article/2026101993936",
+      "publishedAt": "Mon, 19 Oct 2026 08:01:16 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-004",
+      "title": "\"코스피 급락은 반도체 쏠림 때문…편중 위험 줄여야\"-유진",
+      "url": "https://www.hankyung.com/article/2026101993526",
+      "publishedAt": "Mon, 19 Oct 2026 08:00:34 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-005",
+      "title": "\"코스피 하단 5150까지 열어둬야…메타 실적이 분수령\"",
+      "url": "https://www.hankyung.com/article/2026101993566",
+      "publishedAt": "Mon, 19 Oct 2026 07:53:20 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-006",
+      "title": "\"백화점, 자산효과 약화 이후 새로운 소비 모멘텀 필요\"-LS",
+      "url": "https://www.hankyung.com/article/2026101993186",
+      "publishedAt": "Mon, 19 Oct 2026 07:46:44 +0900",
+      "source": "한국경제"
+    }
+  ]
+}
