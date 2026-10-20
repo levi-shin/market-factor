@@ -1,0 +1,48 @@
+{
+  "date": "2026-10-20",
+  "domain": "market",
+  "sources": [
+    {
+      "id": "evidence-001",
+      "title": "K2 전차 잘나가는 데 후속 수주 부진…현대로템, 11% 하락",
+      "url": "https://www.hankyung.com/article/2026102024206",
+      "publishedAt": "Tue, 20 Oct 2026 09:24:20 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-002",
+      "title": "[오늘의 증권가 콜] 현대로템, 비나텍, 코리아써키트, 한화에어로, 고려아연 등",
+      "url": "https://www.hankyung.com/article/202610202311i",
+      "publishedAt": "Tue, 20 Oct 2026 09:22:06 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-003",
+      "title": "[마켓라이브] 나스닥 반등에도 웃지 못하는 코스피…삼성전기·현대로템 조정",
+      "url": "https://www.hankyung.com/article/202610202306i",
+      "publishedAt": "Tue, 20 Oct 2026 09:16:12 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-004",
+      "title": "美 기술주 반등도 소용 없네…코스피, 다시 5700선 아래로",
+      "url": "https://www.hankyung.com/article/2026102023486",
+      "publishedAt": "Tue, 20 Oct 2026 09:11:10 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-005",
+      "title": "엘리스그룹, 코스닥 상장 첫날 27% 급락",
+      "url": "https://www.hankyung.com/article/2026102023736",
+      "publishedAt": "Tue, 20 Oct 2026 09:09:52 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-006",
+      "title": "삼전·하이닉스 팔아치운 초고수, 코스닥서 '이것' 샀다는데",
+      "url": "https://www.hankyung.com/article/202610202208i",
+      "publishedAt": "Tue, 20 Oct 2026 08:46:46 +0900",
+      "source": "한국경제"
+    }
+  ]
+}
