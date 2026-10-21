@@ -1,0 +1,48 @@
+{
+  "date": "2026-10-21",
+  "domain": "market",
+  "sources": [
+    {
+      "id": "evidence-001",
+      "title": "20대 투자금 14배로…단기상품 발행어음에 몰린 여윳돈",
+      "url": "https://www.hankyung.com/article/2026102151146",
+      "publishedAt": "Wed, 21 Oct 2026 09:33:09 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-002",
+      "title": "\"AI 수요 견고\" 슈퍼마이크로 서프라이즈에…삼전닉스 모처럼 급등",
+      "url": "https://www.hankyung.com/article/2026102150796",
+      "publishedAt": "Wed, 21 Oct 2026 09:32:44 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-003",
+      "title": "\"내년엔 코스피보다 코스닥…AI 대형주 쉬면 중소형주 뜬다\"",
+      "url": "https://www.hankyung.com/article/202610215095i",
+      "publishedAt": "Wed, 21 Oct 2026 09:30:48 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-004",
+      "title": "5인분 한우 스테이크 8만→4만원…반값 소고기 나온다",
+      "url": "https://www.hankyung.com/article/202610215061i",
+      "publishedAt": "Wed, 21 Oct 2026 09:30:44 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-005",
+      "title": "보로노이, 신약 후보의 유럽 임상 변경 승인국가 추가에 7%대 강세",
+      "url": "https://www.hankyung.com/article/2026102150926",
+      "publishedAt": "Wed, 21 Oct 2026 09:29:09 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-006",
+      "title": "美 중국산 태양광 견제 강화…OCI홀딩스7%·한화솔루션 4% 상승",
+      "url": "https://www.hankyung.com/article/2026102150536",
+      "publishedAt": "Wed, 21 Oct 2026 09:27:11 +0900",
+      "source": "한국경제"
+    }
+  ]
+}
