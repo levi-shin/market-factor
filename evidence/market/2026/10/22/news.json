@@ -1,0 +1,48 @@
+{
+  "date": "2026-10-22",
+  "domain": "market",
+  "sources": [
+    {
+      "id": "evidence-001",
+      "title": "[마켓라이브]엔비디아에 웃는 삼성전기, 테슬라에 우는 LG엔솔",
+      "url": "https://www.hankyung.com/article/202610227666i",
+      "publishedAt": "Thu, 22 Oct 2026 09:17:43 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-002",
+      "title": "삼성E&A, 호실적·주주환원 소식에 '급등'",
+      "url": "https://www.hankyung.com/article/2026102277006",
+      "publishedAt": "Thu, 22 Oct 2026 09:14:29 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-003",
+      "title": "[오늘의 증권가 콜] LS ELECTRIC, 유니드, 삼성바이오, LIG디펜스, 테스, 한화솔루션 등",
+      "url": "https://www.hankyung.com/article/202610227613i",
+      "publishedAt": "Thu, 22 Oct 2026 09:13:07 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-004",
+      "title": "코스피, 하락 출발해 장 초반 5600선으로 밀려…코스닥도 약세",
+      "url": "https://www.hankyung.com/article/2026102275616",
+      "publishedAt": "Thu, 22 Oct 2026 09:09:05 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-005",
+      "title": "엠에스바이오, 코스닥 상장 첫날 89% 급등",
+      "url": "https://www.hankyung.com/article/2026102276696",
+      "publishedAt": "Thu, 22 Oct 2026 09:07:16 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-006",
+      "title": "삼전닉스 던진 '수익률 1% 초고수'…'이 종목'에 베팅했다",
+      "url": "https://www.hankyung.com/article/202610227638i",
+      "publishedAt": "Thu, 22 Oct 2026 09:02:50 +0900",
+      "source": "한국경제"
+    }
+  ]
+}
