@@ -1,0 +1,48 @@
+{
+  "date": "2026-10-24",
+  "domain": "market",
+  "sources": [
+    {
+      "id": "evidence-001",
+      "title": "또 헤지펀드 청산이었나…재미없을 FOMC, 흥미로울 빅테크 실적 [김현석의 월스트리트나우]",
+      "url": "https://www.hankyung.com/article/202610242192i",
+      "publishedAt": "Sat, 24 Oct 2026 08:16:15 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-002",
+      "title": "비과세 배당 매력 부각에...외국인 한 달간 4600억 쓸어담은 '이 종목'",
+      "url": "https://www.hankyung.com/article/202610232050i",
+      "publishedAt": "Sat, 24 Oct 2026 08:00:05 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-003",
+      "title": "\"곧 코스피 반등 기회 온다…급락 시 조금씩 매수해야\"",
+      "url": "https://www.hankyung.com/article/202610229175i",
+      "publishedAt": "Sat, 24 Oct 2026 07:00:12 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-004",
+      "title": "\"엔비디아, 경쟁심화 우려\"…스페이스X 재평가 본격화[월가 업&다운]",
+      "url": "https://www.hankyung.com/article/202610232075i",
+      "publishedAt": "Fri, 23 Oct 2026 23:51:34 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-005",
+      "title": "솔리다임 상장 접자 '환호'…SK하이닉스, 하루 만에 '급반등' [종목+]",
+      "url": "https://www.hankyung.com/article/2026102314896",
+      "publishedAt": "Fri, 23 Oct 2026 22:00:05 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-006",
+      "title": "美 금리 결정에 구글·아마존·삼전닉스 실적까지...코스피 운명가를 슈퍼위크[다음주 변수 미리보기]",
+      "url": "https://www.hankyung.com/article/202610231830i",
+      "publishedAt": "Fri, 23 Oct 2026 18:34:41 +0900",
+      "source": "한국경제"
+    }
+  ]
+}
