@@ -1,0 +1,48 @@
+{
+  "date": "2026-10-26",
+  "domain": "market",
+  "sources": [
+    {
+      "id": "evidence-001",
+      "title": "코스피 0.92% 내린 5499…코스닥 1.27% 내린 742 개장",
+      "url": "https://www.hankyung.com/article/2026102642666",
+      "publishedAt": "Mon, 26 Oct 2026 09:04:38 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-002",
+      "title": "\"현대백화점, 지누스 적자 아쉽지만 4분기부터 회복 기대…목표가↓\"-LS",
+      "url": "https://www.hankyung.com/article/2026102641156",
+      "publishedAt": "Mon, 26 Oct 2026 08:24:50 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-003",
+      "title": "\"코스피 하단 5200…비중확대 말고 정유·해운 등 선별투자\"",
+      "url": "https://www.hankyung.com/article/2026102640936",
+      "publishedAt": "Mon, 26 Oct 2026 08:18:22 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-004",
+      "title": "\"서진시스템, 美 ESS 공장 초기 비용 부담…목표가↓\"-iM",
+      "url": "https://www.hankyung.com/article/2026102640626",
+      "publishedAt": "Mon, 26 Oct 2026 08:14:33 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-005",
+      "title": "그야말로 '미친 실적'…\"삼전닉스 영업이익 1571조 시대 온다\"",
+      "url": "https://www.hankyung.com/article/2026102640676",
+      "publishedAt": "Mon, 26 Oct 2026 08:14:23 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-006",
+      "title": "[스타워즈] iM證 삼공오공, 지수 레버리지 ETF 단타로 1위 탈환",
+      "url": "https://www.hankyung.com/article/2026102531336",
+      "publishedAt": "Mon, 26 Oct 2026 08:00:07 +0900",
+      "source": "한국경제"
+    }
+  ]
+}
