@@ -1,0 +1,48 @@
+{
+  "date": "2026-10-28",
+  "domain": "market",
+  "sources": [
+    {
+      "id": "evidence-001",
+      "title": "대신증권 이어 미래에셋자산운용 해킹 피해…\"침해 범위 파악 중\"",
+      "url": "https://www.hankyung.com/article/2026102898266",
+      "publishedAt": "Wed, 28 Oct 2026 09:36:17 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-002",
+      "title": "곽노정 SK하이닉스 사장 \"솔리다임 IPO 중단…성장 투자는 지속\"",
+      "url": "https://www.hankyung.com/article/2026102897736",
+      "publishedAt": "Wed, 28 Oct 2026 09:30:57 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-003",
+      "title": "SK하이닉스 '100조 주주환원'에…코스피 단숨에 5800선 돌파",
+      "url": "https://www.hankyung.com/article/202610289678i",
+      "publishedAt": "Wed, 28 Oct 2026 09:29:26 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-004",
+      "title": "美선 펄펄 나는데 한국은 '돈 벌어도 상폐'…액티브 ETF 역설",
+      "url": "https://www.hankyung.com/article/2026102652326",
+      "publishedAt": "Wed, 28 Oct 2026 09:28:16 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-005",
+      "title": "대신증권 \"고객 정보 유출 확인…고객 보호·재발 방지 대책 마련할 것\"",
+      "url": "https://www.hankyung.com/article/2026102897586",
+      "publishedAt": "Wed, 28 Oct 2026 09:26:57 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-006",
+      "title": "삼전 110조·하이닉스 100조…통큰 주주환원에 주가도 '훨훨'",
+      "url": "https://www.hankyung.com/article/2026102896986",
+      "publishedAt": "Wed, 28 Oct 2026 09:22:59 +0900",
+      "source": "한국경제"
+    }
+  ]
+}
