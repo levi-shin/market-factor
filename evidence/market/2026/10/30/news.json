@@ -1,0 +1,48 @@
+{
+  "date": "2026-10-30",
+  "domain": "market",
+  "sources": [
+    {
+      "id": "evidence-001",
+      "title": "알파벳 실적 쇼크에 코스피 5%대 급락…매도 사이드카 발동",
+      "url": "https://www.hankyung.com/article/202610305596i",
+      "publishedAt": "Fri, 30 Oct 2026 10:33:58 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-002",
+      "title": "예탁원 \"내달 상장사 52곳 주식 1억923만주 의무보유등록 해제\"",
+      "url": "https://www.hankyung.com/article/2026103056246",
+      "publishedAt": "Fri, 30 Oct 2026 10:28:53 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-003",
+      "title": "대신증권 \"3분기 기준 IRP 10년 수익률 6.12%…증권업계 1위\"",
+      "url": "https://www.hankyung.com/article/2026103056026",
+      "publishedAt": "Fri, 30 Oct 2026 10:22:45 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-004",
+      "title": "[속보] 코스피 4%대 급락…매도 사이드카 발동",
+      "url": "https://www.hankyung.com/article/2026103055336",
+      "publishedAt": "Fri, 30 Oct 2026 10:08:07 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-005",
+      "title": "[오늘의 증권가 콜] 삼성SDI, 삼성전자, 현대차, 한화에어로스페이스, 두산에너빌, 한화솔루션, 아모레퍼시픽 등",
+      "url": "https://www.hankyung.com/article/202610305391i",
+      "publishedAt": "Fri, 30 Oct 2026 09:57:45 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-006",
+      "title": "MS, 9년 만에 회사채 시장 복귀…약 250억달러 발행 추진",
+      "url": "https://www.hankyung.com/article/202610305291i",
+      "publishedAt": "Fri, 30 Oct 2026 09:53:14 +0900",
+      "source": "한국경제"
+    }
+  ]
+}
