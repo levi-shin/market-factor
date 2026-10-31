@@ -1,0 +1,48 @@
+{
+  "date": "2026-10-31",
+  "domain": "market",
+  "sources": [
+    {
+      "id": "evidence-001",
+      "title": "\"6000피 더 간다\"…레버리지 상품에 3231억원 베팅",
+      "url": "https://www.hankyung.com/article/2026103173617",
+      "publishedAt": "Sat, 31 Oct 2026 09:22:46 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-002",
+      "title": "\"무릎 꿇어라\" 애플에 굴욕당한 男…10년 후 벌어진 '대반전' [박한신의 테크+]",
+      "url": "https://www.hankyung.com/article/202610317174i",
+      "publishedAt": "Sat, 31 Oct 2026 09:00:08 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-003",
+      "title": "인텔 투매, 30% 추락…메모리의 복수, 애플도 쇼크? \"선거 뒤를 기다려라\" [김현석의 월스트리트나우]",
+      "url": "https://www.hankyung.com/article/202610317321i",
+      "publishedAt": "Sat, 31 Oct 2026 08:27:51 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-004",
+      "title": "36시간 예행연습, 20분 만에 8.4조 털었다…北 해커 지목",
+      "url": "https://www.hankyung.com/article/2026103172607",
+      "publishedAt": "Sat, 31 Oct 2026 07:15:48 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-005",
+      "title": "AI 투자 공포…美 반도체주 7곳서 하루 새 860조 증발 [뉴욕증시 브리핑]",
+      "url": "https://www.hankyung.com/article/2026103172407",
+      "publishedAt": "Sat, 31 Oct 2026 07:09:18 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-006",
+      "title": "\"27% 폭락했는데 더 샀다고?\"…국민연금 찍은 종목은",
+      "url": "https://www.hankyung.com/article/2026103068451",
+      "publishedAt": "Sat, 31 Oct 2026 06:00:12 +0900",
+      "source": "한국경제"
+    }
+  ]
+}
