@@ -1,0 +1,48 @@
+{
+  "date": "2026-11-02",
+  "domain": "market",
+  "sources": [
+    {
+      "id": "evidence-001",
+      "title": "[속보] 증권 결제주기, 2028년 'T+2'→'T+1' 단축…로드맵 공개",
+      "url": "https://www.hankyung.com/article/2026110297267",
+      "publishedAt": "Mon, 02 Nov 2026 10:31:44 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-002",
+      "title": "주식 판 돈 '다음날' 입금…결제주기 T+1, 2028년 전환 추진",
+      "url": "https://www.hankyung.com/article/2026110296136",
+      "publishedAt": "Mon, 02 Nov 2026 10:30:05 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-003",
+      "title": "[오늘의 증권가 콜] 기아, 현대모비스, 한화에어로, LG CNS, 에이피알, 효성중공업, 대덕전자, 카카오게임즈 등",
+      "url": "https://www.hankyung.com/article/202611029477i",
+      "publishedAt": "Mon, 02 Nov 2026 10:11:14 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-004",
+      "title": "\"수익성 회복 쉽지 않아\"… SOOP, 3분기 실적 부진에 '급락'",
+      "url": "https://www.hankyung.com/article/2026110294306",
+      "publishedAt": "Mon, 02 Nov 2026 09:39:15 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-005",
+      "title": "샘표·샘표식품, 합병 소식에 나란히 상한가",
+      "url": "https://www.hankyung.com/article/2026110293686",
+      "publishedAt": "Mon, 02 Nov 2026 09:32:05 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-006",
+      "title": "\"한 달만에 목표주가 43% 올랐다고?\"…알짜 반도체 장비주는?",
+      "url": "https://www.hankyung.com/article/202611029291i",
+      "publishedAt": "Mon, 02 Nov 2026 09:30:57 +0900",
+      "source": "한국경제"
+    }
+  ]
+}
