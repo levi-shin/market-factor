@@ -1,0 +1,48 @@
+{
+  "date": "2026-11-03",
+  "domain": "market",
+  "sources": [
+    {
+      "id": "evidence-001",
+      "title": "\"급락은 오히려 기회\"…상위 1% 투자 고수들의 선택",
+      "url": "https://www.hankyung.com/article/202611032472i",
+      "publishedAt": "Tue, 03 Nov 2026 11:28:01 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-002",
+      "title": "유가 7% 급락에도 정제마진은 개선...정유주 공식 바뀌나",
+      "url": "https://www.hankyung.com/article/202611032475i",
+      "publishedAt": "Tue, 03 Nov 2026 11:27:00 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-003",
+      "title": "\"물린 주식, 본전 오면 판다?…매수가가 기준이 되면 안된다\"",
+      "url": "https://www.hankyung.com/article/202611020625i",
+      "publishedAt": "Tue, 03 Nov 2026 10:30:06 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-004",
+      "title": "대신증권, 13일 유튜브서 '배당투자 오디세이' 세미나 개최",
+      "url": "https://www.hankyung.com/article/2026110322776",
+      "publishedAt": "Tue, 03 Nov 2026 10:22:28 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-005",
+      "title": "기술주 흔들렸지만, 11개 업종 중 9개 상승…업종별 투자 가이드 [김현석의 퀵 브리프]",
+      "url": "https://www.hankyung.com/article/202611032155i",
+      "publishedAt": "Tue, 03 Nov 2026 10:02:39 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-006",
+      "title": "KB증권, 강원도 철원서 '행복뚝딱 의료봉사' 진행",
+      "url": "https://www.hankyung.com/article/2026110321416",
+      "publishedAt": "Tue, 03 Nov 2026 09:48:52 +0900",
+      "source": "한국경제"
+    }
+  ]
+}
