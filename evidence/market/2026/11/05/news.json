@@ -1,0 +1,48 @@
+{
+  "date": "2026-11-05",
+  "domain": "market",
+  "sources": [
+    {
+      "id": "evidence-001",
+      "title": "코스피 사이드카에도 끄떡없다…'신고가' 경신한 방어주",
+      "url": "https://www.hankyung.com/article/202611057715i",
+      "publishedAt": "Thu, 05 Nov 2026 10:47:43 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-002",
+      "title": "코스피, 장중 낙폭 4% 확대 매도 사이드카…삼전닉스 '급락'",
+      "url": "https://www.hankyung.com/article/2026110576866",
+      "publishedAt": "Thu, 05 Nov 2026 10:34:31 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-003",
+      "title": "거래소 \"수능일(19일) 정규장 개장 시각 오전 10시…마감 오후 4시30분\"",
+      "url": "https://www.hankyung.com/article/2026110576576",
+      "publishedAt": "Thu, 05 Nov 2026 10:22:08 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-004",
+      "title": "[속보] 코스피 4%대 급락…매도 사이드카 발동",
+      "url": "https://www.hankyung.com/article/2026110576607",
+      "publishedAt": "Thu, 05 Nov 2026 10:21:12 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-005",
+      "title": "한국예탁결제원, 글로벌LEI재단 '올해의 최우수 LOU' 선정",
+      "url": "https://www.hankyung.com/article/2026110576236",
+      "publishedAt": "Thu, 05 Nov 2026 10:14:10 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-006",
+      "title": "하나증권, 토스뱅크 앱에서 가입하는 적립식 발행어음 출시",
+      "url": "https://www.hankyung.com/article/2026110576006",
+      "publishedAt": "Thu, 05 Nov 2026 10:10:19 +0900",
+      "source": "한국경제"
+    }
+  ]
+}
