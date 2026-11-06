@@ -1,0 +1,48 @@
+{
+  "date": "2026-11-06",
+  "domain": "market",
+  "sources": [
+    {
+      "id": "evidence-001",
+      "title": "[오늘의 증권가 콜] KT&G, 삼성E&A, 셀트리온, CJ ENM, 롯데에너지머티, 넷마블, 카카오, LG화학 등",
+      "url": "https://www.hankyung.com/article/202611060492i",
+      "publishedAt": "Fri, 06 Nov 2026 11:04:10 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-002",
+      "title": "\"이렇게 떨어졌는데도 안 산다\"…월가가 경고한 '섬뜩한 신호'",
+      "url": "https://www.hankyung.com/article/202611060327i",
+      "publishedAt": "Fri, 06 Nov 2026 10:55:51 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-003",
+      "title": "코스피 급락에 F4회의 가동한 정부...증안펀드·공매도 제한 나오나",
+      "url": "https://www.hankyung.com/article/202611060422i",
+      "publishedAt": "Fri, 06 Nov 2026 10:55:44 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-004",
+      "title": "대범한 고수들…코스피 급락장에서 SK하이닉스 '순매수 1위'",
+      "url": "https://www.hankyung.com/article/202611060449i",
+      "publishedAt": "Fri, 06 Nov 2026 10:52:27 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-005",
+      "title": "4214→9385→ 결국 '4천피'…'롤러코스피' 그때 그 장면들",
+      "url": "https://www.hankyung.com/article/202611060419i",
+      "publishedAt": "Fri, 06 Nov 2026 10:49:27 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-006",
+      "title": "코스피 8% 급락에도 음식료·담배는 상승…방어주로 쏠린 눈",
+      "url": "https://www.hankyung.com/article/202611060281i",
+      "publishedAt": "Fri, 06 Nov 2026 10:26:55 +0900",
+      "source": "한국경제"
+    }
+  ]
+}
