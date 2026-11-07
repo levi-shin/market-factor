@@ -1,0 +1,48 @@
+{
+  "date": "2026-11-07",
+  "domain": "market",
+  "sources": [
+    {
+      "id": "evidence-001",
+      "title": "기술주 운명, 다음 주에 달렸다 ⑴ 코어위브 실적  ⑵ 앤트로픽 IPO [김현석의 월스트리트나우]",
+      "url": "https://www.hankyung.com/article/202611071912i",
+      "publishedAt": "Sat, 07 Nov 2026 09:13:43 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-002",
+      "title": "폭락했던 AI 기술주 반등…나스닥 1.1% ↑ [뉴욕증시 브리핑]",
+      "url": "https://www.hankyung.com/article/2026110719317",
+      "publishedAt": "Sat, 07 Nov 2026 07:25:08 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-003",
+      "title": "대형주 중 올해 낙폭 큰 상위 50위 리스트 따져보니",
+      "url": "https://www.hankyung.com/article/202611061208i",
+      "publishedAt": "Sat, 07 Nov 2026 07:20:03 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-004",
+      "title": "\"삼전닉스 믿고 버텼는데\"…증권가가 내놓은 뜻밖의 조언 [종목+]",
+      "url": "https://www.hankyung.com/article/2026110610246",
+      "publishedAt": "Sat, 07 Nov 2026 07:09:29 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-005",
+      "title": "\"이례적으로 강한 고용\"…미국 금리인상 확률 '매우 높음'",
+      "url": "https://www.hankyung.com/article/202611061820i",
+      "publishedAt": "Fri, 06 Nov 2026 23:28:50 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-006",
+      "title": "'아직도 바닥이 아니다?'…앞으로 48시간이 더 무서운 이유",
+      "url": "https://www.hankyung.com/article/2026110615991",
+      "publishedAt": "Fri, 06 Nov 2026 17:59:45 +0900",
+      "source": "한국경제"
+    }
+  ]
+}
