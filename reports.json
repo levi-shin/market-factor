@@ -1,5 +1,14 @@
 [
   {
+    "type": "weekly",
+    "id": "2026-W45",
+    "path": "reports/2026-W45.html",
+    "title": "주간 마켓 리포트",
+    "dateRange": "2026-11-02 ~ 2026-11-06",
+    "headline": "이번 주는 삼성전자가 -17.16%로 가장 크게 흔들렸습니다",
+    "generatedAt": "2026-11-07T11:18:29.672934+09:00"
+  },
+  {
     "type": "monthly",
     "id": "2026-10-monthly",
     "path": "reports/2026-10-monthly.html",
