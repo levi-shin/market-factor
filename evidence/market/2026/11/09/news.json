@@ -1,0 +1,48 @@
+{
+  "date": "2026-11-09",
+  "domain": "market",
+  "sources": [
+    {
+      "id": "evidence-001",
+      "title": "\"한화家 삼남이 또 돈 푼다더니\"…주가 10% 급등한 종목",
+      "url": "https://www.hankyung.com/article/2026110941646",
+      "publishedAt": "Mon, 09 Nov 2026 09:38:53 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-002",
+      "title": "[마켓라이브] 삼전닉스 반등에도 코스피 약보합…한진칼·한화M&S 급등",
+      "url": "https://www.hankyung.com/article/202611093880i",
+      "publishedAt": "Mon, 09 Nov 2026 09:31:24 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-003",
+      "title": "신약 상업화·기술수출 확대 기대감…한미사이언스 7% 급등",
+      "url": "https://www.hankyung.com/article/2026110940556",
+      "publishedAt": "Mon, 09 Nov 2026 09:20:55 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-004",
+      "title": "씨젠, 3분기 당기순손익 적자 전환에 17.26% 급락",
+      "url": "https://www.hankyung.com/article/2026110940766",
+      "publishedAt": "Mon, 09 Nov 2026 09:20:33 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-005",
+      "title": "LIG D&A, 실적 부진에 주가 '급락'",
+      "url": "https://www.hankyung.com/article/2026110940506",
+      "publishedAt": "Mon, 09 Nov 2026 09:16:58 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-006",
+      "title": "한국콜마, 3분기 실적 실망에 장 초반 7%대 '급락'",
+      "url": "https://www.hankyung.com/article/2026110939936",
+      "publishedAt": "Mon, 09 Nov 2026 09:12:01 +0900",
+      "source": "한국경제"
+    }
+  ]
+}
