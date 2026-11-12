@@ -1,0 +1,48 @@
+{
+  "date": "2026-11-12",
+  "domain": "market",
+  "sources": [
+    {
+      "id": "evidence-001",
+      "title": "초고수들, 네이버·DB하이텍 등 급락 종목들 왜 담았을까",
+      "url": "https://www.hankyung.com/article/202611122332i",
+      "publishedAt": "Thu, 12 Nov 2026 10:58:48 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-002",
+      "title": "젠슨 황 해임 위기에 K반도체도 긴장…삼전닉스에 악재일까",
+      "url": "https://www.hankyung.com/article/202611122331i",
+      "publishedAt": "Thu, 12 Nov 2026 10:54:56 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-003",
+      "title": "코스피, 개인 매수세 속 5400선 공방…삼성전자 2%대 강세",
+      "url": "https://www.hankyung.com/article/2026111223646",
+      "publishedAt": "Thu, 12 Nov 2026 10:53:17 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-004",
+      "title": "돌아온 엔터주…JYP 20% 급등에 K팝 ETF도 '들썩'",
+      "url": "https://www.hankyung.com/article/202611122278i",
+      "publishedAt": "Thu, 12 Nov 2026 10:36:59 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-005",
+      "title": "NH투자증권, 예탁자산 300억원 이상 고객 대상 '패밀리오피스 세미나' 개최",
+      "url": "https://www.hankyung.com/article/2026111221796",
+      "publishedAt": "Thu, 12 Nov 2026 10:12:06 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-006",
+      "title": "4개월만에 22만원에서 8만원대로…현대백화점 반등 가능할까",
+      "url": "https://www.hankyung.com/article/202611110799i",
+      "publishedAt": "Thu, 12 Nov 2026 10:10:26 +0900",
+      "source": "한국경제"
+    }
+  ]
+}
