@@ -1,0 +1,48 @@
+{
+  "date": "2026-11-13",
+  "domain": "market",
+  "sources": [
+    {
+      "id": "evidence-001",
+      "title": "\"기술주 대신 이곳 담아라\"…외국인 9조원 몰려간 시장",
+      "url": "https://www.hankyung.com/article/202611134807i",
+      "publishedAt": "Fri, 13 Nov 2026 11:05:20 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-002",
+      "title": "﻿향후 지수상승 둔화…롱숏펀드 등 개별종목장세 투자상품 매력 예상",
+      "url": "https://www.hankyung.com/article/202611123326i",
+      "publishedAt": "Fri, 13 Nov 2026 11:00:09 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-003",
+      "title": "실적 부진에 급락했는데…초고수들이 대거 사들인 종목",
+      "url": "https://www.hankyung.com/article/202611134741i",
+      "publishedAt": "Fri, 13 Nov 2026 10:53:53 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-004",
+      "title": "젠슨 황 떠난 엔비디아의 빈틈, 삼전닉스엔 '뜻밖의 호재'?",
+      "url": "https://www.hankyung.com/article/202611134784i",
+      "publishedAt": "Fri, 13 Nov 2026 10:48:32 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-005",
+      "title": "공모펀드 내놓은 라이프자산운용…'라이프 보이저' 출시",
+      "url": "https://www.hankyung.com/article/202611134462i",
+      "publishedAt": "Fri, 13 Nov 2026 09:55:51 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-006",
+      "title": "한국전력 '어닝 쇼크'에 장중 최저가…증권가 목표가 줄하향",
+      "url": "https://www.hankyung.com/article/2026111344966",
+      "publishedAt": "Fri, 13 Nov 2026 09:32:27 +0900",
+      "source": "한국경제"
+    }
+  ]
+}
