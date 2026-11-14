@@ -1,0 +1,48 @@
+{
+  "date": "2026-11-14",
+  "domain": "market",
+  "sources": [
+    {
+      "id": "evidence-001",
+      "title": "젠슨 황 불륜에 날아든 '청구서'…한국인 노후가 흔들린다 [신현보의 딥데이터]",
+      "url": "https://www.hankyung.com/article/202611134880H",
+      "publishedAt": "Sat, 14 Nov 2026 07:42:58 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-002",
+      "title": "엔비디아 반사이익 기대했는데…브로드컴에 무슨 일이 [월가 업&다운]",
+      "url": "https://www.hankyung.com/article/202611136086i",
+      "publishedAt": "Fri, 13 Nov 2026 23:19:51 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-003",
+      "title": "\"엔비디아 11% 빠질 때 30% 급등\"…돈 몰린 '이 종목'",
+      "url": "https://www.hankyung.com/article/2026111360727",
+      "publishedAt": "Fri, 13 Nov 2026 22:55:35 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-004",
+      "title": "\"땡큐 젠슨 황\"…공포의 폭락장서 '매수 버튼' 광클한 개미들 [분석+]",
+      "url": "https://www.hankyung.com/article/2026111347546",
+      "publishedAt": "Fri, 13 Nov 2026 22:00:04 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-005",
+      "title": "'조선미녀' 구다이글로벌, 코스피 상장 도전장",
+      "url": "https://www.hankyung.com/article/2026111359051",
+      "publishedAt": "Fri, 13 Nov 2026 18:32:13 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-006",
+      "title": "\"AI만 잘나가는 줄 알았는데\"…영업익 91% 뛴다는 '이 회사'",
+      "url": "https://www.hankyung.com/article/2026111358631",
+      "publishedAt": "Fri, 13 Nov 2026 18:03:20 +0900",
+      "source": "한국경제"
+    }
+  ]
+}
