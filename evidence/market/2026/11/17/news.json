@@ -1,0 +1,48 @@
+{
+  "date": "2026-11-17",
+  "domain": "market",
+  "sources": [
+    {
+      "id": "evidence-001",
+      "title": "\"반도체 흔들리자 18조 몰렸다\"…단기자금 피난처",
+      "url": "https://www.hankyung.com/article/202611171574i",
+      "publishedAt": "Tue, 17 Nov 2026 11:39:19 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-002",
+      "title": "\"골프존홀딩스, 카운티 지분 현금화해야\"…美터톤, 추가 주주행동 검토",
+      "url": "https://www.hankyung.com/article/202611171504i",
+      "publishedAt": "Tue, 17 Nov 2026 11:38:27 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-003",
+      "title": "초고수들은 18% 폭락한 마이크로컨텍솔을 왜 가득 담았을까",
+      "url": "https://www.hankyung.com/article/202611171325i",
+      "publishedAt": "Tue, 17 Nov 2026 11:08:31 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-004",
+      "title": "삼전닉스 비중 확 줄였더니…주목받는 '동일가중' 투자법",
+      "url": "https://www.hankyung.com/article/202611171308i",
+      "publishedAt": "Tue, 17 Nov 2026 11:05:42 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-005",
+      "title": "[오전시황] 코스피 5000선 회복…하이닉스·기판주 상승 전환",
+      "url": "https://www.hankyung.com/article/202611171364i",
+      "publishedAt": "Tue, 17 Nov 2026 10:38:31 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-006",
+      "title": "[개장시황]美 AI 칩 규제·엔비디아 여파에 코스피 5010선 후퇴…옵토닉스·나노팀 급등",
+      "url": "https://www.hankyung.com/article/202611171350i",
+      "publishedAt": "Tue, 17 Nov 2026 10:34:53 +0900",
+      "source": "한국경제"
+    }
+  ]
+}
