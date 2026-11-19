@@ -1,0 +1,48 @@
+{
+  "date": "2026-11-19",
+  "domain": "market",
+  "sources": [
+    {
+      "id": "evidence-001",
+      "title": "한투 '글로벌 리서치' 1000만회 '클릭'…최고 인기 리포트는",
+      "url": "https://www.hankyung.com/article/202611196545i",
+      "publishedAt": "Thu, 19 Nov 2026 11:30:01 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-002",
+      "title": "삼전 늘리고, 없던 하이닉스 담고…ETF마다 갈린 '반도체 셈법'",
+      "url": "https://www.hankyung.com/article/202611196862i",
+      "publishedAt": "Thu, 19 Nov 2026 11:18:36 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-003",
+      "title": "한화오션, 3642억원 규모 초대형 원유운반선 2척 수주",
+      "url": "https://www.hankyung.com/article/2026111969676",
+      "publishedAt": "Thu, 19 Nov 2026 11:14:42 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-004",
+      "title": "\"바닥 어디냐\"…증권주, 업황 둔화·과징금 이중고에 '추락' [분석+]",
+      "url": "https://www.hankyung.com/article/2026111962616",
+      "publishedAt": "Thu, 19 Nov 2026 11:02:26 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-005",
+      "title": "\"중국인들 한국 대거 몰려온다\"…여행·항공·카지노주 급등세",
+      "url": "https://www.hankyung.com/article/2026111968666",
+      "publishedAt": "Thu, 19 Nov 2026 10:47:23 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-006",
+      "title": "[개장시황] 또 다시 5000선 내준 코스피… '한한령 완화'에 콘텐츠·여행주는 급등",
+      "url": "https://www.hankyung.com/article/202611196760i",
+      "publishedAt": "Thu, 19 Nov 2026 10:42:46 +0900",
+      "source": "한국경제"
+    }
+  ]
+}
