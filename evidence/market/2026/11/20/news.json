@@ -1,0 +1,48 @@
+{
+  "date": "2026-11-20",
+  "domain": "market",
+  "sources": [
+    {
+      "id": "evidence-001",
+      "title": "'돈 버는 AI'만 골라 담는다…AI 모델·플랫폼 ETF 다음달 상장",
+      "url": "https://www.hankyung.com/article/202611209732i",
+      "publishedAt": "Fri, 20 Nov 2026 11:36:11 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-002",
+      "title": "[오전시황] 외국인·기관 1조원 넘게 팔았다…코스피 장중 4900선 하회",
+      "url": "https://www.hankyung.com/article/202611209694i",
+      "publishedAt": "Fri, 20 Nov 2026 11:20:19 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-003",
+      "title": "개미들 계좌 1억개 넘었는데… \"주식 살 돈은 없어요\"",
+      "url": "https://www.hankyung.com/article/202611209606i",
+      "publishedAt": "Fri, 20 Nov 2026 11:04:11 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-004",
+      "title": "초고수들, 美 기술주 약세 틈타 삼전닉스 쓸어담아…엔터주 차익실현 매도",
+      "url": "https://www.hankyung.com/article/202611209538i",
+      "publishedAt": "Fri, 20 Nov 2026 10:57:11 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-005",
+      "title": "중국이 메모리 주문 확 줄였다…삼전닉스 '날벼락' 맞은 이유",
+      "url": "https://www.hankyung.com/article/202611209413i",
+      "publishedAt": "Fri, 20 Nov 2026 10:53:46 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-006",
+      "title": "\"주총장 안 가도 의결권 행사\"…예탁원, 전자주총 플랫폼 'EVOP' 개설",
+      "url": "https://www.hankyung.com/article/202611209390i",
+      "publishedAt": "Fri, 20 Nov 2026 10:39:42 +0900",
+      "source": "한국경제"
+    }
+  ]
+}
