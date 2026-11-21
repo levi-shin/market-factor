@@ -1,0 +1,48 @@
+{
+  "date": "2026-11-21",
+  "domain": "market",
+  "sources": [
+    {
+      "id": "evidence-001",
+      "title": "나스닥 5% 폭락…시험대 오른 국내 증시, 반등 열쇠는 [다음주 주요 변수 미리보기]",
+      "url": "https://www.hankyung.com/article/202611200923i",
+      "publishedAt": "Sat, 21 Nov 2026 11:00:08 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-002",
+      "title": "\"믿었던 AI마저\"…기술주 투매에 나스닥 5% 급락 [뉴욕증시 브리핑]",
+      "url": "https://www.hankyung.com/article/2026112110837",
+      "publishedAt": "Sat, 21 Nov 2026 07:27:04 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-003",
+      "title": "앤트로픽 상장은 '마지막 불꽃놀이'...FT의 경고 [월가 업&다운]",
+      "url": "https://www.hankyung.com/article/202611211036i",
+      "publishedAt": "Sat, 21 Nov 2026 02:25:12 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-004",
+      "title": "\"월요일엔 또 무슨 악몽이\"…삼전닉스 개미들 멘탈도 '바닥' [분석+]",
+      "url": "https://www.hankyung.com/article/2026112004446",
+      "publishedAt": "Fri, 20 Nov 2026 22:00:01 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-005",
+      "title": "[2027 대전망] 무너진 오천피…\"내가 산 가격 잊어라\" 2조 큰손의 조언",
+      "url": "https://www.hankyung.com/article/202611198067i",
+      "publishedAt": "Fri, 20 Nov 2026 18:33:27 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-006",
+      "title": "삼전닉스 'PER 2배' 극단적 저평가…1000조 벌어도 못 믿는다",
+      "url": "https://www.hankyung.com/article/2026112007211",
+      "publishedAt": "Fri, 20 Nov 2026 18:15:47 +0900",
+      "source": "한국경제"
+    }
+  ]
+}
