@@ -4,9 +4,44 @@
   "sources": [
     {
       "id": "evidence-001",
-      "title": "글로벌 증시 및 금융 시장 주요 뉴스 수집 중",
-      "url": null,
-      "publishedAt": null,
+      "title": "연일 추락하는 증시…\"주가 오히려 오른다\" 증권가 주목한 '이 종목'",
+      "url": "https://www.hankyung.com/article/202611234595i",
+      "publishedAt": "Mon, 23 Nov 2026 16:16:37 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-002",
+      "title": "[마감시황] 4700선 사수한 코스피…美 AI 쇼크에 데이터센터株 급락",
+      "url": "https://www.hankyung.com/article/202611234559i",
+      "publishedAt": "Mon, 23 Nov 2026 16:12:29 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-003",
+      "title": "한국투자금융, 스타트업에 최대 5억원 투자…일본 VC와 양국 시장 진출 협력",
+      "url": "https://www.hankyung.com/article/2026112333461",
+      "publishedAt": "Mon, 23 Nov 2026 16:02:02 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-004",
+      "title": "'AI 회의론' 코스피, 4700선 겨우 지켜…코스닥은 연중 최저",
+      "url": "https://www.hankyung.com/article/2026112345656",
+      "publishedAt": "Mon, 23 Nov 2026 15:48:09 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-005",
+      "title": "\"HBM 시장 더 커진다\"면서… 삼전·하닉 목표가 깎은 골드만삭스",
+      "url": "https://www.hankyung.com/article/202611234379i",
+      "publishedAt": "Mon, 23 Nov 2026 15:47:07 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-006",
+      "title": "\"12만원에 사 달라\" 주식농부 2심도 패소…조광피혁에 배상",
+      "url": "https://www.hankyung.com/article/2026112341816",
+      "publishedAt": "Mon, 23 Nov 2026 15:33:57 +0900",
       "source": "한국경제"
     }
   ]
