@@ -1,0 +1,13 @@
+{
+  "date": "2026-11-25",
+  "domain": "market",
+  "sources": [
+    {
+      "id": "evidence-001",
+      "title": "글로벌 증시 및 금융 시장 주요 뉴스 수집 중",
+      "url": null,
+      "publishedAt": null,
+      "source": "한국경제"
+    }
+  ]
+}
