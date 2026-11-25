@@ -4,9 +4,44 @@
   "sources": [
     {
       "id": "evidence-001",
-      "title": "글로벌 증시 및 금융 시장 주요 뉴스 수집 중",
-      "url": null,
-      "publishedAt": null,
+      "title": "[포토] 롤러코스터 코스피",
+      "url": "https://www.hankyung.com/article/202611250164i",
+      "publishedAt": "Wed, 25 Nov 2026 17:16:39 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-002",
+      "title": "거래소, 상장사 사내·사외이사 100여명 대상 밸류업 설명회",
+      "url": "https://www.hankyung.com/article/2026112500936",
+      "publishedAt": "Wed, 25 Nov 2026 16:56:04 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-003",
+      "title": "엑셀세라퓨틱스 \"中 아크로바이오와 20억원 전략적 투자 유치 협약\"",
+      "url": "https://www.hankyung.com/article/2026112500516",
+      "publishedAt": "Wed, 25 Nov 2026 16:48:15 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-004",
+      "title": "라이브엑스 \"탐즈, 롯데홈쇼핑서 '제로 CPR 트리트먼트' 론칭 예정\"",
+      "url": "https://www.hankyung.com/article/2026112500246",
+      "publishedAt": "Wed, 25 Nov 2026 16:44:28 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-005",
+      "title": "낸드값 하락, D램까지 번질까…격렬해진 '반도체 사이클 공방'",
+      "url": "https://www.hankyung.com/article/202611259913i",
+      "publishedAt": "Wed, 25 Nov 2026 16:43:52 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-006",
+      "title": "\"삼전 반값 됐다\" 울상인데…존 리가 콕 집은 '뜻밖의 희소식'",
+      "url": "https://www.hankyung.com/article/2026112599427",
+      "publishedAt": "Wed, 25 Nov 2026 16:35:49 +0900",
       "source": "한국경제"
     }
   ]
