@@ -6,7 +6,7 @@
 
 ## 구성
 
-- `lambda_function.py` — 시세 수집, Gemini 분석, 로컬 JSON/HTML 저장, Slack 알림
+- `lambda_function.py` — 시세 수집, AI 분석(일간 Gemini / 주·월 GPT), 로컬 JSON/HTML 저장, Slack 알림
 - `index.html` — 마켓 팩터 웹앱 (대시보드 / 브리핑 / 리포트, `briefings.json` · `reports.json`)
 - `briefings.json` — 일별 브리핑 누적 데이터 (Actions가 갱신 후 커밋)
 - `reports.json` — 주간·월간 리포트 목록 (대시보드가 읽음)
@@ -80,10 +80,13 @@ AI가 실패한 날은 metadata가 기록되지 않으므로 남은 슬롯이 �
 
 | Secret | 설명 |
 |--------|------|
-| `GEMINI_API_KEY` | Google Gemini API 키 |
+| `GEMINI_API_KEY` | Google Gemini API 키 (일간 브리핑 + 주·월 폴백) |
+| `OPENAI_API_KEY` | OpenAI API 키 (주간·월간 리포트 AI) |
 | `SLACK_WEBHOOK_URL` | Incoming Webhook URL |
 | `SITE_BASE_URL` | (선택) 대시보드/리포트 링크 베이스. 비워두면 `CNAME` 값을 사용 |
-| `GEMINI_MODEL` | (선택) 우선 사용할 모델명 |
+| `GEMINI_MODEL` | (선택) Gemini 우선 모델명 |
+| `OPENAI_MODEL` | (선택) 기본 `gpt-6-luna` |
+| `OPENAI_REASONING_EFFORT` | (선택) 기본 `medium` |
 
 ## GitHub Pages (대시보드)
 
@@ -100,7 +103,8 @@ Slack 링크에 쓰이는 주소는 다음 순서로 결정됩니다.
 ## 로컬 실행
 
 ```bash
-export GEMINI_API_KEY=...
+export GEMINI_API_KEY=...          # 일간
+export OPENAI_API_KEY=...          # 주간·월간 (없으면 Gemini 폴백)
 export SLACK_WEBHOOK_URL=...
 export SITE_BASE_URL=https://levi-shin.github.io/market-factor   # 선택
 

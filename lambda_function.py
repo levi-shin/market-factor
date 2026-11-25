@@ -2612,28 +2612,127 @@ def format_apple_official_event_line(item):
         f"변동성이 커지며 공급망·경쟁 스마트폰 종목으로 파급될 수 있습니다."
     )
 
+# ==========================================
+# 3.7. OpenAI (주간/월간 리포트 전용)
+# ==========================================
+# 일간 브리핑은 Gemini, 주간·월간만 GPT-6 Luna.
+# 단가 참고(2026-09): Luna 입력 $0.10 / 출력 $0.50 per 1M → 월 수 회면 $3 한도 여유.
+OPENAI_API_URL = "https://api.openai.com/v1/chat/completions"
+OPENAI_HTTP_TIMEOUT = int(os.environ.get("OPENAI_HTTP_TIMEOUT", "120"))
+OPENAI_MAX_RETRIES = int(os.environ.get("OPENAI_MAX_RETRIES", "3"))
+OPENAI_RETRY_DELAY_SEC = 5
+_openai_model_env = clean_str(os.environ.get("OPENAI_MODEL", ""))
+OPENAI_MODEL = _openai_model_env or "gpt-6-luna"
+_openai_effort_env = clean_str(os.environ.get("OPENAI_REASONING_EFFORT", ""))
+OPENAI_REASONING_EFFORT = _openai_effort_env or "medium"
+
+
+def call_openai_json(messages, timeout=None, context_label="OpenAI"):
+    """Chat Completions + JSON object. 반환: (parsed_dict, model_name) 또는 (None, None)."""
+    api_key = clean_str(os.environ.get("OPENAI_API_KEY", ""))
+    if not api_key:
+        logger.error(f"❌ OPENAI_API_KEY 없음 - {context_label} 생략")
+        return None, None
+
+    timeout = timeout or OPENAI_HTTP_TIMEOUT
+    model = OPENAI_MODEL
+    headers = {
+        "Authorization": f"Bearer {api_key}",
+        "Content-Type": "application/json",
+    }
+    payload = {
+        "model": model,
+        "messages": messages,
+        "response_format": {"type": "json_object"},
+        "max_completion_tokens": 8192,
+        # gpt-6-luna 등 reasoning 모델: 주·월 리포트는 medium으로 디테일 확보
+        "reasoning_effort": OPENAI_REASONING_EFFORT,
+    }
+    logger.info(
+        f"{context_label}: model={model}, reasoning_effort={OPENAI_REASONING_EFFORT}"
+    )
+
+    for attempt in range(1, OPENAI_MAX_RETRIES + 1):
+        try:
+            raw = http_post_json(OPENAI_API_URL, payload, headers=headers, timeout=timeout)
+            res = json.loads(raw)
+            choices = res.get("choices") or []
+            if not choices:
+                logger.error(f"{context_label} choices 비어 있음 (시도 {attempt}): {str(res)[:400]}")
+                if attempt < OPENAI_MAX_RETRIES:
+                    time.sleep(OPENAI_RETRY_DELAY_SEC)
+                    continue
+                return None, None
+            message = (choices[0] or {}).get("message") or {}
+            text_out = message.get("content") or ""
+            if isinstance(text_out, list):
+                # 일부 응답이 content parts 배열일 수 있음
+                text_out = "\n".join(
+                    p.get("text", "") for p in text_out if isinstance(p, dict)
+                )
+            parsed = _parse_json_object(text_out)
+            if parsed is None:
+                logger.error(
+                    f"{context_label} JSON 파싱 실패 (시도 {attempt}): {str(text_out)[:500]}"
+                )
+                if attempt < OPENAI_MAX_RETRIES:
+                    time.sleep(OPENAI_RETRY_DELAY_SEC)
+                    continue
+                return None, None
+            if not _is_usable_analysis(parsed, context_label):
+                logger.error(
+                    f"{context_label} 내용 부족 (시도 {attempt}): {str(parsed)[:300]}"
+                )
+                if attempt < OPENAI_MAX_RETRIES:
+                    time.sleep(OPENAI_RETRY_DELAY_SEC)
+                    continue
+                return None, None
+            logger.info(f"✅ {context_label} 성공 (모델: {model}, 시도: {attempt})")
+            return parsed, model
+        except urllib.error.HTTPError as e:
+            if e.code in CAPACITY_HTTP_CODES or e.code in TRANSIENT_HTTP_CODES:
+                logger.warning(
+                    f"{context_label} HTTP {e.code} (시도 {attempt}/{OPENAI_MAX_RETRIES})"
+                )
+                if attempt < OPENAI_MAX_RETRIES:
+                    time.sleep(OPENAI_RETRY_DELAY_SEC * attempt)
+                    continue
+            logger.error(f"{context_label} HTTP 실패 (모델: {model}): {e}")
+            return None, None
+        except Exception as e:
+            if _is_transient_network_error(e) and attempt < OPENAI_MAX_RETRIES:
+                logger.warning(f"{context_label} 네트워크/타임아웃 (시도 {attempt}): {e}")
+                time.sleep(OPENAI_RETRY_DELAY_SEC)
+                continue
+            logger.error(f"{context_label} 호출 실패: {e}")
+            return None, None
+    return None, None
+
+
 def get_period_ai_analysis(macro_metrics, portfolio_metrics, period_news_titles, per_symbol_news,
                             period_word="주", next_period_word="차주", per_symbol_event_news=None):
     # period_word: "주" 또는 "달" / next_period_word: "차주" 또는 "차월"
-    # (주간/월간 리포트가 이 함수 하나를 공유함 - 로직은 동일하고 문구만 다름)
-    api_key = clean_str(os.environ.get("GEMINI_API_KEY", ""))
-    if not api_key:
-        logger.error(f"❌ GEMINI_API_KEY 없음 - {period_word}간 AI 분석 생략")
-        return None, None
+    # 주간·월간은 GPT(OpenAI) 우선. 키 없거나 실패 시에만 Gemini 폴백.
+    # 등락률 요약 텍스트는 전부 코드가 계산한 값만 사용 (숫자 할루시네이션 방지)
 
-    # 등락률 요약 텍스트는 전부 코드가 계산한 값만 사용 (숫자 할루시네이션 방지 원칙 동일 적용)
     macro_lines = []
     for key, label, currency, unit, decimals in WEEKLY_MACRO_SPECS:
         m = macro_metrics.get(key)
         if m and m.get("pct_this_week") is not None:
-            macro_lines.append(f"• {label}: {_fmt_num(m['start'], decimals)}{unit} → {_fmt_num(m['end'], decimals)}{unit} (이번 {period_word} {_pct_str(m['pct_this_week'])})")
+            macro_lines.append(
+                f"• {label}: {_fmt_num(m['start'], decimals)}{unit} → "
+                f"{_fmt_num(m['end'], decimals)}{unit} (이번 {period_word} {_pct_str(m['pct_this_week'])})"
+            )
     macro_text = "\n".join(macro_lines)
 
     portfolio_lines = []
     for sym, name in MY_PORTFOLIO_TICKERS:
         m = portfolio_metrics.get(sym)
         if m and m.get("pct_this_week") is not None:
-            portfolio_lines.append(f"• {name}: {_fmt_num(m['start'], 2)} → {_fmt_num(m['end'], 2)} (이번 {period_word} {_pct_str(m['pct_this_week'])})")
+            portfolio_lines.append(
+                f"• {name}: {_fmt_num(m['start'], 2)} → {_fmt_num(m['end'], 2)} "
+                f"(이번 {period_word} {_pct_str(m['pct_this_week'])})"
+            )
     portfolio_text = "\n".join(portfolio_lines)
 
     news_text = "\n".join([f"• {t}" for t in period_news_titles])
@@ -2644,38 +2743,47 @@ def get_period_ai_analysis(macro_metrics, portfolio_metrics, period_news_titles,
             items = (bucket or {}).get(sym, [])
             if not items:
                 continue
-            lines = "\n".join([f"  - {it['title']} ({it.get('publishedAt', '날짜 미상')})" for it in items])
+            lines = "\n".join(
+                [f"  - {it['title']} ({it.get('publishedAt', '날짜 미상')})" for it in items]
+            )
             parts.append(f"[{name}]\n{lines}")
         return "\n\n".join(parts) if parts else "(수집된 뉴스 없음)"
 
     per_symbol_news_text = _fmt_symbol_news(per_symbol_news)
     per_symbol_event_text = _fmt_symbol_news(per_symbol_event_news)
 
-    prompt = f"""
-당신은 여의도 수석 스트래티지스트입니다. 아래는 이번 {period_word}(평일 기준) 시장 데이터와 뉴스입니다.
+    system_prompt = (
+        f"당신은 여의도 수석 스트래티지스트입니다. "
+        f"주간·월간 마켓 리포트를 디테일하고 명확한 한국어로 작성합니다. "
+        f"출력은 반드시 JSON 객체 하나만."
+    )
+
+    user_prompt = f"""아래는 이번 {period_word}(평일 기준) 시장 데이터와 뉴스입니다.
+풍부하고 구체적인 분석으로 작성하세요. 모호한 문장("흐름이 있다", "관심이 모인다")만으로 끝내지 마세요.
 
 [매우 중요 - 숫자 금지]
-- 등락률/가격 수치는 이미 위에 정확히 제공되어 있습니다. 본문에 새로운 숫자를 만들어 쓰지 말고, 원인과 영향만 서술하세요.
+- 등락률/가격은 데이터에 이미 있습니다. 본문에 새 숫자를 만들지 말고, 원인·경로·해석만 쓰세요.
+- "상승/하락한다"처럼 단정 방향·목표가·매수/매도 조언 금지.
 
-[매우 중요 - {next_period_word} 이벤트 = 일정 사실 + 주가 영향 경로]
-- "next_period_events"는 아래 [종목별 예정 일정 뉴스]를 우선 보고, 없으면 [종목별 일반 뉴스]를 보조로 보세요.
-- 제목이 "[공식 캘린더]"로 시작하면 회사 공식 일정입니다. 뉴스보다 우선하고 반드시 반영하세요.
-- 발표·공개·출시·이벤트·파업·시위·집회·실적발표처럼 **일정 신호**가 헤드라인에 있으면 채우세요.
-- 정확한 날짜가 없어도 "이번 주/차주/임박/예고/예약판매"처럼 시점이 드러나면 포함하세요.
-- 일정 신호가 전혀 없으면 반드시 "확인된 예정 이벤트 없음"이라고 쓰세요. 추측해서 일정을 만들지 마세요.
-- 일정이 있으면 **2~3문장**으로 쓰세요. 일정만 나열하고 끝내면 안 됩니다.
-  1) 언제·무엇이 있는지 (사실)
-  2) 이 종목 주가에 어떻게 닿는지 (기대 선반영, 이벤트 소화, 단기 변동성, 수급, 실적·가이던스 눈높이, 섹터·공급망 파급 등)
-  3) 시장이 흔히 보는 해석 축 한 줄 (예: 신제품 기대 vs 가격·가이던스 실망, 노조 리스크 vs 실적 모멘텀)
-- "반드시 상승/하락한다", 목표가, 매수·매도 조언은 금지. 영향 **경로와 해석 축**만 말하세요.
+[issue_analysis — 이번 {period_word} 이슈, 길게·명확하게]
+- 임팩트 큰 이슈를 **2~3개** 고르세요.
+- 이슈마다 다음을 빠짐없이: (1) 무엇이 있었는지 사실 (2) 왜 시장이 반응했는지 원인
+  (3) 거시·환율·금리·섹터 중 어디에 닿는지 (4) 보유 종목/관심 자산과의 연결
+- 전체 **8~12문장** 분량. 이슈 사이에 문단을 나누듯 서술해도 됩니다(한 문자열).
 
-반드시 마크다운 없이 순수 JSON으로만 출력하세요.
+[next_period_events — {next_period_word} 체크]
+- [종목별 예정 일정 뉴스] 우선, 없으면 [종목별 일반 뉴스] 보조.
+- "[공식 캘린더]" 제목은 회사 공식 → 최우선 반영.
+- 발표·공개·출시·실적·파업·시위 등 **일정 신호**가 있으면 채우세요.
+- 없으면 반드시 "확인된 예정 이벤트 없음". 없는 일정을 지어내지 마세요.
+- 일정이 있으면 **3~4문장**: 언제·무엇 / 주가에 닿는 경로 / 시장이 보는 해석 축 /
+  변동성·수급·섹터 파급 중 하나 이상.
 
 JSON 포맷:
 {{
-  "issue_analysis": "이번 {period_word} 가장 임팩트 컸던 이슈 1~2개의 원인과 파급 영향을 3~4문장으로",
+  "issue_analysis": "이번 {period_word} 이슈 2~3개 · 원인·파급·포트 연결 · 8~12문장",
   "next_period_events": {{
-    "NVDA": "일정 사실 + 이 종목 주가 영향 경로 2~3문장, 또는 '확인된 예정 이벤트 없음'",
+    "NVDA": "일정+영향 경로 3~4문장 또는 '확인된 예정 이벤트 없음'",
     "AAPL": "...",
     "TSLA": "...",
     "005930.KS": "...",
@@ -2694,19 +2802,45 @@ JSON 포맷:
 [이번 {period_word} 수집된 일반 뉴스 헤드라인]
 {news_text}
 
-[종목별 예정 일정 뉴스]  ← next_period_events의 1순위 근거
+[종목별 예정 일정 뉴스]  ← next_period_events 1순위
 {per_symbol_event_text}
 
 [종목별 일반 뉴스]
 {per_symbol_news_text}
 """
-    payload = {
-        "contents": [{"parts": [{"text": prompt}]}],
-        "generationConfig": {"thinkingConfig": {"thinkingLevel": "low"}}
-    }
-    headers = {"x-goog-api-key": api_key}
 
-    return call_gemini_json(payload, headers, timeout=GEMINI_HTTP_TIMEOUT, context_label=f"{period_word}간 AI 분석")
+    context_label = f"{period_word}간 AI 분석(GPT)"
+    messages = [
+        {"role": "system", "content": system_prompt},
+        {"role": "user", "content": user_prompt},
+    ]
+    parsed, model = call_openai_json(
+        messages, timeout=OPENAI_HTTP_TIMEOUT, context_label=context_label
+    )
+    if parsed:
+        return parsed, model
+
+    # GPT 실패/키 없음 → Gemini 폴백 (리포트가 빈 이슈로 나가지 않게)
+    gemini_key = clean_str(os.environ.get("GEMINI_API_KEY", ""))
+    if not gemini_key:
+        logger.error(f"{period_word}간 AI: OpenAI 실패·폴백 Gemini 키도 없음")
+        return None, None
+
+    logger.warning(f"{period_word}간 AI: OpenAI 실패 — Gemini 폴백 시도")
+    gemini_payload = {
+        "contents": [{"parts": [{"text": system_prompt + "\n\n" + user_prompt}]}],
+        "generationConfig": {
+            "thinkingConfig": {"thinkingLevel": "medium"},
+            "responseMimeType": "application/json",
+            "maxOutputTokens": 8192,
+        },
+    }
+    return call_gemini_json(
+        gemini_payload,
+        {"x-goog-api-key": gemini_key},
+        timeout=GEMINI_HTTP_TIMEOUT,
+        context_label=f"{period_word}간 AI 분석(Gemini폴백)",
+    )
 
 
 # 하위 호환용 별칭 (기존 코드에서 get_weekly_ai_analysis로 호출하던 부분)
