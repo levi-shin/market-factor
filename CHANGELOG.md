@@ -8,6 +8,21 @@
 
 ---
 
+## [0.8.26] - 2026-11-25
+
+주간·월간 리포트 AI를 **GPT-6 Luna**로 바꿨습니다. 일간 브리핑은 그대로 Gemini입니다.
+
+### 변경
+
+- `get_period_ai_analysis` → OpenAI Chat Completions (`gpt-6-luna`, `reasoning_effort=medium`)
+- 주·월 프롬프트를 이슈 2~3개·8~12문장 / 이벤트 3~4문장으로 강화
+- OpenAI 실패·키 없을 때만 Gemini 폴백
+- `weekly.yml` / `monthly.yml`에 `OPENAI_API_KEY` · `OPENAI_MODEL` · `OPENAI_REASONING_EFFORT` Secret 연결
+
+### 설정
+
+저장소 Secrets에 `OPENAI_API_KEY`를 넣어야 주·월이 Luna로 돌아갑니다. `OPENAI_MODEL`은 비우면 `gpt-6-luna`.
+
 ## [0.8.25] - 2026-10-14
 
 `금(원화)`를 눌렀는데 **달러 국제 금** 분석이 나오던 혼동을 고쳤습니다.
