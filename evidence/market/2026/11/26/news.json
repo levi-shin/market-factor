@@ -1,0 +1,48 @@
+{
+  "date": "2026-11-26",
+  "domain": "market",
+  "sources": [
+    {
+      "id": "evidence-001",
+      "title": "서학 초고수들, 다시 반도체 반등에 베팅...칩 레버리지 ETF·마이크론 사들여",
+      "url": "https://www.hankyung.com/article/202611261940i",
+      "publishedAt": "Thu, 26 Nov 2026 12:14:17 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-002",
+      "title": "[오전시황] 스페이스X 우주 데이터센터 기대감...2차전지·태양광株 강세",
+      "url": "https://www.hankyung.com/article/202611261829i",
+      "publishedAt": "Thu, 26 Nov 2026 11:39:13 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-003",
+      "title": "코스피, 장중 상승세 지속…외인·기관 '쌍끌이 매수'",
+      "url": "https://www.hankyung.com/article/2026112618086",
+      "publishedAt": "Thu, 26 Nov 2026 11:05:26 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-004",
+      "title": "급반등 삼전닉스 판 초고수들, 피에스케이홀딩스·삼성전기 등 장비주 사들여",
+      "url": "https://www.hankyung.com/article/202611261634i",
+      "publishedAt": "Thu, 26 Nov 2026 10:52:51 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-005",
+      "title": "로레알도 손 내밀었다…코스맥스, '상고하저' 깨고 사상 최대 실적",
+      "url": "https://www.hankyung.com/article/202611261615i",
+      "publishedAt": "Thu, 26 Nov 2026 10:42:09 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-006",
+      "title": "삼전닉스 일제히 반등…한숨 돌린 개미들",
+      "url": "https://www.hankyung.com/article/2026112614526",
+      "publishedAt": "Thu, 26 Nov 2026 09:51:18 +0900",
+      "source": "한국경제"
+    }
+  ]
+}

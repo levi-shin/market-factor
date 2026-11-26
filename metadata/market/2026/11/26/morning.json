@@ -1,0 +1,10 @@
+{
+  "date": "2026-11-26",
+  "domain": "market",
+  "analysisType": "morning",
+  "generatedAt": "2026-11-26T13:21:10.774673+09:00",
+  "analysisVersion": "0.1",
+  "promptVersion": "market-analysis-0.1",
+  "model": "gemini-3.6-flash",
+  "status": "published"
+}
