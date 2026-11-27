@@ -4,9 +4,44 @@
   "sources": [
     {
       "id": "evidence-001",
-      "title": "글로벌 증시 및 금융 시장 주요 뉴스 수집 중",
-      "url": null,
-      "publishedAt": null,
+      "title": "오늘의 프리미엄9 콘텐츠 다이제스트(11월 27일)",
+      "url": "https://www.hankyung.com/article/202611275074i",
+      "publishedAt": "Fri, 27 Nov 2026 16:31:04 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-002",
+      "title": "이달 들어 '목표가 하향' 리포트 1000건 돌파…그 속에서 오른 86곳은?",
+      "url": "https://www.hankyung.com/article/202611274992i",
+      "publishedAt": "Fri, 27 Nov 2026 16:25:45 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-003",
+      "title": "정부는 왜 김용범 메리츠금융지주 부회장에게 자본시장 개혁을 맡겼을까?",
+      "url": "https://www.hankyung.com/article/202611274619i",
+      "publishedAt": "Fri, 27 Nov 2026 16:16:57 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-004",
+      "title": "외국인·기관 쌍끌이 매수에 코스피 4.3% 급등…4900선 탈환",
+      "url": "https://www.hankyung.com/article/2026112751366",
+      "publishedAt": "Fri, 27 Nov 2026 16:14:26 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-005",
+      "title": "\"삼전·닉스 비중 줄였다\"…액티브 ETF, 수익률 방어에 '분주'",
+      "url": "https://www.hankyung.com/article/202611274818i",
+      "publishedAt": "Fri, 27 Nov 2026 16:02:36 +0900",
+      "source": "한국경제"
+    },
+    {
+      "id": "evidence-006",
+      "title": "\"발표 직전 살걸\"…기업들 '자사주 소각' 한 방에 '개미 환호'",
+      "url": "https://www.hankyung.com/article/202611274923i",
+      "publishedAt": "Fri, 27 Nov 2026 15:59:16 +0900",
       "source": "한국경제"
     }
   ]
