@@ -1,5 +1,14 @@
 [
   {
+    "type": "weekly",
+    "id": "2026-W48",
+    "path": "reports/2026-W48.html",
+    "title": "주간 마켓 리포트",
+    "dateRange": "2026-11-23 ~ 2026-11-27",
+    "headline": "이번 주는 엔비디아가 +18.94%로 가장 크게 흔들렸습니다",
+    "generatedAt": "2026-11-28T13:10:22.326892+09:00"
+  },
+  {
     "type": "monthly",
     "id": "2026-10-monthly",
     "path": "reports/2026-10-monthly.html",
